@@ -3,6 +3,7 @@
 module AgilePocker.Session
   ( Session(..), SessionId, Sessions
   , emptySessions, addSession, getSession, removeSession
+  , assignConnection
   ) where
 
 import Data.ByteString (ByteString)
@@ -16,8 +17,9 @@ import qualified Network.WebSockets as WS
 
 
 data Session = Session
-  { sessionName :: T.Text
-  , sessionConnection :: WS.Connection
+  { sessionId :: ByteString
+  , sessionName :: T.Text
+  , sessionConnection :: Maybe WS.Connection
   }
 
 
@@ -31,13 +33,20 @@ type Sessions =
   Map.Map ByteString Session
 
 
-addSession :: T.Text -> WS.Connection -> Sessions -> IO ( Sessions, SessionId )
-addSession name conn sessions = do
+addSession :: T.Text -> Sessions -> IO ( Sessions, SessionId )
+addSession name sessions = do
   newId <- generateId sessions
-  let newSession = Session name conn
-  pure $ ( Map.insert newId newSession sessions
+  pure $ ( Map.insert newId (Session newId name Nothing) sessions
          , newId
          )
+
+
+-- @TODO: silent remove failing
+assignConnection :: SessionId -> WS.Connection -> Sessions -> Sessions
+assignConnection id' conn sessions = Map.alter (fmap update) id' sessions
+  where
+    update session =
+      session { sessionConnection = Just conn }
 
 
 getSession :: ByteString -> Sessions -> Maybe Session

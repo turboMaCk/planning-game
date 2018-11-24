@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -9,6 +10,7 @@ module AgilePocker.Server (main) where
 import Servant
 import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
 import Network.HTTP.Types (status200)
+import Data.Maybe (maybe)
 import Control.Monad (forM_, forever)
 import Control.Concurrent (MVar)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -29,6 +31,8 @@ import qualified Control.Concurrent as Concurrent
 
 
 import AgilePocker.Session
+import AgilePocker.Event
+import AgilePocker.UserInfo
 
 
 -- State
@@ -48,7 +52,7 @@ lookupSession state' sessionId = do
       pure session
 
     Nothing ->
-      throwError (err403 { errBody = "Invalid SessionID" })
+      throwError $ err403 { errBody = "Invalid SessionID" }
 
 
 --- | This function takes extract session id from header value
@@ -76,7 +80,7 @@ authHandler state = mkAuthHandler handler
 
     handler :: Request -> Handler Session
     handler req = either throw401 (lookupSession state) $ do
-        maybeToEither "Missing SessionID" $ mSessionId req
+        maybeToEither "Missing SessionId" $ mSessionId req
 
 
 -- | We need to specify the data returned after authentication
@@ -86,8 +90,9 @@ type instance AuthServerData (AuthProtect "session-id") = Session
 -- API
 
 
-type Api = "status"  :> Get '[JSON] T.Text
-      :<|> "stream" :> WebSocket
+type Api = "status" :> Get '[JSON] T.Text
+      :<|> "join"   :> ReqBody '[JSON] UserInfo :> Post '[JSON] T.Text
+      :<|> "stream" :> AuthProtect "session-id" :> WebSocket
 
 
 api :: Proxy Api
@@ -104,46 +109,67 @@ genContext :: MVar ServerState -> Context (AuthHandler Request Session ': '[])
 genContext state = authHandler state :. EmptyContext
 
 
-broadcast :: T.Text -> ServerState -> IO ()
-broadcast message state' = do
-    T.putStrLn message
-    forM_ state' $ \(Session { sessionConnection=conn }) ->
-      WS.sendTextData conn message
-
-
-handleSocketEvent :: MVar ServerState -> WS.Connection -> IO ()
-handleSocketEvent state' conn = forever $ do
-  msg <- WS.receiveData conn
-  state <- Concurrent.readMVar state'
-  broadcast msg state
-
-
-handleSocket :: MVar ServerState -> WS.Connection -> IO ()
-handleSocket state' conn = do
-  -- @TODO: hardcoded name
-  sessionId <- Concurrent.modifyMVar state' $ addSession "Joe Doe" conn
-
-  -- Disconnect user at the end of session
-  flip finally (disconnect sessionId) $ do
-    WS.forkPingThread conn 30
-    handleSocketEvent state' conn
-
-  where
-    disconnect :: SessionId -> IO ()
-    disconnect id' =
-      Concurrent.modifyMVar_ state' $ pure . removeSession id'
-
-
 server :: MVar ServerState -> Server Api
 server state' = status
-           :<|> joinRoom
+           :<|> join
+           :<|> stream
 
   where
     status :: Handler T.Text
     status = pure "OK"
 
-    joinRoom :: MonadIO m => WS.Connection -> m ()
-    joinRoom = liftIO . handleSocket state'
+    join :: UserInfo -> Handler T.Text
+    join UserInfo { userName=name } = do
+      id' <- liftIO $ Concurrent.modifyMVar state' $ addSession name
+      pure $ TE.decodeUtf8 id'
+
+    stream :: MonadIO m => Session -> WS.Connection -> m ()
+    stream session = liftIO . handleSocket state' session
+
+
+broadcast :: ServerState -> Event -> IO ()
+broadcast state' event = do
+    forM_ state' $ \(Session { sessionConnection=conn }) ->
+       maybe (pure ()) (flip WS.sendTextData $ encodeEvent event) conn
+
+
+handleSocketEvent :: MVar ServerState -> WS.Connection -> IO ()
+handleSocketEvent state' conn = forever $ do
+  msg :: BS.ByteString <- WS.receiveData conn
+  -- state <- Concurrent.readMVar state'
+  -- @TODO: implement
+  pure ()
+
+
+handleSocket :: MVar ServerState -> Session -> WS.Connection -> IO ()
+handleSocket state' session conn = do
+  let sessionId' = sessionId session
+  state <- Concurrent.readMVar state'
+
+  -- Sync state to new user
+  forM_ state $ WS.sendTextData conn . encodeEvent . userJoined
+
+  -- assing connection
+  Concurrent.modifyMVar_ state' $ pure . assignConnection sessionId' conn
+
+  -- Disconnect user at the end of session
+  flip finally (disconnect sessionId' session) $ do
+
+    -- ping thread
+    WS.forkPingThread conn 30
+
+    -- broadcast join event
+    broadcast state $ userJoined session
+
+    -- assign handler
+    handleSocketEvent state' conn
+
+  where
+    disconnect :: SessionId -> Session -> IO ()
+    disconnect id' session = do
+      Concurrent.modifyMVar_ state' $ pure . removeSession id'
+      state <- Concurrent.readMVar state'
+      broadcast state $ userLeft session
 
 
 indexMiddleware :: Middleware
@@ -151,6 +177,7 @@ indexMiddleware application request respond =
     if rawPathInfo request == "/"
     then respond indexRes
     else application request respond
+
   where
     indexRes :: Response
     indexRes = responseFile status200 headers fileName Nothing
@@ -167,9 +194,9 @@ app state =
     $ indexMiddleware
     $ serveWithContext api (genContext state) $ server state
 
-
-static :: Policy
-static = addBase "public"
+  where
+    static :: Policy
+    static = addBase "public"
 
 
 main :: IO ()
