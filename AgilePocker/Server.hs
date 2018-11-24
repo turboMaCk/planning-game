@@ -5,7 +5,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE TypeFamilies          #-}
 
-module AgilePocker.Server (main) where
+module AgilePocker.Server (main, genContext) where
 
 import Servant
 import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
@@ -18,6 +18,7 @@ import Network.Wai (Request, Response, Middleware, requestHeaders, responseFile,
 import Servant.API.WebSocket (WebSocket)
 import Control.Exception (finally)
 import Network.Wai.Middleware.Static (Policy, staticPolicy, addBase)
+import Web.Cookie (parseCookies)
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -55,17 +56,14 @@ lookupSession state' sessionId = do
       throwError $ err403 { errBody = "Invalid SessionID" }
 
 
---- | This function takes extract session id from header value
---- Correct format is `Bearer xxxx` where xxxx is a SessionID itself
+-- | This function takes extract session id from header value
+-- Correct format is `Bearer xxxx` where xxxx is a SessionID itself
 parseSessionId :: BS.ByteString -> Maybe SessionId
 parseSessionId headerVal = BS.stripPrefix "Bearer " headerVal
 
 
---- | The auth handler wraps a function from Request -> Handler Account.
---- We look for a token in the request headers that we expect to be in the cookie.
---- The token is then passed to our `lookupAccount` function.
-authHandler :: MVar ServerState -> AuthHandler Request Session
-authHandler state = mkAuthHandler handler
+authHeaderHandler :: MVar ServerState -> AuthHandler Request Session
+authHeaderHandler state = mkAuthHandler handler
   where
     maybeToEither e =
       maybe (Left e) Right
@@ -84,7 +82,30 @@ authHandler state = mkAuthHandler handler
 
 
 -- | We need to specify the data returned after authentication
-type instance AuthServerData (AuthProtect "session-id") = Session
+type instance AuthServerData (AuthProtect "header") = Session
+
+
+authCookieHandler :: MVar ServerState -> AuthHandler Request Session
+authCookieHandler state = mkAuthHandler handler
+  where
+  maybeToEither e =
+    maybe (Left e) Right
+
+  throw401 msg =
+    throwError $ err401 { errBody = msg }
+
+  mSessionId :: Request -> Maybe SessionId
+  mSessionId req =
+    lookup "authorization" . parseCookies
+        =<< lookup "cookie" (requestHeaders req)
+
+  handler :: Request -> Handler Session
+  handler req = either throw401 (lookupSession state) $ do
+    maybeToEither "Missing SessionId" $ mSessionId req
+
+
+-- | We need to specify the data returned after authentication
+type instance AuthServerData (AuthProtect "cookie") = Session
 
 
 -- API
@@ -92,7 +113,7 @@ type instance AuthServerData (AuthProtect "session-id") = Session
 
 type Api = "status" :> Get '[JSON] T.Text
       :<|> "join"   :> ReqBody '[JSON] UserInfo :> Post '[JSON] T.Text
-      :<|> "stream" :> AuthProtect "session-id" :> WebSocket
+      :<|> "stream" :> AuthProtect "cookie" :> WebSocket
 
 
 api :: Proxy Api
@@ -102,11 +123,8 @@ api = Proxy
 -- Server
 
 
--- | The context that will be made available to request handlers. We supply the
--- "session-id"-tagged request handler defined above, so that the 'HasServer' instance
--- of 'AuthProtect' can extract the handler and run it on the request.
-genContext :: MVar ServerState -> Context (AuthHandler Request Session ': '[])
-genContext state = authHandler state :. EmptyContext
+genContext :: MVar ServerState -> Context (AuthHandler Request Session : AuthHandler Request Session ': '[])
+genContext state = authCookieHandler state :. authHeaderHandler state :. EmptyContext
 
 
 server :: MVar ServerState -> Server Api

@@ -1,24 +1,27 @@
-'use strict';
+/* globals Elm document */
 
-var $el = document.getElementById('app-root');
+(function () {
+    "use strict";
 
-var ws = new WebSocket("ws://localhost:3000/stream");
+    var app = Elm.Main.init({
+        flags: {
+            sessionId: null
+        }
+    });
 
-ws.onopen = function() {
-    // Web Socket is connected, send data using send()
-    // ws.send("Message to send");
-};
+    app.ports.connect.subscribe(function (token) {
+        document.cookie = "authorization=" + token;
+        var ws = new WebSocket("ws://localhost:3000/stream");
 
-ws.onmessage = function (evt) {
-    var msg = evt.data;
-    console.log(msg);
-};
+        ws.onmessage = function (evt) {
+            var msg = evt.data;
+            console.log(msg);
+            app.ports.observe_.send(msg);
+        };
 
-ws.onclose = function() {
-    // websocket is closed.
-    alert("Connection is closed...");
-};
-
-Elm.Main.init({
-    node: $el
-});
+        ws.onclose = function() {
+            // websocket is closed.
+            alert("Connection is closed...");
+        };
+    });
+})();
