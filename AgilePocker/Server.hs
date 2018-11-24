@@ -8,12 +8,14 @@ module AgilePocker.Server (main) where
 
 import Servant
 import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
+import Network.HTTP.Types (status200)
 import Control.Monad (forM_, forever)
 import Control.Concurrent (MVar)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Network.Wai (Request, requestHeaders)
+import Network.Wai (Request, Response, Middleware, requestHeaders, responseFile, rawPathInfo)
 import Servant.API.WebSocket (WebSocket)
 import Control.Exception (finally)
+import Network.Wai.Middleware.Static (Policy, staticPolicy, addBase)
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -103,10 +105,17 @@ genContext state = authHandler state :. EmptyContext
 
 
 broadcast :: T.Text -> ServerState -> IO ()
-broadcast message clients = do
+broadcast message state' = do
     T.putStrLn message
-    forM_ clients $ \(Session { sessionConnection=conn }) ->
+    forM_ state' $ \(Session { sessionConnection=conn }) ->
       WS.sendTextData conn message
+
+
+handleSocketEvent :: MVar ServerState -> WS.Connection -> IO ()
+handleSocketEvent state' conn = forever $ do
+  msg <- WS.receiveData conn
+  state <- Concurrent.readMVar state'
+  broadcast msg state
 
 
 handleSocket :: MVar ServerState -> WS.Connection -> IO ()
@@ -117,8 +126,8 @@ handleSocket state' conn = do
   -- Disconnect user at the end of session
   flip finally (disconnect sessionId) $ do
     WS.forkPingThread conn 30
-    pure ()
-  pure ()
+    handleSocketEvent state' conn
+
   where
     disconnect :: SessionId -> IO ()
     disconnect id' =
@@ -128,6 +137,7 @@ handleSocket state' conn = do
 server :: MVar ServerState -> Server Api
 server state' = status
            :<|> joinRoom
+
   where
     status :: Handler T.Text
     status = pure "OK"
@@ -136,9 +146,30 @@ server state' = status
     joinRoom = liftIO . handleSocket state'
 
 
+indexMiddleware :: Middleware
+indexMiddleware application request respond =
+    if rawPathInfo request == "/"
+    then respond indexRes
+    else application request respond
+  where
+    indexRes :: Response
+    indexRes = responseFile status200 headers fileName Nothing
+        where
+            fileName = "public/index.html"
+            headers = [ ( "Content-Type", "text/html" )
+                      , ( "Cache-Control", "public, max-age=86400" )
+                      ]
+
+
 app :: MVar ServerState -> Application
 app state =
-  serveWithContext api (genContext state) (server state)
+  staticPolicy static
+    $ indexMiddleware
+    $ serveWithContext api (genContext state) $ server state
+
+
+static :: Policy
+static = addBase "public"
 
 
 main :: IO ()

@@ -32,5 +32,7 @@ executable agile-pocker
                      , bytestring
                      , websockets
                      , servant-websockets
+                     , wai-middleware-static
+                     , http-types
   -- hs-source-dirs:
   default-language:    Haskell2010

@@ -11,7 +11,8 @@ let
       with hs;
       [ text containers random bytestring
         aeson servant servant-server wai warp
-        websockets servant-websockets
+        websockets servant-websockets wai-middleware-static
+        http-types
       ]
     );
 in
