@@ -1,2 +1,5 @@
 dist/
 elm-stuff/
+/result
+/serve
+/public/app.js
