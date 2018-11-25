@@ -34,21 +34,24 @@ type Sessions =
 
 
 -- @TODO: Add name uniqueness?
-addSession :: T.Text -> Sessions -> IO ( Sessions, SessionId )
+addSession :: T.Text -> Sessions -> IO ( Sessions, ( SessionId, Session ) )
 addSession name sessions = do
   newId <- generateId sessions
-  pure $ ( Map.insert newId (Session newId name IntMap.empty) sessions
-         , newId
+  let newSession = (Session newId name IntMap.empty)
+  pure $ ( Map.insert newId newSession sessions
+         , ( newId, newSession )
          )
 
 
-assignConnection :: SessionId -> WS.Connection -> Sessions -> ( Sessions, Maybe Int )
+assignConnection :: SessionId -> WS.Connection -> Sessions -> ( Sessions, Maybe ( Int, Session ) )
 assignConnection id' conn sessions =
   case Map.lookup id' sessions of
     Just (session@(Session { sessionConnections=conns })) ->
-      let index = IntMap.size conns in
-      ( Map.insert id' (session { sessionConnections = IntMap.insert index conn conns }) sessions
-      , Just index
+      let index = IntMap.size conns
+          updatedSession = (session { sessionConnections = IntMap.insert index conn conns })
+      in
+      ( Map.insert id' updatedSession sessions
+      , Just ( index, updatedSession )
       )
     Nothing ->
       ( sessions, Nothing )

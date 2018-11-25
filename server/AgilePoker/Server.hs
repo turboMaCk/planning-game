@@ -8,6 +8,7 @@
 module AgilePoker.Server (main, genContext) where
 
 import Servant
+import Data.Maybe (maybe)
 import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
 import Network.HTTP.Types (status200)
 import Data.Maybe (maybe)
@@ -138,7 +139,12 @@ server state' = status
 
     join :: UserInfo -> Handler T.Text
     join UserInfo { userName=name } = do
-      id' <- liftIO $ Concurrent.modifyMVar state' $ addSession name
+      ( id', session ) <- liftIO $ Concurrent.modifyMVar state' $ addSession name
+      state <- liftIO $ Concurrent.readMVar state'
+
+      -- broadcast join event
+      liftIO $ broadcast state $ userJoined session
+
       pure $ TE.decodeUtf8 id'
 
     stream :: MonadIO m => Session -> WS.Connection -> m ()
@@ -162,23 +168,24 @@ handleSocketEvent state' conn = forever $ do
 handleSocket :: MVar ServerState -> Session -> WS.Connection -> IO ()
 handleSocket state' session conn = do
   let sessionId' = sessionId session
-  state <- Concurrent.readMVar state'
-
-  -- Sync state to new user
-  forM_ state $ WS.sendTextData conn . encodeEvent . userJoined
 
   -- assing connection
   mConnectionId <- Concurrent.modifyMVar state' $ pure . assignConnection sessionId' conn
 
+  -- Sync state to new user
+  state <- Concurrent.readMVar state'
+  forM_ state $ WS.sendTextData conn . encodeEvent . userJoined
+
   case mConnectionId of
-    Just connectionId ->
+    Just ( connectionId, session ) ->
         -- Disconnect user at the end of session
-        flip finally (disconnect ( sessionId', connectionId ) session) $ do
+        flip finally (disconnect ( sessionId', connectionId )) $ do
             -- ping thread
             WS.forkPingThread conn 30
 
             -- broadcast join event
-            broadcast state $ userJoined session
+            state <- Concurrent.readMVar state'
+            broadcast state $ userStatusUpdate session
 
             -- assign handler
             handleSocketEvent state' conn
@@ -189,11 +196,17 @@ handleSocket state' session conn = do
       pure ()
 
   where
-    disconnect :: ( SessionId, Int ) -> Session -> IO ()
-    disconnect id' session = do
-      Concurrent.modifyMVar_ state' $ pure . disconnectSession id'
+    disconnect :: ( SessionId, Int ) -> IO ()
+    disconnect id' = do
+      -- disconnect
+      Concurrent.modifyMVar_ state' $
+        pure . disconnectSession id'
+
+      -- broadcast
       state <- Concurrent.readMVar state'
-      broadcast state $ userStatusUpdate session
+      let session = getSession (fst id') state
+
+      maybe (pure ()) (broadcast state . userStatusUpdate) session
 
 
 indexMiddleware :: Middleware

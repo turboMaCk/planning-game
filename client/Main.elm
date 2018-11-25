@@ -70,6 +70,19 @@ type Msg
     | ClearSession
 
 
+updateUser : User -> List User -> List User
+updateUser user xs =
+    List.map
+        (\u ->
+            if u.name == user.name then
+                user
+
+            else
+                u
+        )
+        xs
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -105,38 +118,42 @@ update msg model =
             )
 
         StreamEvent result ->
-            case result of
-                Ok event ->
-                    case event of
-                        UserJoin newUser ->
-                            case model.view of
-                                Game { players } ->
+            case model.view of
+                Game { players } ->
+                    case result of
+                        Ok event ->
+                            case event of
+                                UserJoin newUser ->
                                     ( { model
                                         | view = Game { players = newUser :: players }
                                       }
                                     , Cmd.none
                                     )
 
-                                _ ->
-                                    ( model, Cmd.none )
+                                UserStatusUpdate user ->
+                                    ( { model
+                                        | view = Game { players = updateUser user players }
+                                      }
+                                    , Cmd.none
+                                    )
 
-                        UserStatusUpdate updateUser ->
-                            ( model, Cmd.none )
+                        Err err ->
+                            ( model
+                            , case err of
+                                SocketError ->
+                                    -- @TODO: replace with cmd-extra?
+                                    Task.perform identity <| Task.succeed ClearSession
 
-                Err err ->
-                    ( model
-                    , case err of
-                        SocketError ->
-                            -- @TODO: replace with cmd-extra?
-                            Task.perform identity <| Task.succeed ClearSession
+                                DecodingError dErr ->
+                                    let
+                                        _ =
+                                            Debug.log "err" dErr
+                                    in
+                                    Cmd.none
+                            )
 
-                        DecodingError dErr ->
-                            let
-                                _ =
-                                    Debug.log "err" dErr
-                            in
-                            Cmd.none
-                    )
+                _ ->
+                    ( model, Cmd.none )
 
 
 
