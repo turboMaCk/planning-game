@@ -1,4 +1,4 @@
-port module Stream exposing (Event(..), connect, observe)
+port module Stream exposing (Event(..), connect, disconnect, observe)
 
 import Data exposing (User)
 import Json.Decode as Decode exposing (Decoder)
@@ -8,6 +8,9 @@ port observe_ : (String -> msg) -> Sub msg
 
 
 port connect : String -> Cmd msg
+
+
+port disconnect : () -> Cmd msg
 
 
 type Event

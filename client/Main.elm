@@ -8,6 +8,7 @@ import Html.Events as Event
 import Http
 import Json.Decode as Decode
 import Stream exposing (Event(..))
+import Task
 import Url exposing (Url)
 
 
@@ -35,8 +36,21 @@ type alias Flags =
 
 init : Flags -> Url -> key -> ( Model, Cmd Msg )
 init { sessionId } _ _ =
-    ( { view = SetName, userName = "", sessionId = Ok sessionId }
-    , Cmd.none
+    let
+        ( viewModel, cmd ) =
+            case sessionId of
+                Just sId ->
+                    ( Game { players = [] }
+                    , Ok sId
+                        |> Result.map Stream.connect
+                        |> Result.withDefault Cmd.none
+                    )
+
+                Nothing ->
+                    ( SetName, Cmd.none )
+    in
+    ( { view = viewModel, userName = "", sessionId = Ok sessionId }
+    , cmd
     )
 
 
@@ -46,6 +60,7 @@ type Msg
     | SubmitName
     | SessionCreated (Result Http.Error String)
     | StreamEvent (Result Decode.Error Event)
+    | ClearSession
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -70,7 +85,16 @@ update msg model =
                 , view = Game <| GameModel []
               }
             , Result.map Stream.connect res
-                |> Result.withDefault Cmd.none
+                -- @TODO: replace with cmd-extra?
+                |> Result.withDefault (Task.perform identity <| Task.succeed ClearSession)
+            )
+
+        ClearSession ->
+            ( { model
+                | sessionId = Ok Nothing
+                , view = SetName
+              }
+            , Stream.disconnect ()
             )
 
         StreamEvent result ->
