@@ -2,4 +2,4 @@
 
 cabal build --builddir=dist
 
-ln -s ./dist/build/agile-pocker/agile-pocker ./serve
+ln -sf ./dist/build/agile-poker/agile-poker ./serve

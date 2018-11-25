@@ -1,4 +1,4 @@
-# Revision history for agile-pocker
+# Revision history for agile-poker
 
 ## 0.1.0.0 -- YYYY-mm-dd
 

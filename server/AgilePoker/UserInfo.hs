@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings     #-}
-module AgilePocker.UserInfo (UserInfo(..)) where
+module AgilePoker.UserInfo (UserInfo(..)) where
 
 import Data.Aeson (FromJSON(..), (.:))
 import qualified Data.Text as T
 import qualified Data.Aeson.Types as AT
 
-import AgilePocker.Session
+import AgilePoker.Session
 
 
 data UserInfo = UserInfo

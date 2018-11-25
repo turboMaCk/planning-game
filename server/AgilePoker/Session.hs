@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePocker.Session
+module AgilePoker.Session
   ( Session(..), SessionId, Sessions
   , emptySessions, addSession, getSession, removeSession
   , assignConnection

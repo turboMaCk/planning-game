@@ -6,7 +6,7 @@ let
   elmPackages = pkgs.elmPackages;
 in
   pkgs.haskellPackages.mkDerivation {
-        pname = "agile-pocker";
+        pname = "agile-poker";
         version = "1.0.0";
         src = ./.;
         isLibrary = false;

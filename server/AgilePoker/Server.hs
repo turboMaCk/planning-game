@@ -5,7 +5,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE TypeFamilies          #-}
 
-module AgilePocker.Server (main, genContext) where
+module AgilePoker.Server (main, genContext) where
 
 import Servant
 import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
@@ -31,9 +31,9 @@ import qualified Control.Concurrent as Concurrent
 -- Modules
 
 
-import AgilePocker.Session
-import AgilePocker.Event
-import AgilePocker.UserInfo
+import AgilePoker.Session
+import AgilePoker.Event
+import AgilePoker.UserInfo
 
 
 -- State

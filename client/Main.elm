@@ -97,7 +97,7 @@ view model =
     { title =
         case model.view of
             SetName ->
-                "Join | Agile Pocker"
+                "Join | Agile Poker"
     , body =
         case model.view of
             SetName ->

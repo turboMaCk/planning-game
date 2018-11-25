@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module AgilePocker.Event
+module AgilePoker.Event
   ( Event
   , encodeEvent
   , userJoined
@@ -14,7 +14,7 @@ import Data.Aeson.Types (ToJSON(..), (.=))
 import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as AT
 
-import AgilePocker.Session
+import AgilePoker.Session
 
 data Event
     = UserJoined Session
