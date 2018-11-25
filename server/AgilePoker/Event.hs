@@ -6,11 +6,11 @@ module AgilePoker.Event
   , userLeft
   ) where
 
-import Data.Maybe (isJust)
 import Data.ByteString (ByteString)
+import Data.Aeson.Types (ToJSON(..), (.=))
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Text as T
-import Data.Aeson.Types (ToJSON(..), (.=))
+import qualified Data.IntMap as IntMap
 import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as AT
 
@@ -22,11 +22,11 @@ data Event
 
 
 instance ToJSON Event where
-  toJSON (UserJoined (Session { sessionName=name, sessionConnection=conn })) =
+  toJSON (UserJoined (Session { sessionName=name, sessionConnections=conns })) =
     AT.object
         [ "event" .= T.pack "UserJoined"
         , "name" .= name
-        , "connected" .= isJust conn
+        , "connected" .= not (IntMap.null conns)
         ]
   toJSON (UserLeft name) =
     AT.object

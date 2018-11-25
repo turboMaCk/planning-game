@@ -3,50 +3,54 @@
 module AgilePoker.Session
   ( Session(..), SessionId, Sessions
   , emptySessions, addSession, getSession, removeSession
-  , assignConnection
+  , assignConnection, disconnectSession
   ) where
 
 import Data.ByteString (ByteString)
 import Data.Text.Encoding (encodeUtf8)
-
 import Control.Monad (liftM)
 import System.Random (randomRs, newStdGen)
+import Data.IntMap.Strict (IntMap)
+import Data.Map.Strict (Map)
+import qualified Data.Map as Map
+import qualified Data.IntMap as IntMap
 import qualified Data.Text as T
-import qualified Data.Map.Strict as Map
 import qualified Network.WebSockets as WS
 
 
 data Session = Session
   { sessionId :: ByteString
   , sessionName :: T.Text
-  , sessionConnection :: Maybe WS.Connection
+  , sessionConnections :: IntMap WS.Connection
   }
 
 
 -- @TODO: Just alias for now
-
-
 type SessionId = ByteString
 
 
 type Sessions =
-  Map.Map ByteString Session
+  Map ByteString Session
 
 
 addSession :: T.Text -> Sessions -> IO ( Sessions, SessionId )
 addSession name sessions = do
   newId <- generateId sessions
-  pure $ ( Map.insert newId (Session newId name Nothing) sessions
+  pure $ ( Map.insert newId (Session newId name IntMap.empty) sessions
          , newId
          )
 
 
--- @TODO: silent remove failing
-assignConnection :: SessionId -> WS.Connection -> Sessions -> Sessions
-assignConnection id' conn sessions = Map.alter (fmap update) id' sessions
-  where
-    update session =
-      session { sessionConnection = Just conn }
+assignConnection :: SessionId -> WS.Connection -> Sessions -> ( Sessions, Maybe Int )
+assignConnection id' conn sessions =
+  case Map.lookup id' sessions of
+    Just (session@(Session { sessionConnections=conns })) ->
+      let index = IntMap.size conns in
+      ( Map.insert id' (session { sessionConnections = IntMap.insert index conn conns }) sessions
+      , Just index
+      )
+    Nothing ->
+      ( sessions, Nothing )
 
 
 getSession :: ByteString -> Sessions -> Maybe Session
@@ -59,6 +63,14 @@ emptySessions = Map.empty
 
 removeSession :: SessionId -> Sessions -> Sessions
 removeSession = Map.delete
+
+
+disconnectSession :: ( SessionId, Int ) -> Sessions -> Sessions
+disconnectSession ( sessionId, index ) = Map.alter (fmap update) sessionId
+  where
+    update :: Session -> Session
+    update session@(Session { sessionConnections=conns }) =
+      session { sessionConnections = IntMap.delete index conns }
 
 
 -- @TODO: Those are rather abstract and should in different module

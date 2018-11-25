@@ -53,7 +53,7 @@ lookupSession state' sessionId = do
       pure session
 
     Nothing ->
-      throwError $ err403 { errBody = "Invalid SessionID" }
+      throwError $ err403 { errBody = "Invalid SessionId" }
 
 
 -- | This function takes extract session id from header value
@@ -113,7 +113,7 @@ type instance AuthServerData (AuthProtect "cookie") = Session
 
 type Api = "status" :> Get '[JSON] T.Text
       :<|> "join"   :> ReqBody '[JSON] UserInfo :> Post '[JSON] T.Text
-      :<|> "stream" :> AuthProtect "cookie" :> WebSocket
+      :<|> "stream" :> AuthProtect "cookie"     :> WebSocket
 
 
 api :: Proxy Api
@@ -147,8 +147,8 @@ server state' = status
 
 broadcast :: ServerState -> Event -> IO ()
 broadcast state' event = do
-    forM_ state' $ \(Session { sessionConnection=conn }) ->
-       maybe (pure ()) (flip WS.sendTextData $ encodeEvent event) conn
+    forM_ state' $ \(Session { sessionConnections=conns }) ->
+      forM_ conns $ flip WS.sendTextData $ encodeEvent event
 
 
 handleSocketEvent :: MVar ServerState -> WS.Connection -> IO ()
@@ -168,24 +168,30 @@ handleSocket state' session conn = do
   forM_ state $ WS.sendTextData conn . encodeEvent . userJoined
 
   -- assing connection
-  Concurrent.modifyMVar_ state' $ pure . assignConnection sessionId' conn
+  mConnectionId <- Concurrent.modifyMVar state' $ pure . assignConnection sessionId' conn
 
-  -- Disconnect user at the end of session
-  flip finally (disconnect sessionId' session) $ do
+  case mConnectionId of
+    Just connectionId ->
+        -- Disconnect user at the end of session
+        flip finally (disconnect ( sessionId', connectionId ) session) $ do
+            -- ping thread
+            WS.forkPingThread conn 30
 
-    -- ping thread
-    WS.forkPingThread conn 30
+            -- broadcast join event
+            broadcast state $ userJoined session
 
-    -- broadcast join event
-    broadcast state $ userJoined session
+            -- assign handler
+            handleSocketEvent state' conn
 
-    -- assign handler
-    handleSocketEvent state' conn
+    Nothing ->
+      -- @TODO: Add error handling
+      -- but this is very unlikely situation
+      pure ()
 
   where
-    disconnect :: SessionId -> Session -> IO ()
+    disconnect :: ( SessionId, Int ) -> Session -> IO ()
     disconnect id' session = do
-      Concurrent.modifyMVar_ state' $ pure . removeSession id'
+      Concurrent.modifyMVar_ state' $ pure . disconnectSession id'
       state <- Concurrent.readMVar state'
       broadcast state $ userLeft session
 
