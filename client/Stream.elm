@@ -1,4 +1,4 @@
-port module Stream exposing (Event(..), connect, disconnect, observe)
+port module Stream exposing (Event(..), StreamError(..), connect, disconnect, observe)
 
 import Data exposing (User)
 import Json.Decode as Decode exposing (Decoder)
@@ -7,15 +7,23 @@ import Json.Decode as Decode exposing (Decoder)
 port observe_ : (String -> msg) -> Sub msg
 
 
+port streamError : (() -> msg) -> Sub msg
+
+
 port connect : String -> Cmd msg
 
 
 port disconnect : () -> Cmd msg
 
 
+type StreamError
+    = SocketError
+    | DecodingError Decode.Error
+
+
 type Event
     = UserJoin User
-    | UserLeft String
+    | UserStatusUpdate User
 
 
 eventField : String -> (a -> Event) -> Decoder a -> Decoder Event
@@ -40,10 +48,19 @@ eventDecoder : Decoder Event
 eventDecoder =
     Decode.oneOf
         [ eventField "UserJoined" UserJoin Data.userDecoder
-        , eventField "UserLeft" UserLeft Decode.string
+        , eventField "UserStatusUpdate" UserStatusUpdate Data.userDecoder
         ]
 
 
-observe : (Result Decode.Error Event -> msg) -> Sub msg
+observe : (Result StreamError Event -> msg) -> Sub msg
 observe msg =
-    observe_ <| msg << Decode.decodeString eventDecoder
+    Sub.batch
+        [ observe_ <|
+            msg
+                << Result.mapError DecodingError
+                << Decode.decodeString eventDecoder
+        , streamError <|
+            msg
+                << Err
+                << always SocketError
+        ]

@@ -48,6 +48,10 @@
         document.cookie = "authorization=" + token;
         var ws = new WebSocket("ws://localhost:3000/stream");
 
+        ws.onerror = function () {
+            app.ports.streamError.send(null);
+        };
+
         ws.onmessage = function (evt) {
             var msg = evt.data;
             app.ports.observe_.send(msg);
@@ -60,6 +64,7 @@
     });
 
     app.ports.disconnect.subscribe(function() {
+        console.log('erase');
         cookie.erase('sessionId');
     });
 })();

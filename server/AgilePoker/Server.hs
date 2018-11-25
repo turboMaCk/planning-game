@@ -193,7 +193,7 @@ handleSocket state' session conn = do
     disconnect id' session = do
       Concurrent.modifyMVar_ state' $ pure . disconnectSession id'
       state <- Concurrent.readMVar state'
-      broadcast state $ userLeft session
+      broadcast state $ userStatusUpdate session
 
 
 indexMiddleware :: Middleware

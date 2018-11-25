@@ -6,10 +6,13 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
 import Http
-import Json.Decode as Decode
-import Stream exposing (Event(..))
+import Stream exposing (Event(..), StreamError(..))
 import Task
 import Url exposing (Url)
+
+
+
+-- Model
 
 
 type alias GameModel =
@@ -54,12 +57,16 @@ init { sessionId } _ _ =
     )
 
 
+
+-- Update
+
+
 type Msg
     = NoOp
     | UpdateName String
     | SubmitName
     | SessionCreated (Result Http.Error String)
-    | StreamEvent (Result Decode.Error Event)
+    | StreamEvent (Result StreamError Event)
     | ClearSession
 
 
@@ -99,24 +106,41 @@ update msg model =
 
         StreamEvent result ->
             case result of
-                Ok (UserJoin newUser) ->
-                    case model.view of
-                        Game { players } ->
-                            ( { model
-                                | view = Game { players = newUser :: players }
-                              }
-                            , Cmd.none
-                            )
+                Ok event ->
+                    case event of
+                        UserJoin newUser ->
+                            case model.view of
+                                Game { players } ->
+                                    ( { model
+                                        | view = Game { players = newUser :: players }
+                                      }
+                                    , Cmd.none
+                                    )
 
-                        _ ->
+                                _ ->
+                                    ( model, Cmd.none )
+
+                        UserStatusUpdate updateUser ->
                             ( model, Cmd.none )
 
-                _ ->
-                    let
-                        _ =
-                            Debug.log "err" result
-                    in
-                    ( model, Cmd.none )
+                Err err ->
+                    ( model
+                    , case err of
+                        SocketError ->
+                            -- @TODO: replace with cmd-extra?
+                            Task.perform identity <| Task.succeed ClearSession
+
+                        DecodingError dErr ->
+                            let
+                                _ =
+                                    Debug.log "err" dErr
+                            in
+                            Cmd.none
+                    )
+
+
+
+-- Subscriptions
 
 
 subscriptions : Model -> Sub Msg

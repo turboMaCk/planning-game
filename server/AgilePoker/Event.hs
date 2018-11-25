@@ -3,7 +3,7 @@ module AgilePoker.Event
   ( Event
   , encodeEvent
   , userJoined
-  , userLeft
+  , userStatusUpdate
   ) where
 
 import Data.ByteString (ByteString)
@@ -18,7 +18,7 @@ import AgilePoker.Session
 
 data Event
     = UserJoined Session
-    | UserLeft T.Text
+    | UserStatusUpdate Session
 
 
 instance ToJSON Event where
@@ -28,10 +28,11 @@ instance ToJSON Event where
         , "name" .= name
         , "connected" .= not (IntMap.null conns)
         ]
-  toJSON (UserLeft name) =
+  toJSON (UserStatusUpdate (Session { sessionName=name, sessionConnections=conns })) =
     AT.object
-        [ "event" .= T.pack "UserLeft"
+        [ "event" .= T.pack "UserStatusUpdate"
         , "name" .= name
+        , "connected" .= not (IntMap.null conns)
         ]
 
 
@@ -39,9 +40,8 @@ userJoined :: Session -> Event
 userJoined = UserJoined
 
 
-userLeft :: Session -> Event
-userLeft Session { sessionName=name } =
-  UserLeft name
+userStatusUpdate :: Session -> Event
+userStatusUpdate = UserStatusUpdate
 
 
 encodeEvent :: Event -> ByteString
