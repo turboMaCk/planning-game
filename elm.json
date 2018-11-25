@@ -1,7 +1,7 @@
 {
     "type": "application",
     "source-directories": [
-        "front-end"
+        "client"
     ],
     "elm-version": "0.19.0",
     "dependencies": {

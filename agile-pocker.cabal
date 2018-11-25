@@ -21,6 +21,7 @@ executable agile-pocker
                      , AgilePocker.Server
                      , AgilePocker.Event
                      , AgilePocker.UserInfo
+  hs-source-dirs:      server
   -- other-extensions:
   build-depends:       base >=4.11 && <4.12
                      , servant
