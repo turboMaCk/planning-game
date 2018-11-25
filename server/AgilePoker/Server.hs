@@ -11,6 +11,7 @@ import Servant
 import Data.Maybe (maybe)
 import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
 import Network.HTTP.Types (status200)
+import Data.ByteString (ByteString)
 import Data.Maybe (maybe)
 import Control.Monad (forM_, forever)
 import Control.Concurrent (MVar)
@@ -35,6 +36,7 @@ import qualified Control.Concurrent as Concurrent
 import AgilePoker.Session
 import AgilePoker.Event
 import AgilePoker.UserInfo
+import AgilePoker.Table
 
 
 -- State
@@ -59,7 +61,7 @@ lookupSession state' sessionId = do
 
 -- | This function takes extract session id from header value
 -- Correct format is `Bearer xxxx` where xxxx is a SessionID itself
-parseSessionId :: BS.ByteString -> Maybe SessionId
+parseSessionId :: ByteString -> Maybe SessionId
 parseSessionId headerVal = BS.stripPrefix "Bearer " headerVal
 
 
@@ -112,9 +114,13 @@ type instance AuthServerData (AuthProtect "cookie") = Session
 -- API
 
 
-type Api = "status" :> Get '[JSON] T.Text
-      :<|> "join"   :> ReqBody '[JSON] UserInfo :> Post '[JSON] T.Text
-      :<|> "stream" :> AuthProtect "cookie"     :> WebSocket
+type Api = "status"                                :> Get  '[JSON] T.Text
+      :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] Session
+      :<|> "join"    :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text
+      :<|> "stream"  :> AuthProtect "cookie"       :> WebSocket
+      :<|> "table"   :> Capture "tableid" TableId  :> "join"
+                     :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text
+      :<|> "table"   :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text
 
 
 api :: Proxy Api
@@ -130,12 +136,18 @@ genContext state = authCookieHandler state :. authHeaderHandler state :. EmptyCo
 
 server :: MVar ServerState -> Server Api
 server state' = status
+           :<|> getSession
            :<|> join
            :<|> stream
+           :<|> joinRoom
+           :<|> createRoom
 
   where
     status :: Handler T.Text
     status = pure "OK"
+
+    getSession :: Session -> Handler Session
+    getSession = pure
 
     join :: UserInfo -> Handler T.Text
     join UserInfo { userName=name } = do
@@ -155,6 +167,14 @@ server state' = status
 
     stream :: MonadIO m => Session -> WS.Connection -> m ()
     stream session = liftIO . handleSocket state' session
+
+    -- @TODO: implement
+    joinRoom :: TableId -> UserInfo -> Handler T.Text
+    joinRoom id' UserInfo { userName=name } = pure "hi!"
+
+    createRoom :: UserInfo -> Handler T.Text
+    createRoom UserInfo { userName=name } =
+      pure "hi"
 
 
 broadcast :: ServerState -> Event -> IO ()

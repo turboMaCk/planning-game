@@ -18,9 +18,12 @@ cabal-version:       >=1.10
 executable agile-poker
   main-is:             AgilePoker.hs
   other-modules:       AgilePoker.Session
+                     , AgilePoker.Player
+                     , AgilePoker.Id
                      , AgilePoker.Server
                      , AgilePoker.Event
                      , AgilePoker.UserInfo
+                     , AgilePoker.Table
   hs-source-dirs:      server
   -- other-extensions:
   build-depends:       base >=4.11 && <4.12

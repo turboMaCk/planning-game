@@ -44,9 +44,12 @@ init { sessionId } _ _ =
             case sessionId of
                 Just sId ->
                     ( Game { players = [] }
-                    , Ok sId
-                        |> Result.map Stream.connect
-                        |> Result.withDefault Cmd.none
+                    , Cmd.batch
+                        [ Ok sId
+                            |> Result.map Stream.connect
+                            |> Result.withDefault Cmd.none
+                        , Data.getCurrentUser sId CurrentUserFetched
+                        ]
                     )
 
                 Nothing ->
@@ -67,11 +70,12 @@ type Msg
     | SubmitName
     | SessionCreated (Result Http.Error String)
     | StreamEvent (Result StreamError Event)
+    | CurrentUserFetched (Result Http.Error User)
     | ClearSession
 
 
 updateUser : User -> List User -> List User
-updateUser user xs =
+updateUser user =
     List.map
         (\u ->
             if u.name == user.name then
@@ -80,7 +84,6 @@ updateUser user xs =
             else
                 u
         )
-        xs
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -115,6 +118,12 @@ update msg model =
                 , view = SetName
               }
             , Stream.disconnect ()
+            )
+
+        CurrentUserFetched res ->
+            ( Result.map (\{ name } -> { model | userName = name }) res
+                |> Result.withDefault model
+            , Cmd.none
             )
 
         StreamEvent result ->
@@ -192,12 +201,14 @@ viewUser { name, isConnected } =
         ]
 
 
-gameView : GameModel -> List (Html Msg)
-gameView { players } =
+gameView : String -> GameModel -> List (Html Msg)
+gameView userName { players } =
     [ Html.aside []
         [ Html.ul [] <|
             List.map viewUser players
         ]
+    , Html.aside []
+        [ Html.text userName ]
     ]
 
 
@@ -231,7 +242,7 @@ view model =
                 setNameView model.userName
 
             Game m ->
-                gameView m
+                gameView model.userName m
     }
 
 

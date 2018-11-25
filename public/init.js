@@ -18,6 +18,7 @@
                 }
             }
         },
+
         write: function (name, value, days) {
             var expires;
 
@@ -31,6 +32,7 @@
 
             document.cookie = name + "=" + value + expires + "; path=/";
         },
+
         erase: function (name) {
             this.write(name, '', -1);
         }

@@ -17,5 +17,6 @@ let
     );
 in
   pkgs.mkShell {
-    buildInputs = with pkgs; [ ghc haskellPackages.ghcid libiconv elmPackages.elm ];
+    buildInputs = with pkgs; [ ghc haskellPackages.ghcid
+                               libiconv elmPackages.elm ];
   }

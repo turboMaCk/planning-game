@@ -7,15 +7,17 @@ module AgilePoker.Session
   ) where
 
 import Data.ByteString (ByteString)
-import Data.Text.Encoding (encodeUtf8)
-import Control.Monad (liftM)
-import System.Random (randomRs, newStdGen)
 import Data.IntMap.Strict (IntMap)
 import Data.Map.Strict (Map)
+import Data.Aeson.Types (ToJSON(..), (.=))
 import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as T
 import qualified Network.WebSockets as WS
+import qualified Data.Aeson.Types as AT
+
+
+import AgilePoker.Id
 
 
 data Session = Session
@@ -25,13 +27,20 @@ data Session = Session
   }
 
 
+instance ToJSON Session where
+  toJSON (Session { sessionName=name, sessionConnections=conns }) =
+    AT.object
+        [ "name" .= name
+        , "connected" .= not (IntMap.null conns)
+        ]
+
+
 -- @TODO: Just alias for now
 type SessionId = ByteString
 
 
 type Sessions =
   Map ByteString Session
-
 
 
 nameTaken :: T.Text -> Sessions -> Bool
@@ -83,20 +92,3 @@ disconnectSession ( sessionId, index ) = Map.alter (fmap update) sessionId
     update :: Session -> Session
     update session@(Session { sessionConnections=conns }) =
       session { sessionConnections = IntMap.delete index conns }
-
-
--- @TODO: Those are rather abstract and should in different module
-
-
-randString :: IO String
-randString =
-    liftM (take 32 . randomRs ('a','z')) newStdGen
-
-
-generateId :: Map.Map ByteString a -> IO ByteString
-generateId m = do
-  newId <- encodeUtf8 . T.pack <$> randString
-  if Map.member newId m then
-    generateId m
-  else
-    pure newId

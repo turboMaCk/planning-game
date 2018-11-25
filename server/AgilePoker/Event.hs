@@ -16,23 +16,22 @@ import qualified Data.Aeson.Types as AT
 
 import AgilePoker.Session
 
+
 data Event
     = UserJoined Session
     | UserStatusUpdate Session
 
 
 instance ToJSON Event where
-  toJSON (UserJoined (Session { sessionName=name, sessionConnections=conns })) =
+  toJSON (UserJoined session) =
     AT.object
         [ "event" .= T.pack "UserJoined"
-        , "name" .= name
-        , "connected" .= not (IntMap.null conns)
+        , "user" .= toJSON session
         ]
-  toJSON (UserStatusUpdate (Session { sessionName=name, sessionConnections=conns })) =
+  toJSON (UserStatusUpdate session) =
     AT.object
         [ "event" .= T.pack "UserStatusUpdate"
-        , "name" .= name
-        , "connected" .= not (IntMap.null conns)
+        , "user" .= toJSON session
         ]
 
 

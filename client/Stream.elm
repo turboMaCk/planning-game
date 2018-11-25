@@ -63,8 +63,8 @@ eventField value toEvent decoder =
 eventDecoder : Decoder Event
 eventDecoder =
     Decode.oneOf
-        [ eventField "UserJoined" UserJoin Data.userDecoder
-        , eventField "UserStatusUpdate" UserStatusUpdate Data.userDecoder
+        [ eventField "UserJoined" UserJoin (Decode.field "user" Data.userDecoder)
+        , eventField "UserStatusUpdate" UserStatusUpdate (Decode.field "user" Data.userDecoder)
         ]
 
 
