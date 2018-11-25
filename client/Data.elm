@@ -8,7 +8,7 @@ import Json.Encode as Encode
 
 type alias User =
     { name : String
-    , isOnline : Bool
+    , isConnected : Bool
     }
 
 
@@ -16,7 +16,7 @@ userDecoder : Decoder User
 userDecoder =
     Decode.succeed User
         |> Decode.andMap (Decode.field "name" Decode.string)
-        |> Decode.andMap (Decode.field "isOnline" Decode.bool)
+        |> Decode.andMap (Decode.field "connected" Decode.bool)
 
 
 setName : (Result Http.Error String -> msg) -> String -> Cmd msg

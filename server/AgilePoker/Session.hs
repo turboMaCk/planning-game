@@ -33,6 +33,7 @@ type Sessions =
   Map ByteString Session
 
 
+-- @TODO: Add name uniqueness?
 addSession :: T.Text -> Sessions -> IO ( Sessions, SessionId )
 addSession name sessions = do
   newId <- generateId sessions

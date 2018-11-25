@@ -1,17 +1,24 @@
 module Main exposing (main)
 
 import Browser exposing (Document)
-import Data
+import Data exposing (User)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
 import Http
+import Json.Decode as Decode
 import Stream exposing (Event(..))
 import Url exposing (Url)
 
 
+type alias GameModel =
+    { players : List User
+    }
+
+
 type View
     = SetName
+    | Game GameModel
 
 
 type alias Model =
@@ -38,6 +45,7 @@ type Msg
     | UpdateName String
     | SubmitName
     | SessionCreated (Result Http.Error String)
+    | StreamEvent (Result Decode.Error Event)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -57,17 +65,41 @@ update msg model =
             )
 
         SessionCreated res ->
-            ( { model | sessionId = Result.map Just res }
+            ( { model
+                | sessionId = Result.map Just res
+                , view = Game <| GameModel []
+              }
             , Result.map Stream.connect res
                 |> Result.withDefault Cmd.none
             )
+
+        StreamEvent result ->
+            case result of
+                Ok (UserJoin newUser) ->
+                    case model.view of
+                        Game { players } ->
+                            ( { model
+                                | view = Game { players = newUser :: players }
+                              }
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    let
+                        _ =
+                            Debug.log "err" result
+                    in
+                    ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.sessionId of
         Ok (Just _) ->
-            Stream.observe (always NoOp)
+            Stream.observe StreamEvent
 
         _ ->
             Sub.none
@@ -75,6 +107,30 @@ subscriptions model =
 
 
 -- View
+
+
+viewUser : User -> Html msg
+viewUser { name, isConnected } =
+    Html.li []
+        [ Html.span []
+            [ if isConnected then
+                Html.text "o"
+
+              else
+                Html.text "x"
+            ]
+        , Html.text " "
+        , Html.text name
+        ]
+
+
+gameView : GameModel -> List (Html Msg)
+gameView { players } =
+    [ Html.aside []
+        [ Html.ul [] <|
+            List.map viewUser players
+        ]
+    ]
 
 
 setNameView : String -> List (Html Msg)
@@ -98,10 +154,16 @@ view model =
         case model.view of
             SetName ->
                 "Join | Agile Poker"
+
+            Game _ ->
+                "Game | Agile Poker"
     , body =
         case model.view of
             SetName ->
                 setNameView model.userName
+
+            Game m ->
+                gameView m
     }
 
 
