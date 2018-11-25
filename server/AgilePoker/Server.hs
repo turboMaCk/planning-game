@@ -139,13 +139,19 @@ server state' = status
 
     join :: UserInfo -> Handler T.Text
     join UserInfo { userName=name } = do
-      ( id', session ) <- liftIO $ Concurrent.modifyMVar state' $ addSession name
-      state <- liftIO $ Concurrent.readMVar state'
+      mSession <- liftIO $ Concurrent.modifyMVar state' $ addSession name
 
-      -- broadcast join event
-      liftIO $ broadcast state $ userJoined session
+      case mSession of
+        Just ( id', session ) -> do
+            state <- liftIO $ Concurrent.readMVar state'
 
-      pure $ TE.decodeUtf8 id'
+            -- broadcast join event
+            liftIO $ broadcast state $ userJoined session
+
+            pure $ TE.decodeUtf8 id'
+
+        Nothing ->
+            throwError $ err409 { errBody = "Name already taken" }
 
     stream :: MonadIO m => Session -> WS.Connection -> m ()
     stream session = liftIO . handleSocket state' session

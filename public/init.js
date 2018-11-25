@@ -43,13 +43,13 @@
     });
 
     app.ports.connect.subscribe(function (token) {
-        cookie.write("sessionId", token);
+        cookie.write('sessionId', token);
 
-        document.cookie = "authorization=" + token;
-        var ws = new WebSocket("ws://localhost:3000/stream");
+        document.cookie = 'authorization=' + token;
+        var ws = new WebSocket('ws://localhost:3000/stream');
 
         ws.onerror = function () {
-            app.ports.streamError.send(null);
+            app.ports.streamError.send('can_not_connect');
         };
 
         ws.onmessage = function (evt) {
@@ -58,8 +58,7 @@
         };
 
         ws.onclose = function() {
-            // websocket is closed.
-            alert("Connection is closed...");
+            app.ports.streamError.send('connection_closed');
         };
     });
 

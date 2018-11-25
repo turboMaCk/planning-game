@@ -7,7 +7,7 @@ import Json.Decode as Decode exposing (Decoder)
 port observe_ : (String -> msg) -> Sub msg
 
 
-port streamError : (() -> msg) -> Sub msg
+port streamError : (String -> msg) -> Sub msg
 
 
 port connect : String -> Cmd msg
@@ -17,8 +17,24 @@ port disconnect : () -> Cmd msg
 
 
 type StreamError
-    = SocketError
+    = CantConnect
+    | Disconnected
     | DecodingError Decode.Error
+
+
+streamErrorDecoder : String -> Maybe StreamError
+streamErrorDecoder str =
+    let
+        result (val, c) acc =
+            if val == str then
+                Just c
+            else
+                acc
+    in
+    [ ( "can_not_connect", CantConnect )
+    , ( "connection_closed", Disconnected )
+    ]
+    |> List.foldl result Nothing
 
 
 type Event
@@ -62,5 +78,6 @@ observe msg =
         , streamError <|
             msg
                 << Err
-                << always SocketError
+                << Maybe.withDefault Disconnected
+                << streamErrorDecoder
         ]

@@ -140,9 +140,12 @@ update msg model =
                         Err err ->
                             ( model
                             , case err of
-                                SocketError ->
+                                CantConnect ->
                                     -- @TODO: replace with cmd-extra?
                                     Task.perform identity <| Task.succeed ClearSession
+
+                                Disconnected ->
+                                    Cmd.none
 
                                 DecodingError dErr ->
                                     let
