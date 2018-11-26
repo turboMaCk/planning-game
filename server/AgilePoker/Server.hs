@@ -8,16 +8,14 @@ module AgilePoker.Server (main, genContext) where
 
 import Servant
 import Data.Maybe (maybe)
-import Network.HTTP.Types (status200)
 import Data.ByteString (ByteString)
 import Data.Maybe (maybe)
 import Control.Monad (forM_, forever)
 import Control.Concurrent (MVar)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Network.Wai (Response, Middleware, responseFile, rawPathInfo)
+import Network.Wai (Response)
 import Servant.API.WebSocket (WebSocket)
 import Control.Exception (finally)
-import Network.Wai.Middleware.Static (Policy, staticPolicy, addBase)
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -25,11 +23,8 @@ import qualified Data.Text.Encoding as TE
 import qualified Network.WebSockets as WS
 import qualified Control.Concurrent as Concurrent
 
-
--- Modules
-
-
 import AgilePoker.Server.Authorization
+import AgilePoker.Server.Static
 import AgilePoker.Session
 import AgilePoker.Event
 import AgilePoker.UserInfo
@@ -176,31 +171,11 @@ handleSocket state' session conn = do
       maybe (pure ()) (broadcast state . userStatusUpdate) session
 
 
-indexMiddleware :: Middleware
-indexMiddleware application request respond =
-    if rawPathInfo request == "/"
-    then respond indexRes
-    else application request respond
-
-  where
-    indexRes :: Response
-    indexRes = responseFile status200 headers fileName Nothing
-        where
-            fileName = "public/index.html"
-            headers = [ ( "Content-Type", "text/html" )
-                      , ( "Cache-Control", "public, max-age=86400" )
-                      ]
-
 
 app :: ServerState -> Application
-app state =
-  staticPolicy static
-    $ indexMiddleware
-    $ serveWithContext api (genContext $ sessions state) $ server state
-
-  where
-    static :: Policy
-    static = addBase "public"
+app state = staticMiddleware $
+    serveWithContext api (genContext $ sessions state) $
+    server state
 
 
 main :: IO ()
