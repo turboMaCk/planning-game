@@ -1,4 +1,7 @@
-module AgilePoker.Table where
+module AgilePoker.Table
+  (Table(..), Tables, TableId
+  , emptyTables
+  ) where
 
 import Data.ByteString (ByteString)
 import qualified Data.Map.Strict as Map
@@ -23,8 +26,8 @@ type TableId = ByteString
 type Tables = Map.Map ByteString Table
 
 
-emptyTable :: Tables
-emptyTable = Map.empty
+emptyTables :: Tables
+emptyTables = Map.empty
 
 
 createTable :: Session -> T.Text -> Tables -> IO Tables

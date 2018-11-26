@@ -10,8 +10,10 @@ import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 
+
 instance FromHttpApiData ByteString where
   parseUrlPiece bs = Right $ TE.encodeUtf8 bs
+
 
 randString :: IO String
 randString =

@@ -42,13 +42,22 @@ import AgilePoker.Table
 -- State
 
 
-type ServerState = Sessions
+data ServerState = ServerState
+  { sessions :: MVar Sessions
+  , tables :: MVar Tables
+  }
+
+
+initialSessions :: IO ServerState
+initialSessions = ServerState
+  <$> Concurrent.newMVar emptySessions
+  <*> Concurrent.newMVar emptyTables
 
 
 -- Authorization
 
 
-lookupSession :: MVar ServerState -> SessionId -> Handler Session
+lookupSession :: MVar Sessions -> SessionId -> Handler Session
 lookupSession state' sessionId = do
   state <- liftIO $ Concurrent.readMVar state'
   case getSession sessionId state of
@@ -65,7 +74,7 @@ parseSessionId :: ByteString -> Maybe SessionId
 parseSessionId headerVal = BS.stripPrefix "Bearer " headerVal
 
 
-authHeaderHandler :: MVar ServerState -> AuthHandler Request Session
+authHeaderHandler :: MVar Sessions -> AuthHandler Request Session
 authHeaderHandler state = mkAuthHandler handler
   where
     maybeToEither e =
@@ -88,7 +97,7 @@ authHeaderHandler state = mkAuthHandler handler
 type instance AuthServerData (AuthProtect "header") = Session
 
 
-authCookieHandler :: MVar ServerState -> AuthHandler Request Session
+authCookieHandler :: MVar Sessions -> AuthHandler Request Session
 authCookieHandler state = mkAuthHandler handler
   where
   maybeToEither e =
@@ -130,12 +139,12 @@ api = Proxy
 -- Server
 
 
-genContext :: MVar ServerState -> Context (AuthHandler Request Session : AuthHandler Request Session ': '[])
+genContext :: MVar Sessions -> Context (AuthHandler Request Session : AuthHandler Request Session ': '[])
 genContext state = authCookieHandler state :. authHeaderHandler state :. EmptyContext
 
 
-server :: MVar ServerState -> Server Api
-server state' = status
+server :: ServerState -> Server Api
+server state = status
            :<|> getSession
            :<|> join
            :<|> stream
@@ -151,14 +160,14 @@ server state' = status
 
     join :: UserInfo -> Handler T.Text
     join UserInfo { userName=name } = do
-      mSession <- liftIO $ Concurrent.modifyMVar state' $ addSession name
+      mSession <- liftIO $ Concurrent.modifyMVar (sessions state) $ addSession name
 
       case mSession of
         Just ( id', session ) -> do
-            state <- liftIO $ Concurrent.readMVar state'
+            s <- liftIO $ Concurrent.readMVar (sessions state)
 
             -- broadcast join event
-            liftIO $ broadcast state $ userJoined session
+            liftIO $ broadcast s $ userJoined session
 
             pure $ TE.decodeUtf8 id'
 
@@ -166,7 +175,7 @@ server state' = status
             throwError $ err409 { errBody = "Name already taken" }
 
     stream :: MonadIO m => Session -> WS.Connection -> m ()
-    stream session = liftIO . handleSocket state' session
+    stream session = liftIO . handleSocket (sessions state) session
 
     -- @TODO: implement
     joinRoom :: TableId -> UserInfo -> Handler T.Text
@@ -177,13 +186,13 @@ server state' = status
       pure "hi"
 
 
-broadcast :: ServerState -> Event -> IO ()
+broadcast :: Sessions -> Event -> IO ()
 broadcast state' event = do
     forM_ state' $ \(Session { sessionConnections=conns }) ->
       forM_ conns $ flip WS.sendTextData $ encodeEvent event
 
 
-handleSocketEvent :: MVar ServerState -> WS.Connection -> IO ()
+handleSocketEvent :: MVar Sessions -> WS.Connection -> IO ()
 handleSocketEvent state' conn = forever $ do
   msg :: BS.ByteString <- WS.receiveData conn
   -- state <- Concurrent.readMVar state'
@@ -191,7 +200,7 @@ handleSocketEvent state' conn = forever $ do
   pure ()
 
 
-handleSocket :: MVar ServerState -> Session -> WS.Connection -> IO ()
+handleSocket :: MVar Sessions -> Session -> WS.Connection -> IO ()
 handleSocket state' session conn = do
   let sessionId' = sessionId session
 
@@ -251,11 +260,11 @@ indexMiddleware application request respond =
                       ]
 
 
-app :: MVar ServerState -> Application
+app :: ServerState -> Application
 app state =
   staticPolicy static
     $ indexMiddleware
-    $ serveWithContext api (genContext state) $ server state
+    $ serveWithContext api (genContext $ sessions state) $ server state
 
   where
     static :: Policy
@@ -264,5 +273,5 @@ app state =
 
 main :: IO ()
 main = do
-  state <- Concurrent.newMVar emptySessions
+  state <- initialSessions
   Warp.run 3000 $ app state
