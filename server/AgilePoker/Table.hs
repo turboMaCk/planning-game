@@ -9,6 +9,7 @@ import Data.ByteString (ByteString)
 import Data.Aeson.Types (ToJSON(..), (.=), object)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 
 import AgilePoker.Id
 import AgilePoker.Session
@@ -16,6 +17,7 @@ import AgilePoker.Player
 
 
 -- @TODO: Just alias for now
+
 type TableId = ByteString
 
 
@@ -29,9 +31,9 @@ data Table = Table
 instance ToJSON Table where
   toJSON table =
     object
-        [ "id" .= tableId table
-        , "banker" .= toJSON (tableBanker table)
-        , "players" .= toJSON (tablePlayers table)
+        [ "id" .= toJSON (TE.decodeUtf8 $ tableId table)
+        , "banker" .= toJSON (snd $ tableBanker table)
+        , "players" .= toJSON (fmap snd $ Map.toList $ tablePlayers table)
         ]
 
 
@@ -44,10 +46,10 @@ emptyTables = Map.empty
 
 createTable :: Session -> T.Text -> Tables -> IO ( Tables, Table )
 createTable Session { sessionId=id' } name tables = do
-  newId <- generateId tables
+  tId <- generateId tables
   let banker = createPlayer name
-  let newTable = Table ( id', banker ) emptyPlayers
-  pure $ ( Map.insert newId newTable tables
+  let newTable = Table tId ( id', banker ) emptyPlayers
+  pure $ ( Map.insert tId newTable tables
          , newTable
          )
 

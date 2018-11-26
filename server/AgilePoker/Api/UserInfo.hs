@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings     #-}
-module AgilePoker.UserInfo (UserInfo(..)) where
+module AgilePoker.Api.UserInfo (UserInfo(..)) where
 
 import Data.Aeson (FromJSON(..), (.:))
 import qualified Data.Text as T

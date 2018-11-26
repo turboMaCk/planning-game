@@ -24,7 +24,7 @@ executable agile-poker
                      , AgilePoker.Server.Authorization
                      , AgilePoker.Server.Static
                      , AgilePoker.Event
-                     , AgilePoker.UserInfo
+                     , AgilePoker.Api.UserInfo
                      , AgilePoker.Table
   hs-source-dirs:      server
   -- other-extensions:

@@ -23,12 +23,12 @@ import qualified Data.Text.Encoding as TE
 import qualified Network.WebSockets as WS
 import qualified Control.Concurrent as Concurrent
 
-import AgilePoker.Server.Authorization
 import AgilePoker.Server.Static
 import AgilePoker.Session
 import AgilePoker.Event
-import AgilePoker.UserInfo
 import AgilePoker.Table
+import AgilePoker.Server.Authorization
+import AgilePoker.Api.UserInfo
 
 
 -- State
