@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 
-module AgilePoker.Server (main, genContext) where
+module AgilePoker.Server (run) where
 
 import Servant
 import Data.Maybe (maybe)
@@ -53,9 +53,9 @@ type Api = "status"                                :> Get  '[JSON] T.Text
       :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] Session
       :<|> "join"    :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text
       :<|> "stream"  :> AuthProtect "cookie"       :> WebSocket
-      :<|> "table"   :> Capture "tableid" TableId  :> "join"
+      :<|> "tables"  :> Capture "tableid" TableId  :> "join"
                      :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text
-      :<|> "table"   :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text
+      :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
 
 
 api :: Proxy Api
@@ -75,8 +75,8 @@ server state = status
            :<|> getSession
            :<|> join
            :<|> stream
-           :<|> joinRoom
-           :<|> createRoom
+           :<|> joinTable
+           :<|> createTableHandler
 
   where
     status :: Handler T.Text
@@ -105,12 +105,14 @@ server state = status
     stream session = liftIO . handleSocket (sessions state) session
 
     -- @TODO: implement
-    joinRoom :: TableId -> UserInfo -> Handler T.Text
-    joinRoom id' UserInfo { userName=name } = pure "hi!"
+    joinTable :: TableId -> UserInfo -> Handler T.Text
+    joinTable id' UserInfo { userName=name } =
+      pure "x"
 
-    createRoom :: UserInfo -> Handler T.Text
-    createRoom UserInfo { userName=name } =
-      pure "hi"
+    createTableHandler :: Session -> UserInfo -> Handler Table
+    createTableHandler session UserInfo { userName=name } =
+      liftIO $ Concurrent.modifyMVar (tables state) $
+        createTable session name
 
 
 broadcast :: Sessions -> Event -> IO ()
@@ -178,7 +180,7 @@ app state = staticMiddleware $
     server state
 
 
-main :: IO ()
-main = do
+run :: Int -> IO ()
+run port = do
   state <- initialSessions
-  Warp.run 3000 $ app state
+  Warp.run port $ app state

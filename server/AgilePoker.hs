@@ -3,4 +3,4 @@ module Main where
 import qualified AgilePoker.Server as Server
 
 main :: IO ()
-main = Server.main
+main = Server.run 3000

@@ -1,9 +1,12 @@
+{-# LANGUAGE OverloadedStrings     #-}
+
 module AgilePoker.Table
   (Table(..), Tables, TableId
-  , emptyTables
+  , emptyTables, createTable
   ) where
 
 import Data.ByteString (ByteString)
+import Data.Aeson.Types (ToJSON(..), (.=), object)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 
@@ -12,15 +15,24 @@ import AgilePoker.Session
 import AgilePoker.Player
 
 
+-- @TODO: Just alias for now
+type TableId = ByteString
+
+
 -- @TODO: incomplete (missing games)
 data Table = Table
-  { tableBanker :: ( SessionId, Player )
+  { tableId :: TableId
+  , tableBanker :: ( SessionId, Player )
   , tablePlayers :: Players
   }
 
-
--- @TODO: Just alias for now
-type TableId = ByteString
+instance ToJSON Table where
+  toJSON table =
+    object
+        [ "id" .= tableId table
+        , "banker" .= toJSON (tableBanker table)
+        , "players" .= toJSON (tablePlayers table)
+        ]
 
 
 type Tables = Map.Map ByteString Table
@@ -30,12 +42,14 @@ emptyTables :: Tables
 emptyTables = Map.empty
 
 
-createTable :: Session -> T.Text -> Tables -> IO Tables
+createTable :: Session -> T.Text -> Tables -> IO ( Tables, Table )
 createTable Session { sessionId=id' } name tables = do
   newId <- generateId tables
   let banker = createPlayer name
   let newTable = Table ( id', banker ) emptyPlayers
-  pure $ Map.insert newId newTable tables
+  pure $ ( Map.insert newId newTable tables
+         , newTable
+         )
 
 
 -- joinTable :: Session -> TableId -> T.Text -> Tables -> IO ( Tables, Maybe Table )
