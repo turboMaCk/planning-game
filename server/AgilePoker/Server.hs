@@ -50,9 +50,10 @@ initialSessions = ServerState
 
 
 type Api = "status"                                :> Get  '[JSON] T.Text
+      :<|> "session"                               :> Post '[JSON] Session
       :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] Session
-      :<|> "join"    :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text
-      :<|> "stream"  :> AuthProtect "cookie"       :> WebSocket
+      :<|> "join"    :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text -- will be removed
+      :<|> "stream"  :> AuthProtect "cookie"       :> WebSocket           -- will be removed
       :<|> "tables"  :> Capture "tableid" TableId  :> "join"
                      :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text
       :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
@@ -72,6 +73,7 @@ genContext state =
 
 server :: ServerState -> Server Api
 server state = status
+           :<|> createSession
            :<|> getSession
            :<|> join
            :<|> stream
@@ -82,24 +84,23 @@ server state = status
     status :: Handler T.Text
     status = pure "OK"
 
+    createSession :: Handler Session
+    createSession = pure . snd =<<
+      (liftIO $ Concurrent.modifyMVar (sessions state) $ addSession "")
+
     getSession :: Session -> Handler Session
     getSession = pure
 
     join :: UserInfo -> Handler T.Text
     join UserInfo { userName=name } = do
-      mSession <- liftIO $ Concurrent.modifyMVar (sessions state) $ addSession name
+      ( id', session ) <- liftIO $ Concurrent.modifyMVar (sessions state) $ addSession name
 
-      case mSession of
-        Just ( id', session ) -> do
-            s <- liftIO $ Concurrent.readMVar (sessions state)
+      s <- liftIO $ Concurrent.readMVar (sessions state)
 
-            -- broadcast join event
-            liftIO $ broadcast s $ userJoined session
+      -- broadcast join event
+      liftIO $ broadcast s $ userJoined session
 
-            pure $ TE.decodeUtf8 id'
-
-        Nothing ->
-            throwError $ err409 { errBody = "Name already taken" }
+      pure $ TE.decodeUtf8 id'
 
     stream :: MonadIO m => Session -> WS.Connection -> m ()
     stream session = liftIO . handleSocket (sessions state) session

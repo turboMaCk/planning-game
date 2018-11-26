@@ -43,20 +43,12 @@ type Sessions =
   Map ByteString Session
 
 
-nameTaken :: T.Text -> Sessions -> Bool
-nameTaken name sessions = not $ Map.null $
-  Map.filter (\s -> sessionName s == name) sessions
-
-
-addSession :: T.Text -> Sessions -> IO ( Sessions, Maybe ( SessionId, Session ) )
-addSession name sessions =
-  if nameTaken name sessions then
-    pure ( sessions, Nothing )
-  else do
+addSession :: T.Text -> Sessions -> IO ( Sessions, ( SessionId, Session ) )
+addSession name sessions = do
     newId <- generateId sessions
     let newSession = (Session newId name IntMap.empty)
     pure $ ( Map.insert newId newSession sessions
-            , Just ( newId, newSession )
+            , ( newId, newSession )
             )
 
 

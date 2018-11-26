@@ -45,16 +45,12 @@ nameTaken name sessions = not $ Map.null $
   Map.filter ((==) name . playerName) sessions
 
 
-addPlayer :: Session -> T.Text -> Players -> ( Players, Maybe Player )
+addPlayer :: Session -> T.Text -> Players -> Maybe Players
 addPlayer Session { sessionId=id' } name players =
   if nameTaken name players then
-    ( players, Nothing )
+    Nothing
   else
-    let newPlayer = createPlayer name
-    in
-    ( Map.insert id' newPlayer players
-    , Just newPlayer
-    )
+    Just $ Map.insert id' (createPlayer name) players
 
 
 addPlayerConnection :: SessionId -> WS.Connection -> Players -> ( Players, Maybe ( Int, Player ) )

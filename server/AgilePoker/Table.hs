@@ -54,13 +54,23 @@ createTable Session { sessionId=id' } name tables = do
          )
 
 
--- joinTable :: Session -> TableId -> T.Text -> Tables -> IO ( Tables, Maybe Table )
--- joinTable session@Session { sessionId=id' } tableId name tables =
---   case Map.lookip tableId tables of
---     Just (table@Table { tableBanker=banker, tablePlayers=players }) ->
---       if playerNamer banker == name then
---         pure ( tables, Nothing )
---       else
---         case addPlayer session name players of
---           ( players )
---         pure ( table { tablePlayers =  } )
+-- @TODO: Add check if session is not already present
+joinTable :: Session -> TableId -> T.Text -> Tables -> ( Tables, Maybe Table )
+joinTable session@Session { sessionId=id' } tableId name tables =
+  case Map.lookup tableId tables of
+    Just (table@Table { tableBanker=(_, banker), tablePlayers=players }) ->
+      if playerName banker == name then
+        ( tables, Nothing )
+      else
+        maybe ( tables, Nothing ) (updateTables table) $
+            addPlayer session name players
+    Nothing ->
+      ( tables, Nothing )
+
+  where
+    updateTables :: Table -> Players -> ( Tables, Maybe Table )
+    updateTables table players =
+      (\t -> ( Map.insert tableId t tables
+             , Just t
+             )) $
+        table { tablePlayers = players }
