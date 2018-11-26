@@ -21,6 +21,7 @@ executable agile-poker
                      , AgilePoker.Player
                      , AgilePoker.Id
                      , AgilePoker.Server
+                     , AgilePoker.Server.Authorization
                      , AgilePoker.Event
                      , AgilePoker.UserInfo
                      , AgilePoker.Table

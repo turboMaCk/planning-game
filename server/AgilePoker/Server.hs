@@ -3,29 +3,25 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE TypeFamilies          #-}
 
 module AgilePoker.Server (main, genContext) where
 
 import Servant
 import Data.Maybe (maybe)
-import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
 import Network.HTTP.Types (status200)
 import Data.ByteString (ByteString)
 import Data.Maybe (maybe)
 import Control.Monad (forM_, forever)
 import Control.Concurrent (MVar)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Network.Wai (Request, Response, Middleware, requestHeaders, responseFile, rawPathInfo)
+import Network.Wai (Response, Middleware, responseFile, rawPathInfo)
 import Servant.API.WebSocket (WebSocket)
 import Control.Exception (finally)
 import Network.Wai.Middleware.Static (Policy, staticPolicy, addBase)
-import Web.Cookie (parseCookies)
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Encoding as TE
-import qualified Data.ByteString as BS
 import qualified Network.WebSockets as WS
 import qualified Control.Concurrent as Concurrent
 
@@ -33,6 +29,7 @@ import qualified Control.Concurrent as Concurrent
 -- Modules
 
 
+import AgilePoker.Server.Authorization
 import AgilePoker.Session
 import AgilePoker.Event
 import AgilePoker.UserInfo
@@ -54,72 +51,6 @@ initialSessions = ServerState
   <*> Concurrent.newMVar emptyTables
 
 
--- Authorization
-
-
-lookupSession :: MVar Sessions -> SessionId -> Handler Session
-lookupSession state' sessionId = do
-  state <- liftIO $ Concurrent.readMVar state'
-  case getSession sessionId state of
-    Just session ->
-      pure session
-
-    Nothing ->
-      throwError $ err403 { errBody = "Invalid SessionId" }
-
-
--- | This function takes extract session id from header value
--- Correct format is `Bearer xxxx` where xxxx is a SessionID itself
-parseSessionId :: ByteString -> Maybe SessionId
-parseSessionId headerVal = BS.stripPrefix "Bearer " headerVal
-
-
-authHeaderHandler :: MVar Sessions -> AuthHandler Request Session
-authHeaderHandler state = mkAuthHandler handler
-  where
-    maybeToEither e =
-      maybe (Left e) Right
-
-    throw401 msg =
-        throwError $ err401 { errBody = msg }
-
-    mSessionId :: Request -> Maybe SessionId
-    mSessionId req =
-        parseSessionId
-            =<< lookup "Authorization" (requestHeaders req)
-
-    handler :: Request -> Handler Session
-    handler req = either throw401 (lookupSession state) $ do
-        maybeToEither "Missing SessionId" $ mSessionId req
-
-
--- | We need to specify the data returned after authentication
-type instance AuthServerData (AuthProtect "header") = Session
-
-
-authCookieHandler :: MVar Sessions -> AuthHandler Request Session
-authCookieHandler state = mkAuthHandler handler
-  where
-  maybeToEither e =
-    maybe (Left e) Right
-
-  throw401 msg =
-    throwError $ err401 { errBody = msg }
-
-  mSessionId :: Request -> Maybe SessionId
-  mSessionId req =
-    lookup "authorization" . parseCookies
-        =<< lookup "cookie" (requestHeaders req)
-
-  handler :: Request -> Handler Session
-  handler req = either throw401 (lookupSession state) $ do
-    maybeToEither "Missing SessionId" $ mSessionId req
-
-
--- | We need to specify the data returned after authentication
-type instance AuthServerData (AuthProtect "cookie") = Session
-
-
 -- API
 
 
@@ -139,8 +70,9 @@ api = Proxy
 -- Server
 
 
-genContext :: MVar Sessions -> Context (AuthHandler Request Session : AuthHandler Request Session ': '[])
-genContext state = authCookieHandler state :. authHeaderHandler state :. EmptyContext
+genContext :: MVar Sessions -> Context (SessionAuth : SessionAuth ': '[])
+genContext state =
+  authCookieHandler state :. authHeaderHandler state :. EmptyContext
 
 
 server :: ServerState -> Server Api
@@ -194,7 +126,7 @@ broadcast state' event = do
 
 handleSocketEvent :: MVar Sessions -> WS.Connection -> IO ()
 handleSocketEvent state' conn = forever $ do
-  msg :: BS.ByteString <- WS.receiveData conn
+  msg :: ByteString <- WS.receiveData conn
   -- state <- Concurrent.readMVar state'
   -- @TODO: implement
   pure ()
