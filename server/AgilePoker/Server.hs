@@ -52,11 +52,12 @@ initialSessions = ServerState
 type Api = "status"                                :> Get  '[JSON] T.Text
       :<|> "session"                               :> Post '[JSON] Session
       :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] Session
-      :<|> "join"    :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text -- will be removed
-      :<|> "stream"  :> AuthProtect "cookie"       :> WebSocket           -- will be removed
-      :<|> "tables"  :> Capture "tableid" TableId  :> "join"
-                     :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text
+      :<|> "join"    :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text              -- will be removed
+      :<|> "stream"  :> AuthProtect "cookie"       :> WebSocket                        -- will be removed
       :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
+      :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" TableId  :> "join"
+                     :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
+      :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" TableId  :> "stream" :> WebSocket
 
 
 api :: Proxy Api
@@ -77,8 +78,9 @@ server state = status
            :<|> getSession
            :<|> join
            :<|> stream
-           :<|> joinTable
            :<|> createTableHandler
+           :<|> joinTableHanlder
+           :<|> streamTableHandler
 
   where
     status :: Handler T.Text
@@ -105,15 +107,23 @@ server state = status
     stream :: MonadIO m => Session -> WS.Connection -> m ()
     stream session = liftIO . handleSocket (sessions state) session
 
-    -- @TODO: implement
-    joinTable :: TableId -> UserInfo -> Handler T.Text
-    joinTable id' UserInfo { userName=name } =
-      pure "x"
+    joinTableHanlder :: Session -> TableId -> UserInfo -> Handler Table
+    joinTableHanlder session id' UserInfo { userName=name } = do
+      tables <- liftIO $ Concurrent.readMVar (tables state)
+      mTable <- liftIO $ joinTable session id' name tables
+
+      case mTable of
+        Just table -> pure table
+        Nothing -> throwError $ err409 { errBody = "Name already taken" }
 
     createTableHandler :: Session -> UserInfo -> Handler Table
     createTableHandler session UserInfo { userName=name } =
       liftIO $ Concurrent.modifyMVar (tables state) $
         createTable session name
+
+    streamTableHandler :: MonadIO m => Session -> TableId -> WS.Connection -> m ()
+    streamTableHandler session id' =
+      liftIO . tableStreamHandler (tables state) session id'
 
 
 broadcast :: Sessions -> Event -> IO ()

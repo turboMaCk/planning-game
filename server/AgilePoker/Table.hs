@@ -2,14 +2,18 @@
 
 module AgilePoker.Table
   (Table(..), Tables, TableId
-  , emptyTables, createTable
+  , emptyTables, createTable, joinTable
+  , tableStreamHandler
   ) where
 
 import Data.ByteString (ByteString)
 import Data.Aeson.Types (ToJSON(..), (.=), object)
+import Control.Concurrent (MVar)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+import qualified Network.WebSockets as WS
+import qualified Control.Concurrent as Concurrent
 
 import AgilePoker.Id
 import AgilePoker.Session
@@ -17,7 +21,6 @@ import AgilePoker.Player
 
 
 -- @TODO: Just alias for now
-
 type TableId = ByteString
 
 
@@ -37,7 +40,8 @@ instance ToJSON Table where
         ]
 
 
-type Tables = Map.Map ByteString Table
+type Tables =
+  Map.Map ByteString (MVar Table)
 
 
 emptyTables :: Tables
@@ -49,28 +53,50 @@ createTable Session { sessionId=id' } name tables = do
   tId <- generateId tables
   let banker = createPlayer name
   let newTable = Table tId ( id', banker ) emptyPlayers
-  pure $ ( Map.insert tId newTable tables
+  mvarTable <- Concurrent.newMVar newTable
+  pure $ ( Map.insert tId mvarTable tables
          , newTable
          )
 
 
 -- @TODO: Add check if session is not already present
-joinTable :: Session -> TableId -> T.Text -> Tables -> ( Tables, Maybe Table )
+joinTable :: Session -> TableId -> T.Text -> Tables -> IO ( Maybe Table )
 joinTable session@Session { sessionId=id' } tableId name tables =
   case Map.lookup tableId tables of
-    Just (table@Table { tableBanker=(_, banker), tablePlayers=players }) ->
-      if playerName banker == name then
-        ( tables, Nothing )
+    Just mvar -> do
+      table <- Concurrent.readMVar mvar
+      if playerName (snd $ tableBanker table) == name then
+        pure Nothing
       else
-        maybe ( tables, Nothing ) (updateTables table) $
-            addPlayer session name players
+        let
+            mPlayers = addPlayer session name (tablePlayers table)
+        in
+        case mPlayers of
+          Just newPlayers ->
+            Concurrent.modifyMVar mvar $ \t -> do
+               let updatedTable = t { tablePlayers = newPlayers }
+               pure ( updatedTable, Just updatedTable )
+          Nothing ->
+             pure Nothing
+
     Nothing ->
-      ( tables, Nothing )
+      pure Nothing
 
   where
-    updateTables :: Table -> Players -> ( Tables, Maybe Table )
+    updateTables :: Table -> Players -> IO ( Tables, Maybe Table )
     updateTables table players =
-      (\t -> ( Map.insert tableId t tables
-             , Just t
-             )) $
-        table { tablePlayers = players }
+       undefined
+
+
+-- @TODO: Implement
+tableStreamHandler :: MVar Tables -> Session -> TableId -> WS.Connection -> IO ()
+tableStreamHandler state Session { sessionId=sId } id' conn =
+  -- 1. Assign connection to player
+  -- 2. Sync sate to new player
+  -- 3. Start player handler
+  -- 3.1 Remove connection on disconnection
+  -- 3.2 Ping Thread
+  -- 3.3 Broadcast join event
+  -- 3.4 Delegate to Msg handler
+
+  pure ()
