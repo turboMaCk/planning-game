@@ -75,7 +75,7 @@ server state = status
            :<|> createSession
            :<|> getSession
            :<|> createTableHandler
-           :<|> joinTableHanlder
+           :<|> joinTableHandler
            :<|> streamTableHandler
 
   where
@@ -89,30 +89,30 @@ server state = status
     getSession :: Session -> Handler Session
     getSession = pure
 
-    join :: UserInfo -> Handler T.Text
-    join UserInfo { userName=name } = do
-      ( id', session ) <- liftIO $ Concurrent.modifyMVar (sessions state) $ addSession name
+    -- join :: UserInfo -> Handler T.Text
+    -- join UserInfo { userName=name } = do
+    --   ( id', session ) <- liftIO $ Concurrent.modifyMVar (sessions state) $ addSession name
 
-      s <- liftIO $ Concurrent.readMVar (sessions state)
+    --   s <- liftIO $ Concurrent.readMVar (sessions state)
 
-      -- broadcast join event
-      liftIO $ broadcast s $ userJoined session
+    --   -- broadcast join event
+    --   liftIO $ broadcast s $ userJoined session
 
-      pure $ TE.decodeUtf8 id'
+    --   pure $ TE.decodeUtf8 id'
 
-    joinTableHanlder :: Session -> TableId -> UserInfo -> Handler Table
-    joinTableHanlder session id' UserInfo { userName=name } = do
+    createTableHandler :: Session -> UserInfo -> Handler Table
+    createTableHandler session UserInfo { userName=name } =
+      liftIO $ Concurrent.modifyMVar (tables state) $
+        createTable session name
+
+    joinTableHandler :: Session -> TableId -> UserInfo -> Handler Table
+    joinTableHandler session id' UserInfo { userName=name } = do
       tables <- liftIO $ Concurrent.readMVar (tables state)
       mTable <- liftIO $ joinTable session id' name tables
 
       case mTable of
         Just table -> pure table
         Nothing -> throwError $ err409 { errBody = "Name already taken" }
-
-    createTableHandler :: Session -> UserInfo -> Handler Table
-    createTableHandler session UserInfo { userName=name } =
-      liftIO $ Concurrent.modifyMVar (tables state) $
-        createTable session name
 
     streamTableHandler :: MonadIO m => Session -> TableId -> WS.Connection -> m ()
     streamTableHandler session id' =

@@ -1,4 +1,11 @@
-module Data exposing (Session, User, createSession, join, userDecoder)
+module Data exposing
+    ( Session
+    , User
+    , createSession
+    , createTable
+    , join
+    , userDecoder
+    )
 
 import Http
 import Json.Decode as Decode exposing (Decoder)
@@ -45,6 +52,23 @@ userDecoder =
     Decode.succeed User
         |> Decode.andMap (Decode.field "name" Decode.string)
         |> Decode.andMap (Decode.field "connected" Decode.bool)
+
+
+
+-- Table
+
+
+createTable : String -> (Result Http.Error String -> msg) -> String -> Cmd msg
+createTable token msg name =
+    Http.request
+        { method = "POST"
+        , url = Url.absolute [ "tables" ] []
+        , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
+        , expect = Http.expectJson msg <| Decode.succeed "aaa"
+        , headers = [ Http.header "Authorization" <| "Bearer " ++ token ]
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 

@@ -181,7 +181,7 @@ update msg model =
         HomeMsg sMsg ->
             case model.page of
                 Authorized session (Home m) ->
-                    Home.update sMsg m
+                    Home.update session sMsg m
                         |> Tuple.mapFirst (\a -> { model | page = Authorized session <| Home a })
                         |> Tuple.mapSecond (Cmd.map HomeMsg)
 

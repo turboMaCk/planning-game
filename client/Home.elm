@@ -25,15 +25,15 @@ type Msg
     | JoinResponse (Result Http.Error String)
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : String -> Msg -> Model -> ( Model, Cmd Msg )
+update token msg model =
     case msg of
         UpdateName str ->
             ( Model str, Cmd.none )
 
         Submit ->
             ( model
-            , Data.join "" JoinResponse model.userName
+            , Data.createTable token JoinResponse model.userName
             )
 
         JoinResponse res ->
