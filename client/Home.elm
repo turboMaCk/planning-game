@@ -1,6 +1,6 @@
 module Home exposing (Model, Msg(..), init, update, view)
 
-import Data exposing (User)
+import Data exposing (Session)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
@@ -25,15 +25,15 @@ type Msg
     | JoinResponse (Result Http.Error String)
 
 
-update : String -> Msg -> Model -> ( Model, Cmd Msg )
-update token msg model =
+update : Session -> Msg -> Model -> ( Model, Cmd Msg )
+update session msg model =
     case msg of
         UpdateName str ->
             ( Model str, Cmd.none )
 
         Submit ->
             ( model
-            , Data.createTable token JoinResponse model.userName
+            , Data.createTable session JoinResponse model.userName
             )
 
         JoinResponse res ->

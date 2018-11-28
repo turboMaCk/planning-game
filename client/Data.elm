@@ -3,6 +3,7 @@ module Data exposing
     , User
     , createSession
     , createTable
+    , getSession
     , join
     , userDecoder
     )
@@ -37,6 +38,19 @@ createSession msg =
         }
 
 
+getSession : (Result Http.Error Session -> msg) -> String -> Cmd msg
+getSession msg token =
+    Http.request
+        { method = "GET"
+        , url = Url.absolute [ "session" ] []
+        , body = Http.emptyBody
+        , expect = Http.expectJson msg sessionDecoder
+        , headers = [ Http.header "Authorization" <| "Bearer " ++ token ]
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 
 -- User
 
@@ -58,14 +72,14 @@ userDecoder =
 -- Table
 
 
-createTable : String -> (Result Http.Error String -> msg) -> String -> Cmd msg
-createTable token msg name =
+createTable : Session -> (Result Http.Error String -> msg) -> String -> Cmd msg
+createTable session msg name =
     Http.request
         { method = "POST"
         , url = Url.absolute [ "tables" ] []
         , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
         , expect = Http.expectJson msg <| Decode.succeed "aaa"
-        , headers = [ Http.header "Authorization" <| "Bearer " ++ token ]
+        , headers = [ Http.header "Authorization" <| "Bearer " ++ session.id ]
         , timeout = Nothing
         , tracker = Nothing
         }

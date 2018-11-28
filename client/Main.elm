@@ -32,26 +32,27 @@ type Page
     | NotFound
 
 
-type Authorize a
-    = Authorized String a
+type Authorize a b
+    = Authorized b a
     | Unauthorized (Maybe Http.Error)
 
 
+
 {- @TODO:
-Rethink route page and authorize so it's easier to work with
+   Rethink route page and authorize so it's easier to work with
 -}
 
 
 {-| flip Authorized
 -}
-authorize : a -> String -> Authorize a
-authorize a token =
-    Authorized token a
+authorize : a -> b -> Authorize a b
+authorize a b =
+    Authorized b a
 
 
 type alias Model =
     { navigationKey : Key
-    , page : Authorize Page
+    , page : Authorize Page Session
     , route : Route
     , userName : String -- @TODO
     , sessionId : Result Http.Error (Maybe String)
@@ -61,6 +62,10 @@ type alias Model =
 type alias Flags =
     { sessionId : Maybe String
     }
+
+
+
+-- @TODO: this mapping msgs
 
 
 routePage : Route -> ( Page, Cmd Msg )
@@ -84,26 +89,25 @@ routePage route =
 
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
 init { sessionId } url key =
-    let
-        ( page, pageCmd ) =
-            Router.route routePage url
-
-        ( authorized, cmd ) =
-            Maybe.map (authorize page) sessionId
-                |> Maybe.map (\m -> ( m, pageCmd ))
-                |> Maybe.withDefault
-                    ( Unauthorized Nothing
-                    , Data.createSession SessionCreated
-                    )
-    in
-    ( { page = authorized
+    -- let
+    -- ( page, pageCmd ) =
+    --     Router.route routePage url
+    -- ( authorized, cmd ) =
+    --     Maybe.map (authorize page) sessionId
+    --         |> Maybe.map (\m -> ( m, pageCmd ))
+    --         |> Maybe.withDefault
+    --             ( Unauthorized Nothing
+    --             , Data.createSession SessionCreated
+    --             )
+    -- in
+    ( { page = Unauthorized Nothing
       , route = Router.route identity url
       , userName = ""
       , sessionId = Ok sessionId
       , navigationKey = key
       }
-      -- @TODO: Authorization CMD
-    , cmd
+    , Maybe.map (Data.getSession SessionCreated) sessionId
+        |> Maybe.withDefault (Data.createSession SessionCreated)
     )
 
 
@@ -165,9 +169,20 @@ update msg model =
                 ( page, cmd ) =
                     routePage model.route
             in
-            Result.map (\t -> ( authorize page t.id, t.id )) res
-                |> Result.map (\( p, t ) -> ( { model | page = p }, Cmd.batch [ cmd, storeSession t ] ))
-                |> Result.withDefault ( model, Cmd.none )
+            -- @TODO: crap
+            Result.map (\s -> ( authorize page s, s.id )) res
+                |> Result.map
+                    (\( p, t ) ->
+                        ( { model | page = p }
+                        , Cmd.batch
+                            [ cmd
+                            , storeSession t
+                            , Data.getSession (always NoOp) t
+                            ]
+                        )
+                    )
+                -- this cycles!
+                |> Result.withDefault ( model, Data.createSession SessionCreated )
 
         ClearSession ->
             ( { model
