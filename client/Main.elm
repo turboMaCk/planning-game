@@ -1,14 +1,20 @@
-module Main exposing (main)
+port module Main exposing (main)
 
-import Browser exposing (Document)
-import Data exposing (User)
+import Browser exposing (Document, UrlRequest(..))
+import Browser.Navigation as Navigation exposing (Key)
+import Data exposing (Session, User)
+import Home
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
 import Http
+import Router exposing (Route)
 import Stream exposing (Event(..), StreamError(..))
 import Task
 import Url exposing (Url)
+
+
+port storeSession : String -> Cmd msg
 
 
 
@@ -20,14 +26,34 @@ type alias GameModel =
     }
 
 
-type View
-    = SetName
-    | Game GameModel
+type Page
+    = Home Home.Model
+    | Table GameModel
+    | NotFound
+
+
+type Authorize a
+    = Authorized String a
+    | Unauthorized (Maybe Http.Error)
+
+
+{- @TODO:
+Rethink route page and authorize so it's easier to work with
+-}
+
+
+{-| flip Authorized
+-}
+authorize : a -> String -> Authorize a
+authorize a token =
+    Authorized token a
 
 
 type alias Model =
-    { view : View
-    , userName : String
+    { navigationKey : Key
+    , page : Authorize Page
+    , route : Route
+    , userName : String -- @TODO
     , sessionId : Result Http.Error (Maybe String)
     }
 
@@ -37,25 +63,46 @@ type alias Flags =
     }
 
 
-init : Flags -> Url -> key -> ( Model, Cmd Msg )
-init { sessionId } _ _ =
-    let
-        ( viewModel, cmd ) =
-            case sessionId of
-                Just sId ->
-                    ( Game { players = [] }
-                    , Cmd.batch
-                        [ Ok sId
-                            |> Result.map Stream.connect
-                            |> Result.withDefault Cmd.none
-                        , Data.getCurrentUser sId CurrentUserFetched
-                        ]
-                    )
+routePage : Route -> ( Page, Cmd Msg )
+routePage route =
+    case route of
+        Router.Home ->
+            Tuple.mapFirst Home Home.init
 
-                Nothing ->
-                    ( SetName, Cmd.none )
+        Router.Table sId ->
+            ( Table { players = [] }
+            , Cmd.batch
+                [ Ok sId
+                    |> Result.map Stream.connect
+                    |> Result.withDefault Cmd.none
+                ]
+            )
+
+        Router.NotFound ->
+            ( NotFound, Cmd.none )
+
+
+init : Flags -> Url -> Key -> ( Model, Cmd Msg )
+init { sessionId } url key =
+    let
+        ( page, pageCmd ) =
+            Router.route routePage url
+
+        ( authorized, cmd ) =
+            Maybe.map (authorize page) sessionId
+                |> Maybe.map (\m -> ( m, pageCmd ))
+                |> Maybe.withDefault
+                    ( Unauthorized Nothing
+                    , Data.createSession SessionCreated
+                    )
     in
-    ( { view = viewModel, userName = "", sessionId = Ok sessionId }
+    ( { page = authorized
+      , route = Router.route identity url
+      , userName = ""
+      , sessionId = Ok sessionId
+      , navigationKey = key
+      }
+      -- @TODO: Authorization CMD
     , cmd
     )
 
@@ -66,12 +113,13 @@ init { sessionId } _ _ =
 
 type Msg
     = NoOp
+    | RouteTo UrlRequest
     | UpdateName String
     | SubmitName
-    | SessionCreated (Result Http.Error String)
+    | SessionCreated (Result Http.Error Session)
     | StreamEvent (Result StreamError Event)
-    | CurrentUserFetched (Result Http.Error User)
     | ClearSession
+    | HomeMsg Home.Msg
 
 
 updateUser : User -> List User -> List User
@@ -92,6 +140,16 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
+        RouteTo url ->
+            case url of
+                Internal location ->
+                    ( model
+                    , Navigation.pushUrl model.navigationKey <| Url.toString location
+                    )
+
+                External _ ->
+                    ( model, Cmd.none )
+
         UpdateName str ->
             ( { model | userName = str }
             , Cmd.none
@@ -99,49 +157,53 @@ update msg model =
 
         SubmitName ->
             ( model
-            , Data.setName SessionCreated model.userName
+            , Cmd.none
             )
 
         SessionCreated res ->
-            ( { model
-                | sessionId = Result.map Just res
-                , view = Game <| GameModel []
-              }
-            , Result.map Stream.connect res
-                -- @TODO: replace with cmd-extra?
-                |> Result.withDefault (Task.perform identity <| Task.succeed ClearSession)
-            )
+            let
+                ( page, cmd ) =
+                    routePage model.route
+            in
+            Result.map (\t -> ( authorize page t.id, t.id )) res
+                |> Result.map (\( p, t ) -> ( { model | page = p }, Cmd.batch [ cmd, storeSession t ] ))
+                |> Result.withDefault ( model, Cmd.none )
 
         ClearSession ->
             ( { model
                 | sessionId = Ok Nothing
-                , view = SetName
+
+                -- , page = SetName
               }
             , Stream.disconnect ()
             )
 
-        CurrentUserFetched res ->
-            ( Result.map (\{ name } -> { model | userName = name }) res
-                |> Result.withDefault model
-            , Cmd.none
-            )
+        HomeMsg sMsg ->
+            case model.page of
+                Authorized session (Home m) ->
+                    Home.update sMsg m
+                        |> Tuple.mapFirst (\a -> { model | page = Authorized session <| Home a })
+                        |> Tuple.mapSecond (Cmd.map HomeMsg)
+
+                _ ->
+                    ( model, Cmd.none )
 
         StreamEvent result ->
-            case model.view of
-                Game { players } ->
+            case model.page of
+                Authorized session (Table { players }) ->
                     case result of
                         Ok event ->
                             case event of
                                 UserJoin newUser ->
                                     ( { model
-                                        | view = Game { players = newUser :: players }
+                                        | page = Authorized session <| Table { players = newUser :: players }
                                       }
                                     , Cmd.none
                                     )
 
                                 UserStatusUpdate user ->
                                     ( { model
-                                        | view = Game { players = updateUser user players }
+                                        | page = Authorized session <| Table { players = updateUser user players }
                                       }
                                     , Cmd.none
                                     )
@@ -212,37 +274,36 @@ gameView userName { players } =
     ]
 
 
-setNameView : String -> List (Html Msg)
-setNameView name =
-    [ Html.form
-        [ Event.onSubmit SubmitName ]
-        [ Html.input
-            [ Attr.value name
-            , Event.onInput UpdateName
-            ]
-            []
-        , Html.button [ Attr.type_ "submit" ]
-            [ Html.text "Submit" ]
-        ]
-    ]
-
-
 view : Model -> Document Msg
 view model =
-    { title =
-        case model.view of
-            SetName ->
-                "Join | Agile Poker"
+    let
+        ( title, body ) =
+            case model.page of
+                Authorized _ page ->
+                    case page of
+                        Home m ->
+                            ( "Agile Poker"
+                            , [ Html.map HomeMsg <| Home.view m ]
+                            )
 
-            Game _ ->
-                "Game | Agile Poker"
-    , body =
-        case model.view of
-            SetName ->
-                setNameView model.userName
+                        Table m ->
+                            ( "Table | Agile Poker"
+                            , gameView model.userName m
+                            )
 
-            Game m ->
-                gameView model.userName m
+                        NotFound ->
+                            ( "404 | Agile Poker"
+                            , [ Html.text "404" ]
+                            )
+
+                Unauthorized _ ->
+                    -- @TODO: error handling?
+                    ( "Authorizing | Agile Poker"
+                    , []
+                    )
+    in
+    { title = title
+    , body = body
     }
 
 
@@ -253,6 +314,6 @@ main =
         , view = view
         , update = update
         , subscriptions = subscriptions
-        , onUrlRequest = always NoOp
+        , onUrlRequest = RouteTo
         , onUrlChange = always NoOp
         }

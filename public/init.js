@@ -44,10 +44,12 @@
         }
     });
 
-    app.ports.connect.subscribe(function (token) {
-        cookie.write('sessionId', token);
+    // Writing cookie
+    app.ports.storeSession.subscribe(function (id) {
+        cookie.write('sessionId', id);
+    });
 
-        document.cookie = 'authorization=' + token;
+    app.ports.connect.subscribe(function () {
         var ws = new WebSocket('ws://localhost:3000/stream');
 
         ws.onerror = function () {

@@ -13,6 +13,7 @@ import Data.Aeson.Types (ToJSON(..), (.=))
 import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Network.WebSockets as WS
 import qualified Data.Aeson.Types as AT
 
@@ -28,9 +29,10 @@ data Session = Session
 
 
 instance ToJSON Session where
-  toJSON (Session { sessionName=name, sessionConnections=conns }) =
+  toJSON (Session { sessionName=name, sessionConnections=conns, sessionId=id }) =
     AT.object
-        [ "name" .= name
+        [ "id" .= TE.decodeUtf8 id
+        , "name" .= name
         , "connected" .= not (IntMap.null conns)
         ]
 

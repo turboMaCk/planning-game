@@ -52,8 +52,6 @@ initialSessions = ServerState
 type Api = "status"                                :> Get  '[JSON] T.Text
       :<|> "session"                               :> Post '[JSON] Session
       :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] Session
-      :<|> "join"    :> ReqBody '[JSON] UserInfo   :> Post '[JSON] T.Text              -- will be removed
-      :<|> "stream"  :> AuthProtect "cookie"       :> WebSocket                        -- will be removed
       :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" TableId  :> "join"
                      :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
@@ -76,8 +74,6 @@ server :: ServerState -> Server Api
 server state = status
            :<|> createSession
            :<|> getSession
-           :<|> join
-           :<|> stream
            :<|> createTableHandler
            :<|> joinTableHanlder
            :<|> streamTableHandler
@@ -103,9 +99,6 @@ server state = status
       liftIO $ broadcast s $ userJoined session
 
       pure $ TE.decodeUtf8 id'
-
-    stream :: MonadIO m => Session -> WS.Connection -> m ()
-    stream session = liftIO . handleSocket (sessions state) session
 
     joinTableHanlder :: Session -> TableId -> UserInfo -> Handler Table
     joinTableHanlder session id' UserInfo { userName=name } = do

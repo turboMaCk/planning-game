@@ -1,9 +1,37 @@
-module Data exposing (User, setName, userDecoder, getCurrentUser)
+module Data exposing (Session, User, createSession, join, userDecoder)
 
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra as Decode
 import Json.Encode as Encode
+import Url.Builder as Url
+
+
+
+-- Session
+
+
+type alias Session =
+    { id : String }
+
+
+sessionDecoder : Decoder Session
+sessionDecoder =
+    Decode.succeed Session
+        |> Decode.andMap (Decode.field "id" Decode.string)
+
+
+createSession : (Result Http.Error Session -> msg) -> Cmd msg
+createSession msg =
+    Http.post
+        { url = Url.absolute [ "session" ] []
+        , body = Http.emptyBody
+        , expect = Http.expectJson msg sessionDecoder
+        }
+
+
+
+-- User
 
 
 type alias User =
@@ -19,23 +47,14 @@ userDecoder =
         |> Decode.andMap (Decode.field "connected" Decode.bool)
 
 
-setName : (Result Http.Error String -> msg) -> String -> Cmd msg
-setName msg name =
+
+-- @TODO: fix
+
+
+join : String -> (Result Http.Error String -> msg) -> String -> Cmd msg
+join id msg name =
     Http.post
-        { url = "http://localhost:3000/join"
+        { url = Url.absolute [ "tables", id, "join" ] []
         , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
         , expect = Http.expectJson msg Decode.string
-        }
-
-
-getCurrentUser : String -> (Result Http.Error User -> msg) -> Cmd msg
-getCurrentUser token msg =
-    Http.request
-        { method = "GET"
-        , headers = [ Http.header "Authorization" <| "Bearer " ++ token ]
-        , url = "/session"
-        , body = Http.emptyBody
-        , expect = Http.expectJson msg userDecoder
-        , timeout = Nothing
-        , tracker = Nothing
         }

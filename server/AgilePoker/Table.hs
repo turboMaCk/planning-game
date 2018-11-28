@@ -34,9 +34,9 @@ data Table = Table
 instance ToJSON Table where
   toJSON table =
     object
-        [ "id" .= toJSON (TE.decodeUtf8 $ tableId table)
-        , "banker" .= toJSON (snd $ tableBanker table)
-        , "players" .= toJSON (fmap snd $ Map.toList $ tablePlayers table)
+        [ "id" .= TE.decodeUtf8 (tableId table)
+        , "banker" .= snd (tableBanker table)
+        , "players" .= fmap snd (Map.toList $ tablePlayers table)
         ]
 
 
