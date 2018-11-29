@@ -50,22 +50,22 @@
         cookie.write('sessionId', id);
     });
 
-    app.ports.connect.subscribe(function () {
-        var ws = new WebSocket('ws://localhost:3000/stream');
+    // app.ports.connect.subscribe(function () {
+    //     var ws = new WebSocket('ws://localhost:3000/stream');
 
-        ws.onerror = function () {
-            app.ports.streamError.send('can_not_connect');
-        };
+    //     ws.onerror = function () {
+    //         app.ports.streamError.send('can_not_connect');
+    //     };
 
-        ws.onmessage = function (evt) {
-            var msg = evt.data;
-            app.ports.observe_.send(msg);
-        };
+    //     ws.onmessage = function (evt) {
+    //         var msg = evt.data;
+    //         app.ports.observe_.send(msg);
+    //     };
 
-        ws.onclose = function() {
-            app.ports.streamError.send('connection_closed');
-        };
-    });
+    //     ws.onclose = function() {
+    //         app.ports.streamError.send('connection_closed');
+    //     };
+    // });
 
     app.ports.disconnect.subscribe(function() {
         console.log('erase');

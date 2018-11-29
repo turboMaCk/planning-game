@@ -2,6 +2,7 @@ port module Main exposing (main, routePage)
 
 import Browser exposing (Document, UrlRequest(..))
 import Browser.Navigation as Navigation exposing (Key)
+import Cmd.Extra as Cmd
 import Data exposing (Session, User)
 import Home
 import Html exposing (Html)
@@ -31,12 +32,6 @@ type Page
 type Authorize a b
     = Authorized b a
     | Unauthorized (Maybe Http.Error)
-
-
-
-{- @TODO:
-   Rethink route page and authorize so it's easier to work with
--}
 
 
 authorize : b -> (b -> c) -> Authorize a b -> Authorize c b
@@ -90,13 +85,6 @@ routePage authorizeF route model =
                         |> Tuple.mapFirst Table
                         |> Tuple.mapSecond (Cmd.map TableMsg)
 
-                -- ( Table { players = [] }
-                -- , Cmd.batch
-                --     [ Ok sId
-                --         |> Result.map Stream.connect
-                --         |> Result.withDefault Cmd.none
-                --     ]
-                -- )
                 Router.NotFound ->
                     ( NotFound, Cmd.none )
 
@@ -119,7 +107,7 @@ routePage authorizeF route model =
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
 init { sessionId } url key =
     ( { page = Unauthorized Nothing
-      , route = Router.route identity url
+      , route = Router.route url
       , navigationKey = key
       }
     , Maybe.map (Data.getSession SessionCreated) sessionId
@@ -140,18 +128,6 @@ type Msg
     | TableMsg Table.Msg
 
 
-updateUser : User -> List User -> List User
-updateUser user =
-    List.map
-        (\u ->
-            if u.name == user.name then
-                user
-
-            else
-                u
-        )
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -169,17 +145,13 @@ update msg model =
                     ( model, Cmd.none )
 
         UrlChanged url ->
-            let
-                route =
-                    -- @TODO this is silly
-                    Router.route identity url
-            in
-            routePage forAuthorized route model
+            routePage forAuthorized (Router.route url) model
 
         SessionCreated res ->
             case res of
                 Ok session ->
                     routePage (authorize session) model.route model
+                        |> Cmd.add (storeSession session.id)
 
                 Err session ->
                     ( model, Data.createSession SessionCreated )
@@ -199,41 +171,6 @@ update msg model =
 
 
 
--- StreamEvent result ->
---     case model.page of
---         Authorized session (Table { players }) ->
---             case result of
---                 Ok event ->
---                     case event of
---                         UserJoin newUser ->
---                             ( { model
---                                 | page = Authorized session <| Table { players = newUser :: players }
---                               }
---                             , Cmd.none
---                             )
---                         UserStatusUpdate user ->
---                             ( { model
---                                 | page = Authorized session <| Table { players = updateUser user players }
---                               }
---                             , Cmd.none
---                             )
---                 Err err ->
---                     ( model
---                     , case err of
---                         CantConnect ->
---                             -- @TODO: replace with cmd-extra?
---                             Task.perform identity <| Task.succeed ClearSession
---                         Disconnected ->
---                             Cmd.none
---                         DecodingError dErr ->
---                             let
---                                 _ =
---                                     Debug.log "err" dErr
---                             in
---                             Cmd.none
---                     )
---         _ ->
---             ( model, Cmd.none )
 -- Subscriptions
 
 

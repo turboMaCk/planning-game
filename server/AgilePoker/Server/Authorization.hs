@@ -28,9 +28,7 @@ type SessionAuth =
 lookupSession :: MVar Sessions -> SessionId -> Handler Session
 lookupSession state' sId = do
   state <- liftIO $ Concurrent.readMVar state'
-  let mSession = getSession sId state
-  liftIO $ print (sessionId <$> mSession)
-  case mSession of
+  case getSession sId state of
     Just session ->
       pure session
 

@@ -18,8 +18,7 @@ routes =
         ]
 
 
-route : (Route -> a) -> Url -> a
-route f =
-    f
-        << Maybe.withDefault NotFound
+route : Url -> Route
+route =
+    Maybe.withDefault NotFound
         << Url.parse routes
