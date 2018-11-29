@@ -1,6 +1,7 @@
 module Data exposing
     ( Session
     , User
+    , Table
     , createSession
     , createTable
     , getSession
@@ -72,13 +73,28 @@ userDecoder =
 -- Table
 
 
-createTable : Session -> (Result Http.Error String -> msg) -> String -> Cmd msg
+type alias Table =
+    { id : String
+    , banker : User
+    , players : List User
+    }
+
+
+tableDecoder : Decoder Table
+tableDecoder =
+    Decode.succeed Table
+        |> Decode.andMap (Decode.field "id" Decode.string)
+        |> Decode.andMap (Decode.field "banker" userDecoder)
+        |> Decode.andMap (Decode.field "players" <| Decode.list userDecoder)
+
+
+createTable : Session -> (Result Http.Error Table -> msg) -> String -> Cmd msg
 createTable session msg name =
     Http.request
         { method = "POST"
         , url = Url.absolute [ "tables" ] []
         , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
-        , expect = Http.expectJson msg <| Decode.succeed "aaa"
+        , expect = Http.expectJson msg tableDecoder
         , headers = [ Http.header "Authorization" <| "Bearer " ++ session.id ]
         , timeout = Nothing
         , tracker = Nothing

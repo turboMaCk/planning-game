@@ -57,10 +57,11 @@ authHeaderHandler state = mkAuthHandler handler
     mSessionId :: Request -> Maybe SessionId
     mSessionId req =
         parseSessionId
-            =<< lookup "Authorization" (requestHeaders req)
+            =<< lookup "AUTHORIZATION" (requestHeaders req)
 
     handler :: Request -> Handler Session
-    handler req = either throw401 (lookupSession state) $ do
+    handler req = do
+      either throw401 (lookupSession state) $
         maybeToEither "Missing SessionId" $ mSessionId req
 
 -- | We need to specify the data returned after authentication

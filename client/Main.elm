@@ -89,17 +89,6 @@ routePage route =
 
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
 init { sessionId } url key =
-    -- let
-    -- ( page, pageCmd ) =
-    --     Router.route routePage url
-    -- ( authorized, cmd ) =
-    --     Maybe.map (authorize page) sessionId
-    --         |> Maybe.map (\m -> ( m, pageCmd ))
-    --         |> Maybe.withDefault
-    --             ( Unauthorized Nothing
-    --             , Data.createSession SessionCreated
-    --             )
-    -- in
     ( { page = Unauthorized Nothing
       , route = Router.route identity url
       , userName = ""
@@ -177,7 +166,6 @@ update msg model =
                         , Cmd.batch
                             [ cmd
                             , storeSession t
-                            , Data.getSession (always NoOp) t
                             ]
                         )
                     )
@@ -196,7 +184,7 @@ update msg model =
         HomeMsg sMsg ->
             case model.page of
                 Authorized session (Home m) ->
-                    Home.update session sMsg m
+                    Home.update model.navigationKey session sMsg m
                         |> Tuple.mapFirst (\a -> { model | page = Authorized session <| Home a })
                         |> Tuple.mapSecond (Cmd.map HomeMsg)
 

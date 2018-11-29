@@ -1,10 +1,12 @@
 module Home exposing (Model, Msg(..), init, update, view)
 
-import Data exposing (Session)
+import Browser.Navigation as Navigation exposing (Key)
+import Data exposing (Session, Table)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
 import Http
+import Url.Builder as Url
 
 
 type alias Model =
@@ -22,11 +24,11 @@ init =
 type Msg
     = UpdateName String
     | Submit
-    | JoinResponse (Result Http.Error String)
+    | JoinResponse (Result Http.Error Table)
 
 
-update : Session -> Msg -> Model -> ( Model, Cmd Msg )
-update session msg model =
+update : Key -> Session -> Msg -> Model -> ( Model, Cmd Msg )
+update navigationKey session msg model =
     case msg of
         UpdateName str ->
             ( Model str, Cmd.none )
@@ -38,9 +40,10 @@ update session msg model =
 
         JoinResponse res ->
             case res of
-                Ok str ->
+                Ok { id } ->
                     ( model
-                    , Cmd.none
+                    , Navigation.pushUrl navigationKey <|
+                        Url.absolute [ "table", id ] []
                     )
 
                 Err _ ->
