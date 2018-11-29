@@ -32,6 +32,7 @@ executable agile-poker
                      , servant
                      , servant-server
                      , wai
+                     , wai-extra
                      , warp
                      , text
                      , aeson

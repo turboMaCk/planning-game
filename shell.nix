@@ -10,7 +10,7 @@ let
     ( hs:
       with hs;
       [ text containers random bytestring
-        aeson servant servant-server wai warp
+        aeson servant servant-server wai warp wai-extra
         websockets servant-websockets wai-middleware-static
         http-types cookie
       ]

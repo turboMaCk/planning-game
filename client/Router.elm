@@ -14,7 +14,7 @@ routes : Parser (Route -> a) a
 routes =
     Url.oneOf
         [ Url.map Home Url.top
-        , Url.map Table <| Url.s "room" </> Url.string
+        , Url.map Table <| Url.s "table" </> Url.string
         ]
 
 

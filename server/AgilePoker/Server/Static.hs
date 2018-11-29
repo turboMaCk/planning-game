@@ -2,16 +2,22 @@
 
 module AgilePoker.Server.Static (staticMiddleware) where
 
+import Data.Maybe (fromMaybe)
 import Network.HTTP.Types (status200)
-import Network.Wai (Response, Middleware, responseFile, rawPathInfo)
+import Network.Wai (Response, Middleware, responseFile, rawPathInfo, requestHeaders)
 import Network.Wai.Middleware.Static (staticPolicy, addBase)
+import Network.Wai.Parse (parseHttpAccept)
 
 
 indexMiddleware :: Middleware
 indexMiddleware application request respond =
-    if rawPathInfo request == "/"
-    then respond indexRes
-    else application request respond
+  if fromMaybe False $
+     (elem "text/html" . parseHttpAccept) <$>
+     lookup "Accept" (requestHeaders request)
+  then
+    respond indexRes
+  else
+    application request respond
 
   where
     indexRes :: Response

@@ -5,7 +5,7 @@ module Data exposing
     , createSession
     , createTable
     , getSession
-    , join
+    , joinTable
     , userDecoder
     )
 
@@ -105,8 +105,8 @@ createTable session msg name =
 -- @TODO: fix
 
 
-join : String -> (Result Http.Error String -> msg) -> String -> Cmd msg
-join id msg name =
+joinTable : String -> (Result Http.Error String -> msg) -> String -> Cmd msg
+joinTable id msg name =
     Http.post
         { url = Url.absolute [ "tables", id, "join" ] []
         , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]

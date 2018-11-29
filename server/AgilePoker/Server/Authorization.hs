@@ -57,7 +57,7 @@ authHeaderHandler state = mkAuthHandler handler
     mSessionId :: Request -> Maybe SessionId
     mSessionId req =
         parseSessionId
-            =<< lookup "AUTHORIZATION" (requestHeaders req)
+            =<< lookup "Authorization" (requestHeaders req)
 
     handler :: Request -> Handler Session
     handler req = do
