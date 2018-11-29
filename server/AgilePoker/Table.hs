@@ -3,10 +3,12 @@
 module AgilePoker.Table
   (Table(..), Tables, TableId
   , emptyTables, createTable, joinTable
+  , getTablePlayer
   , tableStreamHandler
   ) where
 
 import Data.ByteString (ByteString)
+import Data.Maybe (fromMaybe)
 import Data.Aeson.Types (ToJSON(..), (.=), object)
 import Control.Concurrent (MVar)
 import qualified Data.Map.Strict as Map
@@ -27,6 +29,7 @@ type TableId = ByteString
 -- @TODO: incomplete (missing games)
 data Table = Table
   { tableId :: TableId
+  -- @TODO: this should be dealer probably
   , tableBanker :: ( SessionId, Player )
   , tablePlayers :: Players
   }
@@ -86,6 +89,23 @@ joinTable session@Session { sessionId=id' } tableId name tables =
     updateTables :: Table -> Players -> IO ( Tables, Maybe Table )
     updateTables table players =
        undefined
+
+
+getTablePlayer :: Session -> TableId -> Tables -> IO (Maybe Player)
+getTablePlayer Session { sessionId=sId } tableId tables =
+  fromMaybe (pure Nothing) $ getPlayer' <$>
+    Map.lookup tableId tables
+
+  where
+    getPlayer' :: MVar Table -> IO (Maybe Player)
+    getPlayer' mvar = do
+      table <- Concurrent.readMVar mvar
+
+      if fst (tableBanker table) == sId then
+          pure $ Just $ snd (tableBanker table)
+      else
+          pure $ Map.lookup sId $ (tablePlayers table)
+
 
 
 -- @TODO: Implement

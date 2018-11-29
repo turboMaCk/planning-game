@@ -29,6 +29,7 @@ import AgilePoker.Event
 import AgilePoker.Table
 import AgilePoker.Server.Authorization
 import AgilePoker.Api.UserInfo
+import AgilePoker.Player
 
 
 -- State
@@ -55,7 +56,9 @@ type Api = "status"                                :> Get  '[JSON] T.Text
       :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" TableId  :> "join"
                      :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
-      :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" TableId  :> "stream" :> WebSocket
+      :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" TableId  :> "me"
+                                                   :> Get '[JSON] Player
+      -- :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" TableId  :> "stream" :> WebSocket
 
 
 api :: Proxy Api
@@ -65,9 +68,9 @@ api = Proxy
 -- Server
 
 
-genContext :: MVar Sessions -> Context (SessionAuth : SessionAuth ': '[])
+genContext :: MVar Sessions -> Context (SessionAuth ': '[])
 genContext state =
-  authHeaderHandler state :. authCookieHandler state :. EmptyContext
+  authHeaderHandler state :. EmptyContext
 
 
 server :: ServerState -> Server Api
@@ -76,7 +79,8 @@ server state = status
            :<|> getSession
            :<|> createTableHandler
            :<|> joinTableHandler
-           :<|> streamTableHandler
+           :<|> meHandler
+           -- :<|> streamTableHandler
 
   where
     status :: Handler T.Text
@@ -88,6 +92,19 @@ server state = status
 
     getSession :: Session -> Handler Session
     getSession = pure
+
+    meHandler :: Session -> TableId -> Handler Player
+    meHandler session tableId = do
+      ts <- liftIO $ Concurrent.readMVar (tables state)
+      mPlayer <- liftIO $ getTablePlayer session tableId ts
+
+      case mPlayer of
+        Just player ->
+          pure player
+
+        Nothing ->
+          throwError $ err401 { errBody = "You're not a player of this table" }
+
 
     -- join :: UserInfo -> Handler T.Text
     -- join UserInfo { userName=name } = do
@@ -111,8 +128,11 @@ server state = status
       mTable <- liftIO $ joinTable session id' name tables
 
       case mTable of
-        Just table -> pure table
-        Nothing -> throwError $ err409 { errBody = "Name already taken" }
+        Just table ->
+          pure table
+
+        Nothing ->
+          throwError $ err409 { errBody = "Name already taken" }
 
     streamTableHandler :: MonadIO m => Session -> TableId -> WS.Connection -> m ()
     streamTableHandler session id' =

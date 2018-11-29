@@ -13,6 +13,7 @@ import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHand
 import Control.Concurrent (MVar)
 import Control.Monad.IO.Class (liftIO)
 import Data.ByteString (ByteString, stripPrefix)
+import qualified Data.ByteString.Lazy as LB
 import Network.Wai (Request, requestHeaders)
 import Web.Cookie (parseCookies)
 import qualified Control.Concurrent as Concurrent
@@ -25,14 +26,26 @@ type SessionAuth =
 
 
 lookupSession :: MVar Sessions -> SessionId -> Handler Session
-lookupSession state' sessionId = do
+lookupSession state' sId = do
   state <- liftIO $ Concurrent.readMVar state'
-  case getSession sessionId state of
+  let mSession = getSession sId state
+  liftIO $ print (sessionId <$> mSession)
+  case mSession of
     Just session ->
       pure session
 
     Nothing ->
       throwError $ err403 { errBody = "Invalid SessionId" }
+
+
+maybeToEither :: a -> Maybe b -> Either a b
+maybeToEither e =
+  maybe (Left e) Right
+
+
+throw401 :: LB.ByteString -> Handler x
+throw401 msg =
+  throwError $ err401 { errBody = msg }
 
 
 -- Header Authorization
@@ -48,12 +61,6 @@ parseSessionId headerVal =
 authHeaderHandler :: MVar Sessions -> AuthHandler Request Session
 authHeaderHandler state = mkAuthHandler handler
   where
-    maybeToEither e =
-      maybe (Left e) Right
-
-    throw401 msg =
-        throwError $ err401 { errBody = msg }
-
     mSessionId :: Request -> Maybe SessionId
     mSessionId req =
         parseSessionId
@@ -74,20 +81,14 @@ type instance AuthServerData (AuthProtect "header") = Session
 authCookieHandler :: MVar Sessions -> AuthHandler Request Session
 authCookieHandler state = mkAuthHandler handler
   where
-  maybeToEither e =
-    maybe (Left e) Right
+    mSessionId :: Request -> Maybe SessionId
+    mSessionId req =
+        lookup "authorization" . parseCookies
+            =<< lookup "cookie" (requestHeaders req)
 
-  throw401 msg =
-    throwError $ err401 { errBody = msg }
-
-  mSessionId :: Request -> Maybe SessionId
-  mSessionId req =
-    lookup "authorization" . parseCookies
-        =<< lookup "cookie" (requestHeaders req)
-
-  handler :: Request -> Handler Session
-  handler req = either throw401 (lookupSession state) $ do
-    maybeToEither "Missing SessionId" $ mSessionId req
+    handler :: Request -> Handler Session
+    handler req = either throw401 (lookupSession state) $ do
+        maybeToEither "Missing SessionId" $ mSessionId req
 
 
 -- | We need to specify the data returned after authentication

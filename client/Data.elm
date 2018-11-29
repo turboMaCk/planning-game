@@ -1,9 +1,10 @@
 module Data exposing
     ( Session
-    , User
     , Table
+    , User
     , createSession
     , createTable
+    , getMe
     , getSession
     , joinTable
     , userDecoder
@@ -67,6 +68,19 @@ userDecoder =
     Decode.succeed User
         |> Decode.andMap (Decode.field "name" Decode.string)
         |> Decode.andMap (Decode.field "connected" Decode.bool)
+
+
+getMe : String -> String -> (Result Http.Error User -> msg) -> Cmd msg
+getMe token tableId msg =
+    Http.request
+        { method = "GET"
+        , url = Url.absolute [ "tables", tableId, "me" ] []
+        , body = Http.emptyBody
+        , expect = Http.expectJson msg userDecoder
+        , headers = [ Http.header "Authorization" <| "Bearer " ++ token ]
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 

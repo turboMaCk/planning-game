@@ -1,4 +1,4 @@
-port module Main exposing (main)
+port module Main exposing (main, routePage)
 
 import Browser exposing (Document, UrlRequest(..))
 import Browser.Navigation as Navigation exposing (Key)
@@ -10,6 +10,7 @@ import Html.Events as Event
 import Http
 import Router exposing (Route)
 import Stream exposing (Event(..), StreamError(..))
+import Table
 import Task
 import Url exposing (Url)
 
@@ -21,14 +22,9 @@ port storeSession : String -> Cmd msg
 -- Model
 
 
-type alias GameModel =
-    { players : List User
-    }
-
-
 type Page
     = Home Home.Model
-    | Table GameModel
+    | Table Table.Model
     | NotFound
 
 
@@ -43,11 +39,19 @@ type Authorize a b
 -}
 
 
-{-| flip Authorized
--}
-authorize : a -> b -> Authorize a b
-authorize a b =
-    Authorized b a
+authorize : b -> (b -> c) -> Authorize a b -> Authorize c b
+authorize b f auth =
+    Authorized b <| f b
+
+
+forAuthorized : (b -> c) -> Authorize a b -> Authorize c b
+forAuthorized f auth =
+    case auth of
+        Unauthorized err ->
+            Unauthorized err
+
+        Authorized b _ ->
+            Authorized b <| f b
 
 
 type alias Model =
@@ -66,23 +70,50 @@ type alias Flags =
 -- @TODO: this mapping msgs
 
 
-routePage : Route -> ( Page, Cmd Msg )
-routePage route =
-    case route of
-        Router.Home ->
-            Tuple.mapFirst Home Home.init
+routePage :
+    ((Session -> ( Page, Cmd Msg ))
+     -> Authorize Page Session
+     -> Authorize ( Page, Cmd msg ) Session
+    )
+    -> Router.Route
+    -> Model
+    -> ( Model, Cmd msg )
+routePage authorizeF route model =
+    let
+        genPage session =
+            case route of
+                Router.Home ->
+                    Tuple.mapFirst Home Home.init
 
-        Router.Table sId ->
-            ( Table { players = [] }
-            , Cmd.batch
-                [ Ok sId
-                    |> Result.map Stream.connect
-                    |> Result.withDefault Cmd.none
-                ]
+                Router.Table id ->
+                    Table.init session.id id
+                        |> Tuple.mapFirst Table
+                        |> Tuple.mapSecond (Cmd.map TableMsg)
+
+                -- ( Table { players = [] }
+                -- , Cmd.batch
+                --     [ Ok sId
+                --         |> Result.map Stream.connect
+                --         |> Result.withDefault Cmd.none
+                --     ]
+                -- )
+                Router.NotFound ->
+                    ( NotFound, Cmd.none )
+
+        newAuthorized =
+            authorizeF genPage model.page
+    in
+    case newAuthorized of
+        Authorized ses ( page, cmd ) ->
+            ( { model
+                | page = Authorized ses page
+                , route = route
+              }
+            , cmd
             )
 
-        Router.NotFound ->
-            ( NotFound, Cmd.none )
+        Unauthorized _ ->
+            ( model, Cmd.none )
 
 
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
@@ -106,6 +137,7 @@ type Msg
     | UrlChanged Url
     | SessionCreated (Result Http.Error Session)
     | HomeMsg Home.Msg
+    | TableMsg Table.Msg
 
 
 updateUser : User -> List User -> List User
@@ -141,44 +173,16 @@ update msg model =
                 route =
                     -- @TODO this is silly
                     Router.route identity url
-
-                ( page, cmd ) =
-                    routePage route
             in
-            case model.page of
-                Authorized session m ->
-                    ( { model
-                        | page = Authorized session page
-                        , route = route
-                      }
-                    , Cmd.none
-                    )
-
-                Unauthorized e ->
-                    ( model, Cmd.none )
+            routePage forAuthorized route model
 
         SessionCreated res ->
-            let
-                ( page, cmd ) =
-                    routePage model.route
-            in
-            -- @TODO: crap
-            Result.map (\s -> ( authorize page s, s.id )) res
-                |> Result.map
-                    (\( p, t ) ->
-                        ( { model | page = p }
-                        , Cmd.batch
-                            [ cmd
-                            , storeSession t
-                            ]
-                        )
-                    )
-                -- this cycles!
-                -- match status
-                |> Result.withDefault
-                    ( model
-                    , Data.createSession SessionCreated
-                    )
+            case res of
+                Ok session ->
+                    routePage (authorize session) model.route model
+
+                Err session ->
+                    ( model, Data.createSession SessionCreated )
 
         HomeMsg sMsg ->
             case model.page of
@@ -189,6 +193,9 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        TableMsg _ ->
+            ( model, Cmd.none )
 
 
 

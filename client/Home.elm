@@ -35,6 +35,7 @@ update navigationKey session msg model =
 
         Submit ->
             ( model
+              -- or joint table
             , Data.createTable session JoinResponse model.userName
             )
 
