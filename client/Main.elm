@@ -14,6 +14,7 @@ import Stream exposing (Event(..), StreamError(..))
 import Table
 import Task
 import Url exposing (Url)
+import Authorize exposing (Authorize(..))
 
 
 port storeSession : String -> Cmd msg
@@ -27,26 +28,6 @@ type Page
     = Home Home.Model
     | Table Table.Model
     | NotFound
-
-
-type Authorize a b
-    = Authorized b a
-    | Unauthorized (Maybe Http.Error)
-
-
-authorize : b -> (b -> c) -> Authorize a b -> Authorize c b
-authorize b f auth =
-    Authorized b <| f b
-
-
-forAuthorized : (b -> c) -> Authorize a b -> Authorize c b
-forAuthorized f auth =
-    case auth of
-        Unauthorized err ->
-            Unauthorized err
-
-        Authorized b _ ->
-            Authorized b <| f b
 
 
 type alias Model =
@@ -106,7 +87,7 @@ routePage authorizeF route model =
 
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
 init { sessionId } url key =
-    ( { page = Unauthorized Nothing
+    ( { page = Authorize.init
       , route = Router.route url
       , navigationKey = key
       }
@@ -145,12 +126,12 @@ update msg model =
                     ( model, Cmd.none )
 
         UrlChanged url ->
-            routePage forAuthorized (Router.route url) model
+            routePage Authorize.for (Router.route url) model
 
         SessionCreated res ->
             case res of
                 Ok session ->
-                    routePage (authorize session) model.route model
+                    routePage (Authorize.by session) model.route model
                         |> Cmd.add (storeSession session.id)
 
                 Err session ->

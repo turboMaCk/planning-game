@@ -46,7 +46,6 @@
 
     // Writing cookie
     app.ports.storeSession.subscribe(function (id) {
-        console.log(id);
         cookie.write('sessionId', id);
     });
 
