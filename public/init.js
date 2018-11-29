@@ -66,8 +66,8 @@
     //     };
     // });
 
-    app.ports.disconnect.subscribe(function() {
-        console.log('erase');
-        cookie.erase('sessionId');
-    });
+    // app.ports.disconnect.subscribe(function() {
+    //     console.log('erase');
+    //     cookie.erase('sessionId');
+    // });
 })();

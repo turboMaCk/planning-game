@@ -7,6 +7,7 @@ import Url.Parser as Url exposing ((</>), Parser)
 type Route
     = Home
     | Table String
+    | JoinTable String
     | NotFound
 
 
@@ -15,6 +16,7 @@ routes =
     Url.oneOf
         [ Url.map Home Url.top
         , Url.map Table <| Url.s "table" </> Url.string
+        , Url.map JoinTable <| Url.s "table" </> Url.string </> Url.s "join"
         ]
 
 

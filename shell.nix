@@ -12,7 +12,7 @@ let
       [ text containers random bytestring
         aeson servant servant-server wai warp wai-extra
         websockets servant-websockets wai-middleware-static
-        http-types cookie
+        http-types cookie mtl
       ]
     );
 in

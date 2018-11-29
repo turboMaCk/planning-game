@@ -115,14 +115,14 @@ createTable session msg name =
         }
 
 
-
--- @TODO: fix
-
-
-joinTable : String -> (Result Http.Error String -> msg) -> String -> Cmd msg
-joinTable id msg name =
-    Http.post
-        { url = Url.absolute [ "tables", id, "join" ] []
+joinTable : String -> Session -> (Result Http.Error Table -> msg) -> String -> Cmd msg
+joinTable id session msg name =
+    Http.request
+        { method = "POST"
+        , url = Url.absolute [ "tables", id, "join" ] []
         , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
-        , expect = Http.expectJson msg Decode.string
+        , expect = Http.expectJson msg tableDecoder
+        , headers = [ Http.header "Authorization" <| "Bearer " ++ session.id ]
+        , timeout = Nothing
+        , tracker = Nothing
         }

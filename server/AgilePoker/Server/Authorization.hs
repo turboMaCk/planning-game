@@ -19,21 +19,36 @@ import Web.Cookie (parseCookies)
 import qualified Control.Concurrent as Concurrent
 
 import AgilePoker.Session
+import AgilePoker.Api.Errors
 
 
 type SessionAuth =
   AuthHandler Request Session
 
 
+data AuthorizationError
+  = SessionNotFound
+  | SessionIdMissing
+
+
+instance Error AuthorizationError where
+  toType SessionNotFound  = Forbidden
+  toType SessionIdMissing = Unauthorized
+
+  toReadable SessionNotFound  = "Session Expired."
+  toReadable SessionIdMissing = "Session required."
+
+
 lookupSession :: MVar Sessions -> SessionId -> Handler Session
 lookupSession state' sId = do
   state <- liftIO $ Concurrent.readMVar state'
+
   case getSession sId state of
     Just session ->
       pure session
 
     Nothing ->
-      throwError $ err403 { errBody = "Invalid SessionId" }
+      respondError SessionNotFound
 
 
 maybeToEither :: a -> Maybe b -> Either a b
@@ -41,9 +56,10 @@ maybeToEither e =
   maybe (Left e) Right
 
 
-throw401 :: LB.ByteString -> Handler x
-throw401 msg =
-  throwError $ err401 { errBody = msg }
+handler :: (Request -> Maybe SessionId) -> MVar Sessions -> Request -> Handler Session
+handler getSession state req = do
+    either respondError (lookupSession state) $
+        maybeToEither SessionIdMissing $ getSession req
 
 
 -- Header Authorization
@@ -57,17 +73,13 @@ parseSessionId headerVal =
 
 
 authHeaderHandler :: MVar Sessions -> AuthHandler Request Session
-authHeaderHandler state = mkAuthHandler handler
+authHeaderHandler = mkAuthHandler . handler get
   where
-    mSessionId :: Request -> Maybe SessionId
-    mSessionId req =
+    get :: Request -> Maybe SessionId
+    get req =
         parseSessionId
             =<< lookup "Authorization" (requestHeaders req)
 
-    handler :: Request -> Handler Session
-    handler req = do
-      either throw401 (lookupSession state) $
-        maybeToEither "Missing SessionId" $ mSessionId req
 
 -- | We need to specify the data returned after authentication
 type instance AuthServerData (AuthProtect "header") = Session
@@ -77,16 +89,12 @@ type instance AuthServerData (AuthProtect "header") = Session
 
 
 authCookieHandler :: MVar Sessions -> AuthHandler Request Session
-authCookieHandler state = mkAuthHandler handler
+authCookieHandler = mkAuthHandler . handler get
   where
-    mSessionId :: Request -> Maybe SessionId
-    mSessionId req =
+    get :: Request -> Maybe SessionId
+    get req =
         lookup "authorization" . parseCookies
             =<< lookup "cookie" (requestHeaders req)
-
-    handler :: Request -> Handler Session
-    handler req = either throw401 (lookupSession state) $ do
-        maybeToEither "Missing SessionId" $ mSessionId req
 
 
 -- | We need to specify the data returned after authentication

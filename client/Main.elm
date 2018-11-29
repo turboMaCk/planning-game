@@ -1,10 +1,11 @@
 port module Main exposing (main, routePage)
 
+import Authorize exposing (Authorize(..))
 import Browser exposing (Document, UrlRequest(..))
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Data exposing (Session, User)
-import Home
+import Join
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
@@ -14,7 +15,6 @@ import Stream exposing (Event(..), StreamError(..))
 import Table
 import Task
 import Url exposing (Url)
-import Authorize exposing (Authorize(..))
 
 
 port storeSession : String -> Cmd msg
@@ -25,8 +25,9 @@ port storeSession : String -> Cmd msg
 
 
 type Page
-    = Home Home.Model
+    = Home Join.Model
     | Table Table.Model
+    | JoinTable String Join.Model
     | NotFound
 
 
@@ -42,10 +43,6 @@ type alias Flags =
     }
 
 
-
--- @TODO: this mapping msgs
-
-
 routePage :
     ((Session -> ( Page, Cmd Msg ))
      -> Authorize Page Session
@@ -59,12 +56,15 @@ routePage authorizeF route model =
         genPage session =
             case route of
                 Router.Home ->
-                    Tuple.mapFirst Home Home.init
+                    Tuple.mapFirst Home Join.init
 
                 Router.Table id ->
                     Table.init session.id id
                         |> Tuple.mapFirst Table
                         |> Tuple.mapSecond (Cmd.map TableMsg)
+
+                Router.JoinTable id ->
+                    Tuple.mapFirst (JoinTable id) Join.init
 
                 Router.NotFound ->
                     ( NotFound, Cmd.none )
@@ -105,8 +105,9 @@ type Msg
     | RouteTo UrlRequest
     | UrlChanged Url
     | SessionCreated (Result Http.Error Session)
-    | HomeMsg Home.Msg
+    | HomeMsg Join.Msg
     | TableMsg Table.Msg
+    | JoinTableMsg Join.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -140,15 +141,32 @@ update msg model =
         HomeMsg sMsg ->
             case model.page of
                 Authorized session (Home m) ->
-                    Home.update model.navigationKey session sMsg m
+                    Join.update Data.createTable model.navigationKey session sMsg m
                         |> Tuple.mapFirst (\a -> { model | page = Authorized session <| Home a })
                         |> Tuple.mapSecond (Cmd.map HomeMsg)
 
                 _ ->
                     ( model, Cmd.none )
 
-        TableMsg _ ->
-            ( model, Cmd.none )
+        TableMsg sMsg ->
+            case model.page of
+                Authorized session (Table m) ->
+                    Table.update model.navigationKey sMsg m
+                        |> Tuple.mapFirst (\a -> { model | page = Authorized session <| Table a })
+                        |> Tuple.mapSecond (Cmd.map TableMsg)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        JoinTableMsg sMsg ->
+            case model.page of
+                Authorized session (JoinTable id m) ->
+                    Join.update (Data.joinTable id) model.navigationKey session sMsg m
+                        |> Tuple.mapFirst (\a -> { model | page = Authorized session <| JoinTable id a })
+                        |> Tuple.mapSecond (Cmd.map JoinTableMsg)
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 
@@ -173,12 +191,17 @@ view model =
                     case page of
                         Home m ->
                             ( "Agile Poker"
-                            , [ Html.map HomeMsg <| Home.view m ]
+                            , [ Html.map HomeMsg <| Join.view m ]
                             )
 
                         Table m ->
                             ( "Table | Agile Poker"
-                            , [ Html.text "table" ]
+                            , [ Html.map TableMsg <| Table.view m ]
+                            )
+
+                        JoinTable _ m ->
+                            ( "Join | Agile Poker"
+                            , [ Html.map JoinTableMsg <| Join.view m ]
                             )
 
                         NotFound ->

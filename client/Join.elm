@@ -1,4 +1,4 @@
-module Home exposing (Model, Msg(..), init, update, view)
+module Join exposing (Model, Msg(..), init, update, view)
 
 import Browser.Navigation as Navigation exposing (Key)
 import Data exposing (Session, Table)
@@ -27,16 +27,22 @@ type Msg
     | JoinResponse (Result Http.Error Table)
 
 
-update : Key -> Session -> Msg -> Model -> ( Model, Cmd Msg )
-update navigationKey session msg model =
+update :
+    (Session -> (Result Http.Error Table -> Msg) -> String -> Cmd Msg)
+    -> Key
+    -> Session
+    -> Msg
+    -> Model
+    -> ( Model, Cmd Msg )
+update action navigationKey session msg model =
     case msg of
         UpdateName str ->
             ( Model str, Cmd.none )
 
         Submit ->
             ( model
-              -- or joint table
-            , Data.createTable session JoinResponse model.userName
+              -- or join table
+            , action session JoinResponse model.userName
             )
 
         JoinResponse res ->

@@ -1,8 +1,12 @@
-module Table exposing (Model, Msg, init)
+module Table exposing (Model, Msg, init, update, view)
 
+import Browser.Navigation as Navigation exposing (Key)
+import Cmd.Extra as Cmd
 import Data exposing (Table, User)
 import Dict exposing (Dict)
+import Html exposing (Html)
 import Http
+import Url.Builder as Url
 
 
 type alias Model =
@@ -26,3 +30,24 @@ init token id =
 
 type Msg
     = Me (Result Http.Error User)
+
+
+update : Key -> Msg -> Model -> ( Model, Cmd Msg )
+update navigationKey msg model =
+    case msg of
+        Me result ->
+            case result of
+                Ok player ->
+                    { model | me = Just player }
+                        |> Cmd.pure
+
+                Err _ ->
+                    ( model
+                    , Navigation.pushUrl navigationKey <|
+                        Url.absolute [ "table", model.tableId, "join" ] []
+                    )
+
+
+view : Model -> Html Msg
+view model =
+    Html.text <| Maybe.withDefault "" <| Maybe.map .name model.me
