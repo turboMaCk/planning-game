@@ -44,11 +44,8 @@ lookupSession state' sId = do
   state <- liftIO $ Concurrent.readMVar state'
 
   case getSession sId state of
-    Just session ->
-      pure session
-
-    Nothing ->
-      respondError SessionNotFound
+    Just session -> pure session
+    Nothing      -> respondError SessionNotFound
 
 
 maybeToEither :: a -> Maybe b -> Either a b
@@ -67,8 +64,8 @@ handler getSession state req = do
 
 -- | This function takes extract session id from header value
 -- Correct format is `Bearer xxxx` where xxxx is a SessionId itself
-parseSessionId :: ByteString -> Maybe SessionId
-parseSessionId headerVal =
+parseAuthorizationHeader :: ByteString -> Maybe SessionId
+parseAuthorizationHeader headerVal =
   stripPrefix "Bearer " headerVal
 
 
@@ -77,7 +74,7 @@ authHeaderHandler = mkAuthHandler . handler get
   where
     get :: Request -> Maybe SessionId
     get req =
-        parseSessionId
+        parseAuthorizationHeader
             =<< lookup "Authorization" (requestHeaders req)
 
 
@@ -94,7 +91,7 @@ authCookieHandler = mkAuthHandler . handler get
     get :: Request -> Maybe SessionId
     get req =
         lookup "authorization" . parseCookies
-            =<< lookup "cookie" (requestHeaders req)
+            =<< lookup "Cookie" (requestHeaders req)
 
 
 -- | We need to specify the data returned after authentication

@@ -42,10 +42,10 @@ instance Error a => ToJSON (Wrap a) where
 
 
 respondError :: Error a => MonadError ServantErr m => a -> m b
-respondError res =
-  throwError $ err { errBody = encode $ toJSON (Wrap res)
-                   , errHeaders = [ ("Content-Type", "application/json;charset=utf-8") ]
-                   }
+respondError res = throwError $ err
+  { errBody = encode $ toJSON (Wrap res)
+  , errHeaders = [ ("Content-Type", "application/json;charset=utf-8") ]
+  }
   where
     err =
         case toType res of
