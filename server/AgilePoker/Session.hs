@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module AgilePoker.Session
-  ( Session(..), SessionId, Sessions
+  ( Session(..), SessionId, Sessions, SessionError
   , emptySessions, addSession, getSession, removeSession
   , assignConnection, disconnectSession
   ) where
@@ -19,6 +19,7 @@ import qualified Data.Aeson.Types as AT
 
 
 import AgilePoker.Id
+import AgilePoker.Api.Errors
 
 
 data Session = Session
@@ -45,6 +46,15 @@ type Sessions =
   Map ByteString Session
 
 
+data SessionError
+  = SessionDoesNotExist
+
+
+instance Error SessionError where
+  toType SessionDoesNotExist     = NotFound
+  toReadable SessionDoesNotExist = "Session doesn't exist"
+
+
 addSession :: T.Text -> Sessions -> IO ( Sessions, ( SessionId, Session ) )
 addSession name sessions = do
     newId <- generateId sessions
@@ -54,7 +64,7 @@ addSession name sessions = do
             )
 
 
-assignConnection :: SessionId -> WS.Connection -> Sessions -> ( Sessions, Maybe ( Int, Session ) )
+assignConnection :: SessionId -> WS.Connection -> Sessions -> ( Sessions, Either SessionError ( Int, Session ) )
 assignConnection id' conn sessions =
   case Map.lookup id' sessions of
     Just (session@(Session { sessionConnections=conns })) ->
@@ -62,10 +72,10 @@ assignConnection id' conn sessions =
           updatedSession = (session { sessionConnections = IntMap.insert index conn conns })
       in
       ( Map.insert id' updatedSession sessions
-      , Just ( index, updatedSession )
+      , Right ( index, updatedSession )
       )
     Nothing ->
-      ( sessions, Nothing )
+      ( sessions, Left $ SessionDoesNotExist )
 
 
 getSession :: ByteString -> Sessions -> Maybe Session
@@ -86,3 +96,11 @@ disconnectSession ( sessionId, index ) = Map.alter (fmap update) sessionId
     update :: Session -> Session
     update session@(Session { sessionConnections=conns }) =
       session { sessionConnections = IntMap.delete index conns }
+
+
+-- utils
+
+
+maybeToEither :: a -> Maybe b -> Either a b
+maybeToEither e =
+  maybe (Left e) Right

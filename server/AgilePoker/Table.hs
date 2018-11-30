@@ -20,6 +20,7 @@ import qualified Control.Concurrent as Concurrent
 import AgilePoker.Id
 import AgilePoker.Session
 import AgilePoker.Player
+import AgilePoker.Api.Errors
 
 
 -- @TODO: Just alias for now
@@ -29,7 +30,6 @@ type TableId = ByteString
 -- @TODO: incomplete (missing games)
 data Table = Table
   { tableId :: TableId
-  -- @TODO: this should be dealer probably
   , tableBanker :: ( SessionId, Player )
   , tablePlayers :: Players
   }
@@ -45,6 +45,20 @@ instance ToJSON Table where
 
 type Tables =
   Map.Map ByteString (MVar Table)
+
+
+data TableError
+  = TableNotFound
+  | PlayerNotFound
+  | NameTaken
+
+
+instance Error TableError where
+  toType NameTaken     = Conflict
+  toType TableNotFound = NotFound
+
+  toReadable NameTaken     = "Name is already taken"
+  toReadable TableNotFound = "Table doesn't exist"
 
 
 emptyTables :: Tables
@@ -63,13 +77,13 @@ createTable Session { sessionId=id' } name tables = do
 
 
 -- @TODO: Add check if session is not already present
-joinTable :: Session -> TableId -> T.Text -> Tables -> IO ( Maybe Table )
+joinTable :: Session -> TableId -> T.Text -> Tables -> IO ( Either TableError Table )
 joinTable session@Session { sessionId=id' } tableId name tables =
   case Map.lookup tableId tables of
     Just mvar -> do
       table <- Concurrent.readMVar mvar
       if playerName (snd $ tableBanker table) == name then
-        pure Nothing
+        pure $ Left NameTaken
       else
         let
             mPlayers = addPlayer session name (tablePlayers table)
@@ -78,12 +92,12 @@ joinTable session@Session { sessionId=id' } tableId name tables =
           Just newPlayers ->
             Concurrent.modifyMVar mvar $ \t -> do
                let updatedTable = t { tablePlayers = newPlayers }
-               pure ( updatedTable, Just updatedTable )
+               pure ( updatedTable, Right updatedTable )
           Nothing ->
-             pure Nothing
+             pure $ Left NameTaken
 
     Nothing ->
-      pure Nothing
+      pure $ Left TableNotFound
 
   where
     updateTables :: Table -> Players -> IO ( Tables, Maybe Table )
@@ -91,20 +105,21 @@ joinTable session@Session { sessionId=id' } tableId name tables =
        undefined
 
 
-getTablePlayer :: Session -> TableId -> Tables -> IO (Maybe Player)
+getTablePlayer :: Session -> TableId -> Tables -> IO (Either TableError Player)
 getTablePlayer Session { sessionId=sId } tableId tables =
-  fromMaybe (pure Nothing) $ getPlayer' <$>
+  fromMaybe (pure $ Left TableNotFound) $ getPlayer' <$>
     Map.lookup tableId tables
 
   where
-    getPlayer' :: MVar Table -> IO (Maybe Player)
+    getPlayer' :: MVar Table -> IO (Either TableError Player)
     getPlayer' mvar = do
       table <- Concurrent.readMVar mvar
 
       if fst (tableBanker table) == sId then
-          pure $ Just $ snd (tableBanker table)
+          pure $ Right $ snd (tableBanker table)
       else
-          pure $ Map.lookup sId $ (tablePlayers table)
+          pure $ maybe (Left PlayerNotFound) Right $
+            Map.lookup sId $ tablePlayers table
 
 
 

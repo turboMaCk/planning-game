@@ -30,6 +30,7 @@ import AgilePoker.Table
 import AgilePoker.Server.Authorization
 import AgilePoker.Api.UserInfo
 import AgilePoker.Player
+import AgilePoker.Api.Errors
 
 
 -- State
@@ -96,14 +97,9 @@ server state = status
     meHandler :: Session -> TableId -> Handler Player
     meHandler session tableId = do
       ts <- liftIO $ Concurrent.readMVar (tables state)
-      mPlayer <- liftIO $ getTablePlayer session tableId ts
+      playerRes <- liftIO $ getTablePlayer session tableId ts
 
-      case mPlayer of
-        Just player ->
-          pure player
-
-        Nothing ->
-          throwError $ err401 { errBody = "You're not a player of this table" }
+      either respondError pure playerRes
 
 
     -- join :: UserInfo -> Handler T.Text
@@ -125,14 +121,9 @@ server state = status
     joinTableHandler :: Session -> TableId -> UserInfo -> Handler Table
     joinTableHandler session id' UserInfo { userName=name } = do
       tables <- liftIO $ Concurrent.readMVar (tables state)
-      mTable <- liftIO $ joinTable session id' name tables
+      tableRes <- liftIO $ joinTable session id' name tables
 
-      case mTable of
-        Just table ->
-          pure table
-
-        Nothing ->
-          throwError $ err409 { errBody = "Name already taken" }
+      either respondError pure tableRes
 
     streamTableHandler :: MonadIO m => Session -> TableId -> WS.Connection -> m ()
     streamTableHandler session id' =
@@ -165,7 +156,7 @@ handleSocket state' session conn = do
   forM_ state $ WS.sendTextData conn . encodeEvent . userJoined
 
   case mConnectionId of
-    Just ( connectionId, session ) ->
+    Right ( connectionId, session ) ->
         -- Disconnect user at the end of session
         flip finally (disconnect ( sessionId', connectionId )) $ do
             -- ping thread
@@ -178,7 +169,7 @@ handleSocket state' session conn = do
             -- assign handler
             handleSocketEvent state' conn
 
-    Nothing ->
+    Left _ ->
       -- @TODO: Add error handling
       -- but this is very unlikely situation
       pure ()

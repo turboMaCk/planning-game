@@ -35,7 +35,7 @@ instance Error AuthorizationError where
   toType SessionNotFound  = Forbidden
   toType SessionIdMissing = Unauthorized
 
-  toReadable SessionNotFound  = "Session Expired."
+  toReadable SessionNotFound  = "Session expired."
   toReadable SessionIdMissing = "Session required."
 
 
