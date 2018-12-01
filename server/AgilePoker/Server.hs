@@ -59,7 +59,7 @@ type Api = "status"                                :> Get  '[JSON] T.Text
                      :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" TableId  :> "me"
                                                    :> Get '[JSON] Player
-      -- :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" TableId  :> "stream" :> WebSocket
+      :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" TableId  :> "stream" :> WebSocket
 
 
 api :: Proxy Api
@@ -69,9 +69,9 @@ api = Proxy
 -- Server
 
 
-genContext :: MVar Sessions -> Context (SessionAuth ': '[])
+genContext :: MVar Sessions -> Context (SessionHeaderAuth : SessionCookieAuth ': '[])
 genContext state =
-  authHeaderHandler state :. EmptyContext
+  authHeaderHandler state :. authCookieHandler state :. EmptyContext
 
 
 server :: ServerState -> Server Api
@@ -81,7 +81,7 @@ server state = status
            :<|> createTableHandler
            :<|> joinTableHandler
            :<|> meHandler
-           -- :<|> streamTableHandler
+           :<|> streamTableHandler
 
   where
     status :: Handler T.Text
@@ -91,16 +91,8 @@ server state = status
     createSession = pure . snd =<<
       (liftIO $ Concurrent.modifyMVar (sessions state) $ addSession "")
 
-    getSession :: Session -> Handler Session
-    getSession = pure
-
-    meHandler :: Session -> TableId -> Handler Player
-    meHandler session tableId = do
-      ts <- liftIO $ Concurrent.readMVar (tables state)
-      playerRes <- liftIO $ getTablePlayer session tableId ts
-
-      either respondError pure playerRes
-
+    getSession :: (HeaderAuth Session) -> Handler Session
+    getSession = pure . unHeaderAuth
 
     -- join :: UserInfo -> Handler T.Text
     -- join UserInfo { userName=name } = do
@@ -113,20 +105,27 @@ server state = status
 
     --   pure $ TE.decodeUtf8 id'
 
-    createTableHandler :: Session -> UserInfo -> Handler Table
-    createTableHandler session UserInfo { userName=name } =
+    createTableHandler :: (HeaderAuth Session) -> UserInfo -> Handler Table
+    createTableHandler (HeaderAuth session) UserInfo { userName=name } =
       liftIO $ Concurrent.modifyMVar (tables state) $
         createTable session name
 
-    joinTableHandler :: Session -> TableId -> UserInfo -> Handler Table
-    joinTableHandler session id' UserInfo { userName=name } = do
+    joinTableHandler :: (HeaderAuth Session) -> TableId -> UserInfo -> Handler Table
+    joinTableHandler (HeaderAuth session) id' UserInfo { userName=name } = do
       tables <- liftIO $ Concurrent.readMVar (tables state)
       tableRes <- liftIO $ joinTable session id' name tables
 
       either respondError pure tableRes
 
-    streamTableHandler :: MonadIO m => Session -> TableId -> WS.Connection -> m ()
-    streamTableHandler session id' =
+    meHandler :: (HeaderAuth Session) -> TableId -> Handler Player
+    meHandler (HeaderAuth session) tableId = do
+      ts <- liftIO $ Concurrent.readMVar (tables state)
+      playerRes <- liftIO $ getTablePlayer session tableId ts
+
+      either respondError pure playerRes
+
+    streamTableHandler :: MonadIO m => (CookieAuth Session) -> TableId -> WS.Connection -> m ()
+    streamTableHandler (CookieAuth session) id' =
       liftIO . tableStreamHandler (tables state) session id'
 
 

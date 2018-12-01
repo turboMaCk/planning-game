@@ -5,15 +5,13 @@ import Browser exposing (Document, UrlRequest(..))
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Data exposing (Session, User)
-import Join
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
 import Http
+import Join
 import Router exposing (Route)
-import Stream exposing (Event(..), StreamError(..))
 import Table
-import Task
 import Url exposing (Url)
 
 
@@ -175,7 +173,13 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    case model.page of
+        Authorized session (Table m) ->
+            Table.subscriptions m
+                |> Sub.map TableMsg
+
+        _ ->
+            Sub.none
 
 
 

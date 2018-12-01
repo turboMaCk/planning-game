@@ -1,4 +1,4 @@
-module Table exposing (Model, Msg, init, update, view)
+module Table exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
@@ -7,12 +7,16 @@ import Data exposing (ApiError, Table, TableError(..), User)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Http
+import Stream exposing (StreamError)
 import Url.Builder as Url
 
 
+{-| @TODO: Think if tableError and me shouldn't be
+single Result type
+-}
 type alias Model =
     { tableId : String
-    , me : Maybe User -- @TODO better error type?
+    , me : Maybe User
     , banker : Maybe User
     , players : Dict String Bool
     , tableError : Maybe (ApiError TableError)
@@ -33,16 +37,21 @@ init token id =
 
 type Msg
     = Me (Result (ApiError TableError) User)
+    | NoOp
 
 
 update : Key -> Msg -> Model -> ( Model, Cmd Msg )
 update navigationKey msg model =
     case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
         Me result ->
             case result of
                 Ok player ->
-                    { model | me = Just player }
-                        |> Cmd.pure
+                    ( { model | me = Just player }
+                    , Stream.connect model.tableId
+                    )
 
                 Err err ->
                     ( { model | tableError = Just err }
@@ -53,6 +62,15 @@ update navigationKey msg model =
                       else
                         Cmd.none
                     )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Stream.observe <|
+        \event ->
+            case event of
+                _ ->
+                    NoOp
 
 
 view : Model -> Html Msg

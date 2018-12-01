@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 
 module AgilePoker.Server.Authorization
-  ( SessionAuth
+  ( HeaderAuth(..), CookieAuth(..), SessionHeaderAuth, SessionCookieAuth
   , authHeaderHandler, authCookieHandler
   ) where
 
@@ -20,10 +20,6 @@ import qualified Control.Concurrent as Concurrent
 
 import AgilePoker.Session
 import AgilePoker.Api.Errors
-
-
-type SessionAuth =
-  AuthHandler Request Session
 
 
 data AuthorizationError
@@ -53,13 +49,21 @@ maybeToEither e =
   maybe (Left e) Right
 
 
-handler :: (Request -> Maybe SessionId) -> MVar Sessions -> Request -> Handler Session
-handler getSession state req = do
-    either respondError (lookupSession state) $
-        maybeToEither SessionIdMissing $ getSession req
+handler :: (Request -> Maybe SessionId) -> (Session -> a) -> MVar Sessions -> Request -> Handler a
+handler getSessionId construct state req =
+    either respondError (\id' -> construct <$> lookupSession state id') $
+        maybeToEither SessionIdMissing $ getSessionId req
 
 
 -- Header Authorization
+
+
+newtype HeaderAuth a =
+  HeaderAuth { unHeaderAuth :: a }
+
+
+type SessionHeaderAuth =
+  AuthHandler Request (HeaderAuth Session)
 
 
 -- | This function takes extract session id from header value
@@ -69,8 +73,8 @@ parseAuthorizationHeader headerVal =
   stripPrefix "Bearer " headerVal
 
 
-authHeaderHandler :: MVar Sessions -> AuthHandler Request Session
-authHeaderHandler = mkAuthHandler . handler get
+authHeaderHandler :: MVar Sessions -> AuthHandler Request (HeaderAuth Session)
+authHeaderHandler = mkAuthHandler . handler get HeaderAuth
   where
     get :: Request -> Maybe SessionId
     get req =
@@ -79,20 +83,28 @@ authHeaderHandler = mkAuthHandler . handler get
 
 
 -- | We need to specify the data returned after authentication
-type instance AuthServerData (AuthProtect "header") = Session
+type instance AuthServerData (AuthProtect "header") = (HeaderAuth Session)
 
 
 -- Cookie Authorization
 
 
-authCookieHandler :: MVar Sessions -> AuthHandler Request Session
-authCookieHandler = mkAuthHandler . handler get
+newtype CookieAuth a =
+  CookieAuth { unCookieAuth :: a }
+
+
+type SessionCookieAuth =
+  AuthHandler Request (CookieAuth Session)
+
+
+authCookieHandler :: MVar Sessions -> AuthHandler Request (CookieAuth Session)
+authCookieHandler = mkAuthHandler . handler get CookieAuth
   where
     get :: Request -> Maybe SessionId
     get req =
-        lookup "authorization" . parseCookies
+        lookup "sessionId" . parseCookies
             =<< lookup "Cookie" (requestHeaders req)
 
 
 -- | We need to specify the data returned after authentication
-type instance AuthServerData (AuthProtect "cookie") = Session
+type instance AuthServerData (AuthProtect "cookie") = (CookieAuth Session)
