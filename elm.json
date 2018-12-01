@@ -13,7 +13,8 @@
             "elm/http": "2.0.0",
             "elm/json": "1.1.2",
             "elm/url": "1.0.0",
-            "elm-community/json-extra": "4.0.0"
+            "elm-community/json-extra": "4.0.0",
+            "elm-community/maybe-extra": "5.0.0"
         },
         "indirect": {
             "elm/bytes": "1.0.7",

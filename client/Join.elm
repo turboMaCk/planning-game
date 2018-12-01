@@ -1,7 +1,8 @@
 module Join exposing (Model, Msg(..), init, update, view)
 
 import Browser.Navigation as Navigation exposing (Key)
-import Data exposing (Session, Table)
+import Component
+import Data exposing (ApiError, Session, Table, TableError(..))
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
@@ -11,12 +12,13 @@ import Url.Builder as Url
 
 type alias Model =
     { userName : String
+    , tableError : Maybe (ApiError TableError)
     }
 
 
 init : ( Model, Cmd msg )
 init =
-    ( Model ""
+    ( Model "" Nothing
     , Cmd.none
     )
 
@@ -24,11 +26,11 @@ init =
 type Msg
     = UpdateName String
     | Submit
-    | JoinResponse (Result Http.Error Table)
+    | JoinResponse (Result (ApiError TableError) Table)
 
 
 update :
-    (Session -> (Result Http.Error Table -> Msg) -> String -> Cmd Msg)
+    (Session -> (Result (ApiError TableError) Table -> Msg) -> String -> Cmd Msg)
     -> Key
     -> Session
     -> Msg
@@ -37,7 +39,7 @@ update :
 update action navigationKey session msg model =
     case msg of
         UpdateName str ->
-            ( Model str, Cmd.none )
+            ( { model | userName = str }, Cmd.none )
 
         Submit ->
             ( model
@@ -53,21 +55,33 @@ update action navigationKey session msg model =
                         Url.absolute [ "table", id ] []
                     )
 
-                Err _ ->
-                    -- @TODO: clear session
-                    ( model, Cmd.none )
+                Err err ->
+                    ( { model | tableError = Just <| Debug.log "Err" err }, Cmd.none )
+
+
+viewError : ApiError TableError -> Html msg
+viewError err =
+    Html.div []
+        [ Html.text <| Data.errorMessage err ]
 
 
 view : Model -> Html Msg
-view { userName } =
-    Html.form
-        [ Event.onSubmit Submit ]
-        [ Html.input
-            [ Attr.value userName
-            , Event.onInput UpdateName
+view { userName, tableError } =
+    Component.withTableNotFound tableError <|
+        Html.form
+            [ Event.onSubmit Submit ]
+            [ Html.input
+                [ Attr.value userName
+                , Event.onInput UpdateName
+                ]
+                []
+            , Html.button [ Attr.type_ "submit" ]
+                [ Html.text "Submit" ]
+            , Html.a [ Attr.href "/some-room" ] [ Html.text "some room" ]
+            , case tableError of
+                Just err ->
+                    viewError err
+
+                Nothing ->
+                    Html.text ""
             ]
-            []
-        , Html.button [ Attr.type_ "submit" ]
-            [ Html.text "Submit" ]
-        , Html.a [ Attr.href "/some-room" ] [ Html.text "some room" ]
-        ]
