@@ -142,36 +142,6 @@ getSession msg token =
 
 
 
--- User
-
-
-type alias User =
-    { name : String
-    , isConnected : Bool
-    }
-
-
-userDecoder : Decoder User
-userDecoder =
-    Decode.succeed User
-        |> Decode.andMap (Decode.field "name" Decode.string)
-        |> Decode.andMap (Decode.field "connected" Decode.bool)
-
-
-getMe : String -> String -> (Result Http.Error User -> msg) -> Cmd msg
-getMe token tableId msg =
-    Http.request
-        { method = "GET"
-        , url = Url.absolute [ "tables", tableId, "me" ] []
-        , body = Http.emptyBody
-        , expect = Http.expectJson msg userDecoder
-        , headers = [ Http.header "Authorization" <| "Bearer " ++ token ]
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
-
 -- Table
 
 
@@ -238,6 +208,36 @@ joinTable id session msg name =
         , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
         , expect = expectJson msg tableErrorDecoder tableDecoder
         , headers = [ Http.header "Authorization" <| "Bearer " ++ session.id ]
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+-- User
+
+
+type alias User =
+    { name : String
+    , isConnected : Bool
+    }
+
+
+userDecoder : Decoder User
+userDecoder =
+    Decode.succeed User
+        |> Decode.andMap (Decode.field "name" Decode.string)
+        |> Decode.andMap (Decode.field "connected" Decode.bool)
+
+
+getMe : String -> String -> (Result (ApiError TableError) User -> msg) -> Cmd msg
+getMe token tableId msg =
+    Http.request
+        { method = "GET"
+        , url = Url.absolute [ "tables", tableId, "me" ] []
+        , body = Http.emptyBody
+        , expect = expectJson msg tableErrorDecoder userDecoder
+        , headers = [ Http.header "Authorization" <| "Bearer " ++ token ]
         , timeout = Nothing
         , tracker = Nothing
         }

@@ -2,7 +2,8 @@ module Table exposing (Model, Msg, init, update, view)
 
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
-import Data exposing (Table, User)
+import Component
+import Data exposing (ApiError, Table, TableError(..), User)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Http
@@ -14,6 +15,7 @@ type alias Model =
     , me : Maybe User -- @TODO better error type?
     , banker : Maybe User
     , players : Dict String Bool
+    , tableError : Maybe (ApiError TableError)
     }
 
 
@@ -23,13 +25,14 @@ init token id =
       , me = Nothing
       , banker = Nothing
       , players = Dict.empty
+      , tableError = Nothing
       }
     , Data.getMe token id Me
     )
 
 
 type Msg
-    = Me (Result Http.Error User)
+    = Me (Result (ApiError TableError) User)
 
 
 update : Key -> Msg -> Model -> ( Model, Cmd Msg )
@@ -41,13 +44,20 @@ update navigationKey msg model =
                     { model | me = Just player }
                         |> Cmd.pure
 
-                Err _ ->
-                    ( model
-                    , Navigation.pushUrl navigationKey <|
-                        Url.absolute [ "table", model.tableId, "join" ] []
+                Err err ->
+                    ( { model | tableError = Just err }
+                    , if Data.errorIs PlayerNotFound err then
+                        Navigation.pushUrl navigationKey <|
+                            Url.absolute [ "table", model.tableId, "join" ] []
+
+                      else
+                        Cmd.none
                     )
 
 
 view : Model -> Html Msg
 view model =
-    Html.text <| Maybe.withDefault "" <| Maybe.map .name model.me
+    Component.withTableNotFound model.tableError <|
+        Html.text <|
+            Maybe.withDefault "" <|
+                Maybe.map .name model.me
