@@ -118,14 +118,25 @@ handleStreamMsg conn = forever $ do
   pure ()
 
 
--- @TODO: check if user state changed & broadcast
 disconnect :: MVar Table -> SessionId -> Int -> IO ()
 disconnect state sessionId connId =
   Concurrent.modifyMVar_ state $ \table@Table { tableBanker=banker, tablePlayers=players } ->
-    if fst banker == sessionId then
-      pure $ table { tableBanker = ( fst banker , removeConnectionFromPlayer connId $ snd banker ) }
-    else
-      pure $ table { tablePlayers = disconnectPlayer sessionId connId (tablePlayers table) }
+    if fst banker == sessionId then do
+      let updatedTable = table { tableBanker = ( fst banker , removeConnectionFromPlayer connId $ snd banker ) }
+      let player = snd $ tableBanker updatedTable
+
+      if hasConnection player then
+        pure ()
+      else
+        broadcast updatedTable $ PlayerStatusUpdate player
+
+      pure updatedTable
+    else do
+      let updatedTable = table { tablePlayers = disconnectPlayer sessionId connId (tablePlayers table) }
+      let mPlayer = Map.lookup sessionId $ tablePlayers updatedTable
+
+      maybe mzero (broadcast updatedTable . PlayerStatusUpdate) mPlayer
+      pure updatedTable
 
 
 tableStreamHandler :: MVar Tables -> Session -> TableId -> WS.Connection -> IO ()
@@ -154,6 +165,7 @@ tableStreamHandler state Session { sessionId=sId } id' conn = do
                     WS.forkPingThread conn 30
 
                     -- 3.3 Broadcast join event
+                    -- Broadcast only when this is the first connection
                     table <- Concurrent.readMVar tableState
                     broadcast table $ PlayerStatusUpdate player
 

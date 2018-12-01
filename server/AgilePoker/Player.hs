@@ -5,6 +5,7 @@ module AgilePoker.Player
   , addPlayer, addPlayerConnection, disconnectPlayer
   , getPlayer, emptyPlayers, allPlayerConnections
   , addConnectionToPlayer, removeConnectionFromPlayer
+  , hasConnection
   ) where
 
 import Data.IntMap.Strict (IntMap)
@@ -27,10 +28,10 @@ data Player = Player
 
 
 instance ToJSON Player where
-  toJSON (Player { playerName=name, playerConnections=conns }) =
+  toJSON player@(Player { playerName=name }) =
     AT.object
         [ "name" .= name
-        , "connected" .= not (IntMap.null conns)
+        , "connected" .= hasConnection player
         ]
 
 
@@ -62,6 +63,11 @@ addConnectionToPlayer conn player@Player { playerConnections=conns } =
   where
     index = IntMap.size conns
     updatedPlayer = player { playerConnections = IntMap.insert index conn conns }
+
+
+hasConnection :: Player -> Bool
+hasConnection Player { playerConnections=conns } =
+  not $ IntMap.null conns
 
 
 addPlayerConnection :: SessionId -> WS.Connection -> Players -> ( Players, Maybe ( Player, Int ) )

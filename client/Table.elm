@@ -19,7 +19,7 @@ type alias Model =
     { tableId : String
     , me : Maybe Player
     , banker : Maybe Player
-    , players : Dict String Bool
+    , players : Dict String Player
     , tableError : Maybe (ApiError TableError)
     }
 
@@ -48,7 +48,7 @@ updatePlayer player model =
         { model | banker = Just player }
 
     else
-        { model | players = Dict.insert player.name player.isConnected model.players }
+        { model | players = Dict.insert player.name player model.players }
 
 
 update : Key -> Msg -> Model -> ( Model, Cmd Msg )
@@ -103,7 +103,7 @@ handleEvent event model =
                 , banker = Just table.banker
                 , players =
                     List.filter ((/=) (Maybe.map .name model.me) << Just << .name) table.players
-                        |> List.map (\{ name, isConnected } -> ( name, isConnected ))
+                        |> List.map (\player -> ( player.name, player ))
                         |> Dict.fromList
               }
             , Cmd.none
@@ -115,29 +115,35 @@ subscriptions model =
     Stream.observe Event
 
 
+viewUser : Model -> Player -> Html msg
+viewUser { me, banker } player =
+    Html.li []
+        [ Html.text player.name
+        , if player.isConnected then
+            Html.text " o"
+
+          else
+            Html.text " x"
+        , if Maybe.map .name banker == Just player.name then
+            Html.text " banker"
+
+          else
+            Html.text ""
+        , if Maybe.map .name me == Just player.name then
+            Html.text " change name"
+
+          else
+            Html.text ""
+        ]
+
+
 view : Model -> Html Msg
 view model =
     Component.withTableNotFound model.tableError <|
         Html.div []
-            [ Html.text "you "
-            , Html.text <| Maybe.unwrap "" .name model.me
-            , Html.ul [] <|
-                Html.li [] [ Html.text <| Maybe.unwrap "" .name model.banker ]
-                    :: (List.map
-                            (\( n, online ) ->
-                                Html.li []
-                                    [ Html.text <|
-                                        n
-                                            ++ ": "
-                                            ++ (if online then
-                                                    "o"
-
-                                                else
-                                                    "x"
-                                               )
-                                    ]
-                            )
-                        <|
-                            Dict.toList model.players
+            [ Html.ul [] <|
+                Maybe.unwrap (Html.text "") (viewUser model) model.banker
+                    :: (List.map (viewUser model) <|
+                            Dict.values model.players
                        )
             ]
