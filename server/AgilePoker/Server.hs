@@ -22,7 +22,6 @@ import qualified Control.Concurrent as Concurrent
 
 import AgilePoker.Server.Static
 import AgilePoker.Session
-import AgilePoker.Event
 import AgilePoker.Table
 import AgilePoker.Server.Authorization
 import AgilePoker.Api.UserInfo

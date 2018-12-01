@@ -23,10 +23,11 @@ executable agile-poker
                      , AgilePoker.Server
                      , AgilePoker.Server.Authorization
                      , AgilePoker.Server.Static
-                     , AgilePoker.Event
                      , AgilePoker.Api.UserInfo
                      , AgilePoker.Api.Errors
                      , AgilePoker.Table
+                     , AgilePoker.Table.Type
+                     , AgilePoker.Table.Event
   hs-source-dirs:      server
   -- other-extensions:
   build-depends:       base >=4.11 && <4.12

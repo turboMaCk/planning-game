@@ -1,6 +1,6 @@
 port module Stream exposing (Event(..), StreamError(..), connect, disconnect, observe)
 
-import Data exposing (Player)
+import Data exposing (Player, Table)
 import Json.Decode as Decode exposing (Decoder)
 
 
@@ -40,6 +40,7 @@ streamErrorDecoder str =
 type Event
     = PlayerJoin Player
     | PlayerStatusUpdate Player
+    | SyncTableState Table
 
 
 eventField : String -> (a -> Event) -> Decoder a -> Decoder Event
@@ -63,8 +64,9 @@ eventField value toEvent decoder =
 eventDecoder : Decoder Event
 eventDecoder =
     Decode.oneOf
-        [ eventField "UserJoined" PlayerJoin (Decode.field "player" Data.playerDecoder)
-        , eventField "UserStatusUpdate" PlayerStatusUpdate (Decode.field "player" Data.playerDecoder)
+        [ eventField "UserJoined" PlayerJoin <| Decode.field "player" Data.playerDecoder
+        , eventField "UserStatusUpdate" PlayerStatusUpdate <| Decode.field "player" Data.playerDecoder
+        , eventField "SyncTableState" SyncTableState <| Decode.field "table" Data.tableDecoder
         ]
 
 

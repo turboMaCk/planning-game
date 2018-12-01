@@ -2,73 +2,28 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 
 module AgilePoker.Table
-  (Table(..), Tables, TableId
+  (Table(..), Tables, TableId, Event
   , emptyTables, createTable, joinTable
   , getTablePlayer
   , tableStreamHandler
   ) where
 
-import Data.ByteString (ByteString)
 import Data.Maybe (fromMaybe)
-import Data.Aeson.Types (ToJSON(..), (.=), object)
 import Control.Monad (forM_, forever, mzero)
 import Control.Concurrent (MVar)
 import Control.Exception (finally)
+import Data.ByteString (ByteString)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
 import qualified Network.WebSockets as WS
 import qualified Control.Concurrent as Concurrent
 
 import AgilePoker.Id
 import AgilePoker.Session
 import AgilePoker.Player
-import AgilePoker.Api.Errors
-import AgilePoker.Event
 
-
--- @TODO: Just alias for now
-type TableId = ByteString
-
-
--- @TODO: incomplete (missing games)
-data Table = Table
-  { tableId :: TableId
-  , tableBanker :: ( SessionId, Player )
-  , tablePlayers :: Players
-  }
-
-instance ToJSON Table where
-  toJSON table =
-    object
-        [ "id" .= TE.decodeUtf8 (tableId table)
-        , "banker" .= snd (tableBanker table)
-        , "players" .= fmap snd (Map.toList $ tablePlayers table)
-        ]
-
-
-type Tables =
-  Map.Map ByteString (MVar Table)
-
-
-data TableError
-  = TableNotFound
-  | NameTaken
-  | PlayerNotFound
-
-
-instance Error TableError where
-  toType TableNotFound  = NotFound
-  toType NameTaken      = Conflict
-  toType PlayerNotFound = Forbidden
-
-  toReadable TableNotFound  = "Table doesn't exist"
-  toReadable NameTaken      = "Name is already taken"
-  toReadable PlayerNotFound = "You're not a player on this table"
-
-
-emptyTables :: Tables
-emptyTables = Map.empty
+import AgilePoker.Table.Event
+import AgilePoker.Table.Type
 
 
 createTable :: Session -> T.Text -> Tables -> IO ( Tables, Table )
@@ -184,7 +139,9 @@ tableStreamHandler state Session { sessionId=sId } id' conn = do
         -- 1. Assign connection to player
         mConnId <- Concurrent.modifyMVar tableState $ pure . assignConnection sId conn
 
-        -- @TODO 2. Sync sate to new player
+        -- 2. Sync sate to new player
+        table <- Concurrent.readMVar tableState
+        WS.sendTextData conn $ encodeEvent $ SyncTableState table
 
         -- 3. Start player handler
         case mConnId of
@@ -212,11 +169,6 @@ tableStreamHandler state Session { sessionId=sId } id' conn = do
         -- @TODO: handle table doesn't exist
         putStrLn "Table not found"
         mzero
-
-
-wtf :: Table -> T.Text -> IO ()
-wtf table t =
-  forM_ (allConnections table) $ flip WS.sendTextData t
 
 
 broadcast :: Table -> Event -> IO ()

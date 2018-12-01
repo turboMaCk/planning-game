@@ -88,6 +88,18 @@ handleEvent event model =
             , Cmd.none
             )
 
+        SyncTableState table ->
+            ( { model
+                | tableId = table.id
+                , banker = Just table.banker
+                , players =
+                    Dict.fromList <|
+                        -- @TODO: remove me?
+                        List.map (\{ name, isConnected } -> ( name, isConnected )) table.players
+              }
+            , Cmd.none
+            )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

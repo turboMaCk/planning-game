@@ -12,6 +12,7 @@ module Data exposing
     , getSession
     , joinTable
     , playerDecoder
+    , tableDecoder
     )
 
 import Http exposing (Expect)

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Event
+module AgilePoker.Table.Event
   ( Event(..)
   , encodeEvent
   ) where
@@ -13,25 +13,32 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as AT
 
-import AgilePoker.Session
-import AgilePoker.Player
+import AgilePoker.Player (Player)
+
+import AgilePoker.Table.Type (Table)
 
 
 data Event
     = PlayerJoined Player
     | PlayerStatusUpdate Player
+    | SyncTableState Table
 
 
 instance ToJSON Event where
   toJSON (PlayerJoined player) =
     AT.object
         [ "event" .= T.pack "UserJoined"
-        , "player" .= toJSON player
+        , "player" .= player
         ]
   toJSON (PlayerStatusUpdate player) =
     AT.object
         [ "event" .= T.pack "UserStatusUpdate"
-        , "player" .= toJSON player
+        , "player" .= player
+        ]
+  toJSON (SyncTableState table) =
+    AT.object
+        [ "event" .= T.pack "SyncTableState"
+        , "table" .= table
         ]
 
 
