@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module AgilePoker.Event
-  ( Event
+  ( Event(..)
   , encodeEvent
-  , userJoined
-  , userStatusUpdate
   ) where
 
 import Data.ByteString (ByteString)
@@ -15,32 +13,25 @@ import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as AT
 
 import AgilePoker.Session
+import AgilePoker.Player
 
 
 data Event
-    = UserJoined Session
-    | UserStatusUpdate Session
+    = PlayerJoined Player
+    | PlayerStatusUpdate Player
 
 
 instance ToJSON Event where
-  toJSON (UserJoined session) =
+  toJSON (PlayerJoined player) =
     AT.object
         [ "event" .= T.pack "UserJoined"
-        , "user" .= toJSON session
+        , "player" .= toJSON player
         ]
-  toJSON (UserStatusUpdate session) =
+  toJSON (PlayerStatusUpdate player) =
     AT.object
         [ "event" .= T.pack "UserStatusUpdate"
-        , "user" .= toJSON session
+        , "player" .= toJSON player
         ]
-
-
-userJoined :: Session -> Event
-userJoined = UserJoined
-
-
-userStatusUpdate :: Session -> Event
-userStatusUpdate = UserStatusUpdate
 
 
 encodeEvent :: Event -> ByteString

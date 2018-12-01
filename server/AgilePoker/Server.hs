@@ -9,13 +9,10 @@ module AgilePoker.Server (run) where
 import Servant
 import Data.Maybe (maybe)
 import Data.ByteString (ByteString)
-import Data.Maybe (maybe)
-import Control.Monad (forM_, forever)
 import Control.Concurrent (MVar)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Network.Wai (Response)
 import Servant.API.WebSocket (WebSocket)
-import Control.Exception (finally)
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -89,21 +86,10 @@ server state = status
 
     createSession :: Handler Session
     createSession = pure . snd =<<
-      (liftIO $ Concurrent.modifyMVar (sessions state) $ addSession "")
+      (liftIO $ Concurrent.modifyMVar (sessions state) addSession)
 
     getSession :: (HeaderAuth Session) -> Handler Session
     getSession = pure . unHeaderAuth
-
-    -- join :: UserInfo -> Handler T.Text
-    -- join UserInfo { userName=name } = do
-    --   ( id', session ) <- liftIO $ Concurrent.modifyMVar (sessions state) $ addSession name
-
-    --   s <- liftIO $ Concurrent.readMVar (sessions state)
-
-    --   -- broadcast join event
-    --   liftIO $ broadcast s $ userJoined session
-
-    --   pure $ TE.decodeUtf8 id'
 
     createTableHandler :: (HeaderAuth Session) -> UserInfo -> Handler Table
     createTableHandler (HeaderAuth session) UserInfo { userName=name } =
@@ -125,67 +111,8 @@ server state = status
       either respondError pure playerRes
 
     streamTableHandler :: MonadIO m => (CookieAuth Session) -> TableId -> WS.Connection -> m ()
-    streamTableHandler (CookieAuth session) id' =
-      liftIO . tableStreamHandler (tables state) session id'
-
-
-broadcast :: Sessions -> Event -> IO ()
-broadcast state' event = do
-    forM_ state' $ \(Session { sessionConnections=conns }) ->
-      forM_ conns $ flip WS.sendTextData $ encodeEvent event
-
-
-handleSocketEvent :: MVar Sessions -> WS.Connection -> IO ()
-handleSocketEvent state' conn = forever $ do
-  msg :: ByteString <- WS.receiveData conn
-  -- state <- Concurrent.readMVar state'
-  -- @TODO: implement
-  pure ()
-
-
-handleSocket :: MVar Sessions -> Session -> WS.Connection -> IO ()
-handleSocket state' session conn = do
-  let sessionId' = sessionId session
-
-  -- assing connection
-  mConnectionId <- Concurrent.modifyMVar state' $ pure . assignConnection sessionId' conn
-
-  -- Sync state to new user
-  state <- Concurrent.readMVar state'
-  forM_ state $ WS.sendTextData conn . encodeEvent . userJoined
-
-  case mConnectionId of
-    Right ( connectionId, session ) ->
-        -- Disconnect user at the end of session
-        flip finally (disconnect ( sessionId', connectionId )) $ do
-            -- ping thread
-            WS.forkPingThread conn 30
-
-            -- broadcast join event
-            state <- Concurrent.readMVar state'
-            broadcast state $ userStatusUpdate session
-
-            -- assign handler
-            handleSocketEvent state' conn
-
-    Left _ ->
-      -- @TODO: Add error handling
-      -- but this is very unlikely situation
-      pure ()
-
-  where
-    disconnect :: ( SessionId, Int ) -> IO ()
-    disconnect id' = do
-      -- disconnect
-      Concurrent.modifyMVar_ state' $
-        pure . disconnectSession id'
-
-      -- broadcast
-      state <- Concurrent.readMVar state'
-      let session = getSession (fst id') state
-
-      maybe (pure ()) (broadcast state . userStatusUpdate) session
-
+    streamTableHandler (CookieAuth session) id' conn = do
+      liftIO $ tableStreamHandler (tables state) session id' conn
 
 
 app :: ServerState -> Application

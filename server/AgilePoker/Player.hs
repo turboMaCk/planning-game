@@ -3,7 +3,8 @@
 module AgilePoker.Player
   ( Player(..), Players, createPlayer
   , addPlayer, addPlayerConnection, disconnectPlayer
-  , getPlayer, emptyPlayers
+  , getPlayer, emptyPlayers, allPlayerConnections
+  , addConnectionToPlayer, removeConnectionFromPlayer
   ) where
 
 import Data.IntMap.Strict (IntMap)
@@ -45,34 +46,45 @@ nameTaken name sessions = not $ Map.null $
   Map.filter ((==) name . playerName) sessions
 
 
-addPlayer :: Session -> T.Text -> Players -> Maybe Players
+addPlayer :: Session -> T.Text -> Players -> Maybe ( Players, Player )
 addPlayer Session { sessionId=id' } name players =
   if nameTaken name players then
     Nothing
   else
-    Just $ Map.insert id' (createPlayer name) players
+    let newPlayer = createPlayer name
+    in
+    Just $ ( Map.insert id' newPlayer players, newPlayer )
 
 
-addPlayerConnection :: SessionId -> WS.Connection -> Players -> ( Players, Maybe ( Int, Player ) )
+addConnectionToPlayer :: WS.Connection -> Player -> (Player, Int)
+addConnectionToPlayer conn player@Player { playerConnections=conns } =
+  (updatedPlayer, index)
+  where
+    index = IntMap.size conns
+    updatedPlayer = player { playerConnections = IntMap.insert index conn conns }
+
+
+addPlayerConnection :: SessionId -> WS.Connection -> Players -> ( Players, Maybe Int )
 addPlayerConnection id' conn players =
   case Map.lookup id' players of
-    Just (player@(Player { playerConnections=conns })) ->
-      let index = IntMap.size conns
-          updatedSession = (player { playerConnections = IntMap.insert index conn conns })
+    Just player ->
+      let (updatedPlayer, index) = addConnectionToPlayer conn player
       in
-      ( Map.insert id' updatedSession players
-      , Just ( index, updatedSession )
+      ( Map.insert id' updatedPlayer players
+      , Just index
       )
     Nothing ->
       ( players, Nothing )
 
 
-disconnectPlayer :: ( SessionId, Int ) -> Players -> Players
-disconnectPlayer ( sessionId, index ) = Map.alter (fmap update) sessionId
-  where
-    update :: Player -> Player
-    update player@(Player { playerConnections=conns }) =
+removeConnectionFromPlayer :: Int -> Player -> Player
+removeConnectionFromPlayer index player@(Player { playerConnections=conns }) =
       player { playerConnections = IntMap.delete index conns }
+
+
+disconnectPlayer :: SessionId -> Int -> Players -> Players
+disconnectPlayer sessionId index =
+  Map.alter (fmap $ removeConnectionFromPlayer index) sessionId
 
 
 getPlayer :: SessionId -> Players -> Maybe Player
@@ -81,3 +93,8 @@ getPlayer = Map.lookup
 
 emptyPlayers :: Players
 emptyPlayers = Map.empty
+
+
+allPlayerConnections :: Player -> [ WS.Connection ]
+allPlayerConnections Player { playerConnections=conns } =
+  snd <$> IntMap.toList conns

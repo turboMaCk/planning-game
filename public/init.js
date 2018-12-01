@@ -58,6 +58,7 @@
 
         ws.onmessage = function (evt) {
             var msg = evt.data;
+            console.log("socket", msg);
             app.ports.observe_.send(msg);
         };
 

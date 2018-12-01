@@ -3,11 +3,12 @@ module Table exposing (Model, Msg, init, subscriptions, update, view)
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Component
-import Data exposing (ApiError, Table, TableError(..), User)
+import Data exposing (ApiError, Player, Table, TableError(..))
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Http
-import Stream exposing (StreamError)
+import Maybe.Extra as Maybe
+import Stream exposing (Event(..), StreamError)
 import Url.Builder as Url
 
 
@@ -16,8 +17,8 @@ single Result type
 -}
 type alias Model =
     { tableId : String
-    , me : Maybe User
-    , banker : Maybe User
+    , me : Maybe Player
+    , banker : Maybe Player
     , players : Dict String Bool
     , tableError : Maybe (ApiError TableError)
     }
@@ -36,8 +37,9 @@ init token id =
 
 
 type Msg
-    = Me (Result (ApiError TableError) User)
+    = Me (Result (ApiError TableError) Player)
     | NoOp
+    | Event (Result StreamError Event)
 
 
 update : Key -> Msg -> Model -> ( Model, Cmd Msg )
@@ -63,19 +65,53 @@ update navigationKey msg model =
                         Cmd.none
                     )
 
+        Event result ->
+            case result of
+                Ok e ->
+                    handleEvent e model
+
+                Err e ->
+                    -- @TODO: handle errors
+                    ( model, Cmd.none )
+
+
+handleEvent : Event -> Model -> ( Model, Cmd msg )
+handleEvent event model =
+    case event of
+        PlayerJoin player ->
+            ( { model | players = Dict.insert player.name player.isConnected model.players }
+            , Cmd.none
+            )
+
+        _ ->
+            ( model, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Stream.observe <|
-        \event ->
-            case event of
-                _ ->
-                    NoOp
+    Stream.observe Event
 
 
 view : Model -> Html Msg
 view model =
     Component.withTableNotFound model.tableError <|
-        Html.text <|
-            Maybe.withDefault "" <|
-                Maybe.map .name model.me
+        Html.div []
+            [ Html.text "you "
+            , Html.text <| Maybe.unwrap "" .name model.me
+            , Html.ul [] <|
+                List.map
+                    (\( n, online ) ->
+                        Html.li []
+                            [ Html.text <|
+                                n ++ ": "
+                                    ++ (if online then
+                                            "o"
+
+                                        else
+                                            "x"
+                                       )
+                            ]
+                    )
+                <|
+                    Dict.toList model.players
+            ]

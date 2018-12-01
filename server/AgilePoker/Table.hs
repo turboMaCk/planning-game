@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 
 module AgilePoker.Table
   (Table(..), Tables, TableId
@@ -10,7 +11,9 @@ module AgilePoker.Table
 import Data.ByteString (ByteString)
 import Data.Maybe (fromMaybe)
 import Data.Aeson.Types (ToJSON(..), (.=), object)
+import Control.Monad (forM_, forever, mzero)
 import Control.Concurrent (MVar)
+import Control.Exception (finally)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -21,6 +24,7 @@ import AgilePoker.Id
 import AgilePoker.Session
 import AgilePoker.Player
 import AgilePoker.Api.Errors
+import AgilePoker.Event
 
 
 -- @TODO: Just alias for now
@@ -91,10 +95,14 @@ joinTable session@Session { sessionId=id' } tableId name tables =
             mPlayers = addPlayer session name (tablePlayers table)
         in
         case mPlayers of
-          Just newPlayers ->
+          Just (newPlayers, newPlayer) ->
             Concurrent.modifyMVar mvar $ \t -> do
-               let updatedTable = t { tablePlayers = newPlayers }
-               pure ( updatedTable, Right updatedTable )
+                let updatedTable = t { tablePlayers = newPlayers }
+
+                -- Broadcast to connections
+                broadcast t $ PlayerJoined newPlayer
+
+                pure ( updatedTable, Right updatedTable )
           Nothing ->
              pure $ Left NameTaken
 
@@ -124,16 +132,91 @@ getTablePlayer Session { sessionId=sId } tableId tables =
             Map.lookup sId $ tablePlayers table
 
 
+allConnections :: Table -> [ WS.Connection ]
+allConnections Table { tableBanker=banker, tablePlayers=players } =
+  concat $ (allPlayerConnections $ snd banker)
+         : (foldr (\p acc -> allPlayerConnections p : acc) [] players)
 
--- @TODO: Implement
-tableStreamHandler :: MVar Tables -> Session -> TableId -> WS.Connection -> IO ()
-tableStreamHandler state Session { sessionId=sId } id' conn =
-  -- 1. Assign connection to player
-  -- 2. Sync sate to new player
-  -- 3. Start player handler
-  -- 3.1 Remove connection on disconnection
-  -- 3.2 Ping Thread
-  -- 3.3 Broadcast join event
-  -- 3.4 Delegate to Msg handler
 
+assignConnection :: SessionId -> WS.Connection -> Table -> ( Table, Maybe Int )
+assignConnection sId conn table@Table { tableBanker=banker, tablePlayers=players } =
+    if fst banker == sId then
+        let ( updatedBanker, connId ) = addConnectionToPlayer conn $ snd banker
+        in
+        ( table { tableBanker = ( sId, updatedBanker ) }
+        , Just connId
+        )
+    else
+        let ( updatedPlayers, mConnId ) = addPlayerConnection sId conn players
+        in
+        case mConnId of
+            Nothing     -> ( table, Nothing )
+            Just connId -> ( table { tablePlayers = updatedPlayers }
+                           , Just connId)
+
+
+-- @TODO: implement
+handleStreamMsg :: WS.Connection -> IO ()
+handleStreamMsg conn = forever $ do
+  msg :: ByteString <- WS.receiveData conn
   pure ()
+
+
+-- @TODO: check if user state changed & broadcast
+disconnect :: MVar Table -> SessionId -> Int -> IO ()
+disconnect state sessionId connId =
+  Concurrent.modifyMVar_ state $ \table@Table { tableBanker=banker, tablePlayers=players } ->
+    if fst banker == sessionId then
+      pure $ table { tableBanker = ( fst banker , removeConnectionFromPlayer connId $ snd banker ) }
+    else
+      pure $ table { tablePlayers = disconnectPlayer sessionId connId (tablePlayers table) }
+
+
+tableStreamHandler :: MVar Tables -> Session -> TableId -> WS.Connection -> IO ()
+tableStreamHandler state Session { sessionId=sId } id' conn = do
+  tables <- Concurrent.readMVar state
+  let mTable = Map.lookup id' tables
+
+  case mTable of
+    Just tableState -> do
+
+        -- 1. Assign connection to player
+        mConnId <- Concurrent.modifyMVar tableState $ pure . assignConnection sId conn
+
+        -- @TODO 2. Sync sate to new player
+
+        -- 3. Start player handler
+        case mConnId of
+            Just connId ->
+
+                -- 3.1 Remove connection on disconnection
+                flip finally (disconnect tableState sId connId) $ do
+
+                    -- 3.2 Ping Thread
+                    WS.forkPingThread conn 30
+
+                    -- @TODO 3.3 Broadcast join event
+                    -- table <- Concurrent.readMVar tableState
+
+                    -- 3.4 Delegate to Msg handler
+                    handleStreamMsg conn
+
+            Nothing -> do
+                -- @TODO: player doesn't exist (session is not a member)
+                putStrLn "User not a member"
+                mzero
+
+    Nothing -> do
+        -- @TODO: handle table doesn't exist
+        putStrLn "Table not found"
+        mzero
+
+
+wtf :: Table -> T.Text -> IO ()
+wtf table t =
+  forM_ (allConnections table) $ flip WS.sendTextData t
+
+
+broadcast :: Table -> Event -> IO ()
+broadcast table event = do
+  forM_ (allConnections table) $ flip WS.sendTextData $ encodeEvent event

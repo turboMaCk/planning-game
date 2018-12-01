@@ -3,7 +3,6 @@
 module AgilePoker.Session
   ( Session(..), SessionId, Sessions, SessionError
   , emptySessions, addSession, getSession, removeSession
-  , assignConnection, disconnectSession
   ) where
 
 import Data.ByteString (ByteString)
@@ -14,7 +13,6 @@ import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import qualified Network.WebSockets as WS
 import qualified Data.Aeson.Types as AT
 
 
@@ -24,17 +22,13 @@ import AgilePoker.Api.Errors
 
 data Session = Session
   { sessionId :: ByteString
-  , sessionName :: T.Text
-  , sessionConnections :: IntMap WS.Connection
   }
 
 
 instance ToJSON Session where
-  toJSON (Session { sessionName=name, sessionConnections=conns, sessionId=id }) =
+  toJSON (Session { sessionId=id }) =
     AT.object
         [ "id" .= TE.decodeUtf8 id
-        , "name" .= name
-        , "connected" .= not (IntMap.null conns)
         ]
 
 
@@ -55,27 +49,13 @@ instance Error SessionError where
   toReadable SessionDoesNotExist = "Session doesn't exist"
 
 
-addSession :: T.Text -> Sessions -> IO ( Sessions, ( SessionId, Session ) )
-addSession name sessions = do
+addSession :: Sessions -> IO ( Sessions, ( SessionId, Session ) )
+addSession sessions = do
     newId <- generateId sessions
-    let newSession = (Session newId name IntMap.empty)
+    let newSession = Session newId
     pure $ ( Map.insert newId newSession sessions
-            , ( newId, newSession )
-            )
-
-
-assignConnection :: SessionId -> WS.Connection -> Sessions -> ( Sessions, Either SessionError ( Int, Session ) )
-assignConnection id' conn sessions =
-  case Map.lookup id' sessions of
-    Just (session@(Session { sessionConnections=conns })) ->
-      let index = IntMap.size conns
-          updatedSession = (session { sessionConnections = IntMap.insert index conn conns })
-      in
-      ( Map.insert id' updatedSession sessions
-      , Right ( index, updatedSession )
-      )
-    Nothing ->
-      ( sessions, Left $ SessionDoesNotExist )
+           , ( newId, newSession )
+           )
 
 
 getSession :: ByteString -> Sessions -> Maybe Session
@@ -88,19 +68,3 @@ emptySessions = Map.empty
 
 removeSession :: SessionId -> Sessions -> Sessions
 removeSession = Map.delete
-
-
-disconnectSession :: ( SessionId, Int ) -> Sessions -> Sessions
-disconnectSession ( sessionId, index ) = Map.alter (fmap update) sessionId
-  where
-    update :: Session -> Session
-    update session@(Session { sessionConnections=conns }) =
-      session { sessionConnections = IntMap.delete index conns }
-
-
--- utils
-
-
-maybeToEither :: a -> Maybe b -> Either a b
-maybeToEither e =
-  maybe (Left e) Right

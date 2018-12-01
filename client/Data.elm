@@ -1,9 +1,9 @@
 module Data exposing
     ( ApiError
+    , Player
     , Session
     , Table
     , TableError(..)
-    , User
     , createSession
     , createTable
     , errorIs
@@ -11,7 +11,7 @@ module Data exposing
     , getMe
     , getSession
     , joinTable
-    , userDecoder
+    , playerDecoder
     )
 
 import Http exposing (Expect)
@@ -147,8 +147,8 @@ getSession msg token =
 
 type alias Table =
     { id : String
-    , banker : User
-    , players : List User
+    , banker : Player
+    , players : List Player
     }
 
 
@@ -156,8 +156,8 @@ tableDecoder : Decoder Table
 tableDecoder =
     Decode.succeed Table
         |> Decode.andMap (Decode.field "id" Decode.string)
-        |> Decode.andMap (Decode.field "banker" userDecoder)
-        |> Decode.andMap (Decode.field "players" <| Decode.list userDecoder)
+        |> Decode.andMap (Decode.field "banker" playerDecoder)
+        |> Decode.andMap (Decode.field "players" <| Decode.list playerDecoder)
 
 
 type TableError
@@ -214,29 +214,29 @@ joinTable id session msg name =
 
 
 
--- User
+-- Player
 
 
-type alias User =
+type alias Player =
     { name : String
     , isConnected : Bool
     }
 
 
-userDecoder : Decoder User
-userDecoder =
-    Decode.succeed User
+playerDecoder : Decoder Player
+playerDecoder =
+    Decode.succeed Player
         |> Decode.andMap (Decode.field "name" Decode.string)
         |> Decode.andMap (Decode.field "connected" Decode.bool)
 
 
-getMe : String -> String -> (Result (ApiError TableError) User -> msg) -> Cmd msg
+getMe : String -> String -> (Result (ApiError TableError) Player -> msg) -> Cmd msg
 getMe token tableId msg =
     Http.request
         { method = "GET"
         , url = Url.absolute [ "tables", tableId, "me" ] []
         , body = Http.emptyBody
-        , expect = expectJson msg tableErrorDecoder userDecoder
+        , expect = expectJson msg tableErrorDecoder playerDecoder
         , headers = [ Http.header "Authorization" <| "Bearer " ++ token ]
         , timeout = Nothing
         , tracker = Nothing

@@ -4,7 +4,7 @@ import Authorize exposing (Authorize(..))
 import Browser exposing (Document, UrlRequest(..))
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
-import Data exposing (Session, User)
+import Data exposing (Session)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
