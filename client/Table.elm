@@ -42,6 +42,15 @@ type Msg
     | Event (Result StreamError Event)
 
 
+updatePlayer : Player -> Model -> Model
+updatePlayer player model =
+    if Just player.name == Maybe.map .name model.banker then
+        { model | banker = Just player }
+
+    else
+        { model | players = Dict.insert player.name player.isConnected model.players }
+
+
 update : Key -> Msg -> Model -> ( Model, Cmd Msg )
 update navigationKey msg model =
     case msg of
@@ -79,12 +88,12 @@ handleEvent : Event -> Model -> ( Model, Cmd msg )
 handleEvent event model =
     case event of
         PlayerJoin player ->
-            ( { model | players = Dict.insert player.name player.isConnected model.players }
+            ( updatePlayer player model
             , Cmd.none
             )
 
         PlayerStatusUpdate player ->
-            ( { model | players = Dict.insert player.name player.isConnected model.players }
+            ( updatePlayer player model
             , Cmd.none
             )
 
@@ -93,9 +102,9 @@ handleEvent event model =
                 | tableId = table.id
                 , banker = Just table.banker
                 , players =
-                    Dict.fromList <|
-                        -- @TODO: remove me?
-                        List.map (\{ name, isConnected } -> ( name, isConnected )) table.players
+                    List.filter ((/=) (Maybe.map .name model.me) << Just << .name) table.players
+                        |> List.map (\{ name, isConnected } -> ( name, isConnected ))
+                        |> Dict.fromList
               }
             , Cmd.none
             )
@@ -113,20 +122,22 @@ view model =
             [ Html.text "you "
             , Html.text <| Maybe.unwrap "" .name model.me
             , Html.ul [] <|
-                List.map
-                    (\( n, online ) ->
-                        Html.li []
-                            [ Html.text <|
-                                n
-                                    ++ ": "
-                                    ++ (if online then
-                                            "o"
+                Html.li [] [ Html.text <| Maybe.unwrap "" .name model.banker ]
+                    :: (List.map
+                            (\( n, online ) ->
+                                Html.li []
+                                    [ Html.text <|
+                                        n
+                                            ++ ": "
+                                            ++ (if online then
+                                                    "o"
 
-                                        else
-                                            "x"
-                                       )
-                            ]
-                    )
-                <|
-                    Dict.toList model.players
+                                                else
+                                                    "x"
+                                               )
+                                    ]
+                            )
+                        <|
+                            Dict.toList model.players
+                       )
             ]
