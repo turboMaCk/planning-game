@@ -165,9 +165,11 @@ tableStreamHandler state Session { sessionId=sId } id' conn = do
                     WS.forkPingThread conn 30
 
                     -- 3.3 Broadcast join event
-                    -- Broadcast only when this is the first connection
-                    table <- Concurrent.readMVar tableState
-                    broadcast table $ PlayerStatusUpdate player
+                    if playerNumberOfConnections player == 1 then do
+                        table <- Concurrent.readMVar tableState
+                        broadcast table $ PlayerStatusUpdate player
+                    else
+                        mzero
 
                     -- 3.4 Delegate to Msg handler
                     handleStreamMsg conn

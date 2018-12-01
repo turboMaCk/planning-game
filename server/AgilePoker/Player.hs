@@ -5,7 +5,7 @@ module AgilePoker.Player
   , addPlayer, addPlayerConnection, disconnectPlayer
   , getPlayer, emptyPlayers, allPlayerConnections
   , addConnectionToPlayer, removeConnectionFromPlayer
-  , hasConnection
+  , hasConnection, playerNumberOfConnections
   ) where
 
 import Data.IntMap.Strict (IntMap)
@@ -68,6 +68,11 @@ addConnectionToPlayer conn player@Player { playerConnections=conns } =
 hasConnection :: Player -> Bool
 hasConnection Player { playerConnections=conns } =
   not $ IntMap.null conns
+
+
+playerNumberOfConnections :: Player -> Int
+playerNumberOfConnections Player { playerConnections=conns } =
+  IntMap.size conns
 
 
 addPlayerConnection :: SessionId -> WS.Connection -> Players -> ( Players, Maybe ( Player, Int ) )
