@@ -49,16 +49,18 @@ type Tables =
 
 data TableError
   = TableNotFound
-  | PlayerNotFound
   | NameTaken
+  | PlayerNotFound
 
 
 instance Error TableError where
-  toType NameTaken     = Conflict
-  toType TableNotFound = NotFound
+  toType TableNotFound  = NotFound
+  toType NameTaken      = Conflict
+  toType PlayerNotFound = Forbidden
 
-  toReadable NameTaken     = "Name is already taken"
-  toReadable TableNotFound = "Table doesn't exist"
+  toReadable TableNotFound  = "Table doesn't exist"
+  toReadable NameTaken      = "Name is already taken"
+  toReadable PlayerNotFound = "You're not a player on this table"
 
 
 emptyTables :: Tables
