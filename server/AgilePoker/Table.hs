@@ -138,21 +138,22 @@ allConnections Table { tableBanker=banker, tablePlayers=players } =
          : (foldr (\p acc -> allPlayerConnections p : acc) [] players)
 
 
-assignConnection :: SessionId -> WS.Connection -> Table -> ( Table, Maybe Int )
+assignConnection :: SessionId -> WS.Connection -> Table -> ( Table, Maybe ( Player, Int ) )
 assignConnection sId conn table@Table { tableBanker=banker, tablePlayers=players } =
     if fst banker == sId then
         let ( updatedBanker, connId ) = addConnectionToPlayer conn $ snd banker
         in
         ( table { tableBanker = ( sId, updatedBanker ) }
-        , Just connId
+        , Just ( updatedBanker, connId )
         )
     else
-        let ( updatedPlayers, mConnId ) = addPlayerConnection sId conn players
+        let ( updatedPlayers, mPair ) = addPlayerConnection sId conn players
         in
-        case mConnId of
+        case mPair of
             Nothing     -> ( table, Nothing )
-            Just connId -> ( table { tablePlayers = updatedPlayers }
-                           , Just connId)
+            Just pair -> ( table { tablePlayers = updatedPlayers }
+                           , Just pair
+                           )
 
 
 -- @TODO: implement
@@ -187,7 +188,7 @@ tableStreamHandler state Session { sessionId=sId } id' conn = do
 
         -- 3. Start player handler
         case mConnId of
-            Just connId ->
+            Just ( player, connId ) ->
 
                 -- 3.1 Remove connection on disconnection
                 flip finally (disconnect tableState sId connId) $ do
@@ -195,8 +196,9 @@ tableStreamHandler state Session { sessionId=sId } id' conn = do
                     -- 3.2 Ping Thread
                     WS.forkPingThread conn 30
 
-                    -- @TODO 3.3 Broadcast join event
-                    -- table <- Concurrent.readMVar tableState
+                    -- 3.3 Broadcast join event
+                    table <- Concurrent.readMVar tableState
+                    broadcast table $ PlayerStatusUpdate player
 
                     -- 3.4 Delegate to Msg handler
                     handleStreamMsg conn

@@ -64,14 +64,14 @@ addConnectionToPlayer conn player@Player { playerConnections=conns } =
     updatedPlayer = player { playerConnections = IntMap.insert index conn conns }
 
 
-addPlayerConnection :: SessionId -> WS.Connection -> Players -> ( Players, Maybe Int )
+addPlayerConnection :: SessionId -> WS.Connection -> Players -> ( Players, Maybe ( Player, Int ) )
 addPlayerConnection id' conn players =
   case Map.lookup id' players of
     Just player ->
-      let (updatedPlayer, index) = addConnectionToPlayer conn player
+      let ( updatedPlayer, index ) = addConnectionToPlayer conn player
       in
       ( Map.insert id' updatedPlayer players
-      , Just index
+      , Just ( updatedPlayer, index )
       )
     Nothing ->
       ( players, Nothing )

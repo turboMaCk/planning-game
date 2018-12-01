@@ -83,8 +83,10 @@ handleEvent event model =
             , Cmd.none
             )
 
-        _ ->
-            ( model, Cmd.none )
+        PlayerStatusUpdate player ->
+            ( { model | players = Dict.insert player.name player.isConnected model.players }
+            , Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
@@ -103,7 +105,8 @@ view model =
                     (\( n, online ) ->
                         Html.li []
                             [ Html.text <|
-                                n ++ ": "
+                                n
+                                    ++ ": "
                                     ++ (if online then
                                             "o"
 

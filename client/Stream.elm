@@ -39,7 +39,7 @@ streamErrorDecoder str =
 
 type Event
     = PlayerJoin Player
-    | UserStatusUpdate Player
+    | PlayerStatusUpdate Player
 
 
 eventField : String -> (a -> Event) -> Decoder a -> Decoder Event
@@ -64,7 +64,7 @@ eventDecoder : Decoder Event
 eventDecoder =
     Decode.oneOf
         [ eventField "UserJoined" PlayerJoin (Decode.field "player" Data.playerDecoder)
-        , eventField "UserStatusUpdate" UserStatusUpdate (Decode.field "player" Data.playerDecoder)
+        , eventField "UserStatusUpdate" PlayerStatusUpdate (Decode.field "player" Data.playerDecoder)
         ]
 
 
