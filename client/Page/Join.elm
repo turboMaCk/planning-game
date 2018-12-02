@@ -1,4 +1,4 @@
-module Join exposing (Model, Msg(..), init, update, view)
+module Page.Join exposing (Model, Msg(..), init, update, view)
 
 import Browser.Navigation as Navigation exposing (Key)
 import Component

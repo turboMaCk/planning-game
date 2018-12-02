@@ -1,4 +1,4 @@
-module Table exposing (Model, Msg, init, subscriptions, update, view)
+module Page.Table exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
@@ -8,7 +8,7 @@ import Dict exposing (Dict)
 import Html exposing (Html)
 import Http
 import Maybe.Extra as Maybe
-import Stream exposing (Event(..), StreamError)
+import Page.Table.Stream as Stream exposing (Event(..), StreamError)
 import Url.Builder as Url
 
 

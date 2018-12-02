@@ -9,9 +9,9 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Event
 import Http
-import Join
+import Page.Join as Join
+import Page.Table as Table
 import Router exposing (Route)
-import Table
 import Url exposing (Url)
 
 

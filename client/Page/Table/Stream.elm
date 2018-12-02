@@ -1,4 +1,4 @@
-port module Stream exposing (Event(..), StreamError(..), connect, disconnect, observe)
+port module Page.Table.Stream exposing (Event(..), StreamError(..), connect, disconnect, observe)
 
 import Data exposing (Player, Table)
 import Json.Decode as Decode exposing (Decoder)
