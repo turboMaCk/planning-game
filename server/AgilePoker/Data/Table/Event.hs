@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Table.Event
+module AgilePoker.Data.Table.Event
   ( Event(..)
   , encodeEvent
   ) where
@@ -13,9 +13,9 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as AT
 
-import AgilePoker.Player (Player)
+import AgilePoker.Data.Player (Player)
 
-import AgilePoker.Table.Type (Table)
+import AgilePoker.Data.Table.Type (Table)
 
 
 data Event

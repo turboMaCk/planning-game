@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings     #-}
 
-module AgilePoker.Table.Type
+module AgilePoker.Data.Table.Type
   (TableId, Table(..), Tables, TableError(..)
   , emptyTables
   ) where
@@ -11,9 +11,8 @@ import Control.Concurrent (MVar)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text.Encoding as TE
 
-import AgilePoker.Api.Errors (Error(..), ErrorType(..))
-import AgilePoker.Player (Player, Players)
-import AgilePoker.Session (SessionId)
+import AgilePoker.Data.Player (Player, Players)
+import AgilePoker.Data.Session (SessionId)
 
 
 -- @TODO: Just alias for now
@@ -26,6 +25,7 @@ data Table = Table
   , tableBanker :: ( SessionId, Player )
   , tablePlayers :: Players
   }
+
 
 instance ToJSON Table where
   toJSON table =
@@ -44,16 +44,6 @@ data TableError
   = TableNotFound
   | NameTaken
   | PlayerNotFound
-
-
-instance Error TableError where
-  toType TableNotFound  = NotFound
-  toType NameTaken      = Conflict
-  toType PlayerNotFound = Forbidden
-
-  toReadable TableNotFound  = "Table doesn't exist"
-  toReadable NameTaken      = "Name is already taken"
-  toReadable PlayerNotFound = "You're not a player on this table"
 
 
 emptyTables :: Tables

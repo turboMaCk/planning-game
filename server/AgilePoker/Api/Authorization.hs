@@ -3,7 +3,7 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE TypeFamilies          #-}
 
-module AgilePoker.Server.Authorization
+module AgilePoker.Api.Authorization
   ( HeaderAuth(..), CookieAuth(..), SessionHeaderAuth, SessionCookieAuth
   , authHeaderHandler, authCookieHandler
   ) where
@@ -18,8 +18,8 @@ import Network.Wai (Request, requestHeaders)
 import Web.Cookie (parseCookies)
 import qualified Control.Concurrent as Concurrent
 
-import AgilePoker.Session
-import AgilePoker.Api.Errors
+import AgilePoker.Data.Session (SessionId, Session, Sessions, getSession)
+import AgilePoker.Api.Error (Error(..), ErrorType(..), respondError)
 
 
 data AuthorizationError

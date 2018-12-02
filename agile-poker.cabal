@@ -17,17 +17,19 @@ cabal-version:       >=1.10
 
 executable agile-poker
   main-is:             AgilePoker.hs
-  other-modules:       AgilePoker.Session
-                     , AgilePoker.Player
-                     , AgilePoker.Id
-                     , AgilePoker.Server
-                     , AgilePoker.Server.Authorization
-                     , AgilePoker.Server.Static
+  other-modules:       AgilePoker.Api
+ 					 , AgilePoker.Api.Authorization
+                     , AgilePoker.Api.Error
+                     , AgilePoker.Api.Error.Class
+                     , AgilePoker.Api.Middleware
                      , AgilePoker.Api.UserInfo
-                     , AgilePoker.Api.Errors
-                     , AgilePoker.Table
-                     , AgilePoker.Table.Type
-                     , AgilePoker.Table.Event
+                     , AgilePoker.Data
+                     , AgilePoker.Data.Id
+                     , AgilePoker.Data.Player
+  					 , AgilePoker.Data.Session
+                     , AgilePoker.Data.Table
+                     , AgilePoker.Data.Table.Type
+                     , AgilePoker.Data.Table.Event
   hs-source-dirs:      server
   -- other-extensions:
   build-depends:       base >=4.11 && <4.12

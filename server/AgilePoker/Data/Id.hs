@@ -1,4 +1,4 @@
-module AgilePoker.Id (generateId) where
+module AgilePoker.Data.Id (generateId) where
 
 import Data.ByteString (ByteString)
 import Servant (FromHttpApiData(..))

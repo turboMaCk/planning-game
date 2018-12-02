@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 
-module AgilePoker.Server (run) where
+module AgilePoker.Api (ServerState, initState, app) where
 
 import Servant
 import Data.Maybe (maybe)
@@ -13,20 +13,18 @@ import Control.Concurrent (MVar)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Network.Wai (Response)
 import Servant.API.WebSocket (WebSocket)
-import qualified Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Encoding as TE
 import qualified Network.WebSockets as WS
 import qualified Control.Concurrent as Concurrent
 
-import AgilePoker.Server.Static
-import AgilePoker.Session
-import AgilePoker.Table
-import AgilePoker.Server.Authorization
+import AgilePoker.Api.Authorization
 import AgilePoker.Api.UserInfo
-import AgilePoker.Player
-import AgilePoker.Api.Errors
+import AgilePoker.Api.Error
+import AgilePoker.Api.Middleware
+
+import AgilePoker.Data
 
 
 -- State
@@ -38,8 +36,8 @@ data ServerState = ServerState
   }
 
 
-initialSessions :: IO ServerState
-initialSessions = ServerState
+initState :: IO ServerState
+initState = ServerState
   <$> Concurrent.newMVar emptySessions
   <*> Concurrent.newMVar emptyTables
 
@@ -118,9 +116,3 @@ app :: ServerState -> Application
 app state = staticMiddleware $
     serveWithContext api (genContext $ sessions state) $
     server state
-
-
-run :: Int -> IO ()
-run port = do
-  state <- initialSessions
-  Warp.run port $ app state

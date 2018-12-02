@@ -6,8 +6,6 @@ import Data.Aeson (FromJSON(..), (.:))
 import qualified Data.Text as T
 import qualified Data.Aeson.Types as AT
 
-import AgilePoker.Session
-
 
 data UserInfo = UserInfo
   { userName :: T.Text

@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 
-module AgilePoker.Table
-  (Table(..), Tables, TableId, Event
+module AgilePoker.Data.Table
+  (Table(..), Tables, TableId, Event, TableError(..)
   , emptyTables, createTable, joinTable
   , getTablePlayer
   , tableStreamHandler
@@ -18,12 +18,12 @@ import qualified Data.Text as T
 import qualified Network.WebSockets as WS
 import qualified Control.Concurrent as Concurrent
 
-import AgilePoker.Id
-import AgilePoker.Session
-import AgilePoker.Player
+import AgilePoker.Data.Id
+import AgilePoker.Data.Session
+import AgilePoker.Data.Player
 
-import AgilePoker.Table.Event
-import AgilePoker.Table.Type
+import AgilePoker.Data.Table.Event
+import AgilePoker.Data.Table.Type
 
 
 createTable :: Session -> T.Text -> Tables -> IO ( Tables, Table )

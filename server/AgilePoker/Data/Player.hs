@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Player
+module AgilePoker.Data.Player
   ( Player(..), Players, createPlayer
   , addPlayer, addPlayerConnection, disconnectPlayer
   , getPlayer, emptyPlayers, allPlayerConnections
@@ -17,8 +17,8 @@ import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.Aeson.Types as AT
 
-import AgilePoker.Id
-import AgilePoker.Session
+import AgilePoker.Data.Id
+import AgilePoker.Data.Session
 
 
 data Player = Player

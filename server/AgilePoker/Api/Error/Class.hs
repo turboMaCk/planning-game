@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 
-module AgilePoker.Api.Errors where
+module AgilePoker.Api.Error.Class (Error(..), ErrorType(..), respondError) where
 
 import Servant (ServantErr, throwError, errBody, errHeaders, err401, err403, err404, err409)
 import GHC.Generics (Generic)

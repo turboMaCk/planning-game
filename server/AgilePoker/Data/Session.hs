@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Session
-  ( Session(..), SessionId, Sessions, SessionError
+module AgilePoker.Data.Session
+  ( Session(..), SessionId, Sessions, SessionError(..)
   , emptySessions, addSession, getSession, removeSession
   ) where
 
@@ -16,8 +16,7 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.Aeson.Types as AT
 
 
-import AgilePoker.Id
-import AgilePoker.Api.Errors
+import AgilePoker.Data.Id
 
 
 data Session = Session
@@ -42,11 +41,6 @@ type Sessions =
 
 data SessionError
   = SessionDoesNotExist
-
-
-instance Error SessionError where
-  toType SessionDoesNotExist     = NotFound
-  toReadable SessionDoesNotExist = "Session doesn't exist"
 
 
 addSession :: Sessions -> IO ( Sessions, ( SessionId, Session ) )
