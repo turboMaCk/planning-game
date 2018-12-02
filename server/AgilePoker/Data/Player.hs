@@ -17,7 +17,7 @@ import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.Aeson.Types as AT
 
-import AgilePoker.Data.Id
+import AgilePoker.Data.Id (Id)
 import AgilePoker.Data.Session
 
 
@@ -35,7 +35,7 @@ instance ToJSON Player where
         ]
 
 
-type Players = Map SessionId Player
+type Players = Map (Id SessionId) Player
 
 
 createPlayer :: T.Text -> Player
@@ -75,7 +75,7 @@ playerNumberOfConnections Player { playerConnections=conns } =
   IntMap.size conns
 
 
-addPlayerConnection :: SessionId -> WS.Connection -> Players -> ( Players, Maybe ( Player, Int ) )
+addPlayerConnection :: Id SessionId -> WS.Connection -> Players -> ( Players, Maybe ( Player, Int ) )
 addPlayerConnection id' conn players =
   case Map.lookup id' players of
     Just player ->
@@ -93,12 +93,12 @@ removeConnectionFromPlayer index player@(Player { playerConnections=conns }) =
       player { playerConnections = IntMap.delete index conns }
 
 
-disconnectPlayer :: SessionId -> Int -> Players -> Players
+disconnectPlayer :: Id SessionId -> Int -> Players -> Players
 disconnectPlayer sessionId index =
   Map.alter (fmap $ removeConnectionFromPlayer index) sessionId
 
 
-getPlayer :: SessionId -> Players -> Maybe Player
+getPlayer :: Id SessionId -> Players -> Maybe Player
 getPlayer = Map.lookup
 
 

@@ -18,12 +18,13 @@ import Network.Wai (Request, requestHeaders)
 import Web.Cookie (parseCookies)
 import qualified Control.Concurrent as Concurrent
 
+import AgilePoker.Data.Id (Id(..))
 import AgilePoker.Data.Session (SessionId, Session, Sessions, getSession)
 import AgilePoker.Api.Authorization.Type (AuthorizationError(..))
 import AgilePoker.Api.Error (respondError)
 
 
-lookupSession :: MVar Sessions -> SessionId -> Handler Session
+lookupSession :: MVar Sessions -> Id SessionId -> Handler Session
 lookupSession state' sId = do
   state <- liftIO $ Concurrent.readMVar state'
 
@@ -37,7 +38,7 @@ maybeToEither e =
   maybe (Left e) Right
 
 
-handler :: (Request -> Maybe SessionId) -> (Session -> a) -> MVar Sessions -> Request -> Handler a
+handler :: (Request -> Maybe (Id SessionId)) -> (Session -> a) -> MVar Sessions -> Request -> Handler a
 handler getSessionId construct state req =
     either respondError (\id' -> construct <$> lookupSession state id') $
         maybeToEither SessionIdMissing $ getSessionId req
@@ -56,15 +57,15 @@ type SessionHeaderAuth =
 
 -- | This function takes extract session id from header value
 -- Correct format is `Bearer xxxx` where xxxx is a SessionId itself
-parseAuthorizationHeader :: ByteString -> Maybe SessionId
+parseAuthorizationHeader :: ByteString -> Maybe (Id SessionId)
 parseAuthorizationHeader headerVal =
-  stripPrefix "Bearer " headerVal
+  Id <$> stripPrefix "Bearer " headerVal
 
 
 authHeaderHandler :: MVar Sessions -> AuthHandler Request (HeaderAuth Session)
 authHeaderHandler = mkAuthHandler . handler get HeaderAuth
   where
-    get :: Request -> Maybe SessionId
+    get :: Request -> Maybe (Id SessionId)
     get req =
         parseAuthorizationHeader
             =<< lookup "Authorization" (requestHeaders req)
@@ -88,10 +89,10 @@ type SessionCookieAuth =
 authCookieHandler :: MVar Sessions -> AuthHandler Request (CookieAuth Session)
 authCookieHandler = mkAuthHandler . handler get CookieAuth
   where
-    get :: Request -> Maybe SessionId
-    get req =
-        lookup "sessionId" . parseCookies
-            =<< lookup "Cookie" (requestHeaders req)
+    get :: Request -> Maybe (Id SessionId)
+    get req = Id <$>
+        (lookup "sessionId" . parseCookies
+            =<< lookup "Cookie" (requestHeaders req))
 
 
 -- | We need to specify the data returned after authentication

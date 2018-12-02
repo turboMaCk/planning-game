@@ -18,7 +18,7 @@ import qualified Data.Text as T
 import qualified Network.WebSockets as WS
 import qualified Control.Concurrent as Concurrent
 
-import AgilePoker.Data.Id
+import AgilePoker.Data.Id (Id, generateId)
 import AgilePoker.Data.Session
 import AgilePoker.Data.Player
 
@@ -38,7 +38,7 @@ createTable Session { sessionId=id' } name tables = do
 
 
 -- @TODO: Add check if session is not already present
-joinTable :: Session -> TableId -> T.Text -> Tables -> IO ( Either TableError Table )
+joinTable :: Session -> Id TableId -> T.Text -> Tables -> IO ( Either TableError Table )
 joinTable session@Session { sessionId=id' } tableId name tables =
   case Map.lookup tableId tables of
     Just mvar -> do
@@ -70,7 +70,7 @@ joinTable session@Session { sessionId=id' } tableId name tables =
        undefined
 
 
-getTablePlayer :: Session -> TableId -> Tables -> IO (Either TableError Player)
+getTablePlayer :: Session -> Id TableId -> Tables -> IO (Either TableError Player)
 getTablePlayer Session { sessionId=sId } tableId tables =
   fromMaybe (pure $ Left TableNotFound) $ getPlayer' <$>
     Map.lookup tableId tables
@@ -93,7 +93,7 @@ allConnections Table { tableBanker=banker, tablePlayers=players } =
          : (foldr (\p acc -> allPlayerConnections p : acc) [] players)
 
 
-assignConnection :: SessionId -> WS.Connection -> Table -> ( Table, Maybe ( Player, Int ) )
+assignConnection :: Id SessionId -> WS.Connection -> Table -> ( Table, Maybe ( Player, Int ) )
 assignConnection sId conn table@Table { tableBanker=banker, tablePlayers=players } =
     if fst banker == sId then
         let ( updatedBanker, connId ) = addConnectionToPlayer conn $ snd banker
@@ -118,7 +118,7 @@ handleStreamMsg conn = forever $ do
   pure ()
 
 
-disconnect :: MVar Table -> SessionId -> Int -> IO ()
+disconnect :: MVar Table -> Id SessionId -> Int -> IO ()
 disconnect state sessionId connId =
   Concurrent.modifyMVar_ state $ \table@Table { tableBanker=banker, tablePlayers=players } ->
     if fst banker == sessionId then do
@@ -139,7 +139,7 @@ disconnect state sessionId connId =
       pure updatedTable
 
 
-tableStreamHandler :: MVar Tables -> Session -> TableId -> WS.Connection -> IO ()
+tableStreamHandler :: MVar Tables -> Session -> Id TableId -> WS.Connection -> IO ()
 tableStreamHandler state Session { sessionId=sId } id' conn = do
   tables <- Concurrent.readMVar state
   let mTable = Map.lookup id' tables

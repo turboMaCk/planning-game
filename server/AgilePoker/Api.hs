@@ -49,11 +49,11 @@ type Api = "status"                                :> Get  '[JSON] T.Text
       :<|> "session"                               :> Post '[JSON] Session
       :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] Session
       :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
-      :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" TableId  :> "join"
+      :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "join"
                      :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
-      :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" TableId  :> "me"
+      :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "me"
                                                    :> Get '[JSON] Player
-      :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" TableId  :> "stream" :> WebSocket
+      :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" (Id TableId)  :> "stream" :> WebSocket
 
 
 api :: Proxy Api
@@ -93,21 +93,21 @@ server state = status
       liftIO $ Concurrent.modifyMVar (tables state) $
         createTable session name
 
-    joinTableHandler :: (HeaderAuth Session) -> TableId -> UserInfo -> Handler Table
+    joinTableHandler :: (HeaderAuth Session) -> Id TableId -> UserInfo -> Handler Table
     joinTableHandler (HeaderAuth session) id' UserInfo { userName=name } = do
       tables <- liftIO $ Concurrent.readMVar (tables state)
       tableRes <- liftIO $ joinTable session id' name tables
 
       either respondError pure tableRes
 
-    meHandler :: (HeaderAuth Session) -> TableId -> Handler Player
+    meHandler :: (HeaderAuth Session) -> Id TableId -> Handler Player
     meHandler (HeaderAuth session) tableId = do
       ts <- liftIO $ Concurrent.readMVar (tables state)
       playerRes <- liftIO $ getTablePlayer session tableId ts
 
       either respondError pure playerRes
 
-    streamTableHandler :: MonadIO m => (CookieAuth Session) -> TableId -> WS.Connection -> m ()
+    streamTableHandler :: MonadIO m => (CookieAuth Session) -> Id TableId -> WS.Connection -> m ()
     streamTableHandler (CookieAuth session) id' conn = do
       liftIO $ tableStreamHandler (tables state) session id' conn
 

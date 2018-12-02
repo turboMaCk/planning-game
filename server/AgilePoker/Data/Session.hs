@@ -16,34 +16,33 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.Aeson.Types as AT
 
 
-import AgilePoker.Data.Id
+import AgilePoker.Data.Id (Id, generateId)
 
 
 data Session = Session
-  { sessionId :: ByteString
+  { sessionId :: Id SessionId
   }
 
 
 instance ToJSON Session where
   toJSON (Session { sessionId=id }) =
     AT.object
-        [ "id" .= TE.decodeUtf8 id
+        [ "id" .= id
         ]
 
 
--- @TODO: Just alias for now
-type SessionId = ByteString
+data SessionId
 
 
 type Sessions =
-  Map ByteString Session
+  Map (Id SessionId) Session
 
 
 data SessionError
   = SessionDoesNotExist
 
 
-addSession :: Sessions -> IO ( Sessions, ( SessionId, Session ) )
+addSession :: Sessions -> IO ( Sessions, ( Id SessionId, Session ) )
 addSession sessions = do
     newId <- generateId sessions
     let newSession = Session newId
@@ -52,7 +51,7 @@ addSession sessions = do
            )
 
 
-getSession :: ByteString -> Sessions -> Maybe Session
+getSession :: Id SessionId -> Sessions -> Maybe Session
 getSession = Map.lookup
 
 
@@ -60,5 +59,5 @@ emptySessions :: Sessions
 emptySessions = Map.empty
 
 
-removeSession :: SessionId -> Sessions -> Sessions
+removeSession :: Id SessionId -> Sessions -> Sessions
 removeSession = Map.delete
