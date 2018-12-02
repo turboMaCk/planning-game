@@ -19,20 +19,8 @@ import Web.Cookie (parseCookies)
 import qualified Control.Concurrent as Concurrent
 
 import AgilePoker.Data.Session (SessionId, Session, Sessions, getSession)
-import AgilePoker.Api.Error (Error(..), ErrorType(..), respondError)
-
-
-data AuthorizationError
-  = SessionNotFound
-  | SessionIdMissing
-
-
-instance Error AuthorizationError where
-  toType SessionNotFound  = Forbidden
-  toType SessionIdMissing = Unauthorized
-
-  toReadable SessionNotFound  = "Session expired."
-  toReadable SessionIdMissing = "Session required."
+import AgilePoker.Api.Authorization.Type (AuthorizationError(..))
+import AgilePoker.Api.Error (respondError)
 
 
 lookupSession :: MVar Sessions -> SessionId -> Handler Session

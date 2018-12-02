@@ -18,7 +18,8 @@ cabal-version:       >=1.10
 executable agile-poker
   main-is:             AgilePoker.hs
   other-modules:       AgilePoker.Api
- 					 , AgilePoker.Api.Authorization
+                     , AgilePoker.Api.Authorization
+                     , AgilePoker.Api.Authorization.Type
                      , AgilePoker.Api.Error
                      , AgilePoker.Api.Error.Class
                      , AgilePoker.Api.Middleware
@@ -26,7 +27,7 @@ executable agile-poker
                      , AgilePoker.Data
                      , AgilePoker.Data.Id
                      , AgilePoker.Data.Player
-  					 , AgilePoker.Data.Session
+                     , AgilePoker.Data.Session
                      , AgilePoker.Data.Table
                      , AgilePoker.Data.Table.Type
                      , AgilePoker.Data.Table.Event
