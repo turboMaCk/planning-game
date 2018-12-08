@@ -1,10 +1,13 @@
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE OverloadedStrings      #-}
+{-# LANGUAGE FlexibleInstances      #-}
 
 module AgilePoker.Data.Game
   (Vote(..), RunningGame, FinishedGame, Games
   , startGame, addVote, nextRound, completeGame
   ) where
 
+import Data.Aeson.Types (ToJSON(..), (.=))
+import qualified Data.Aeson.Types as AT
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 
@@ -40,8 +43,21 @@ instance Show Vote where
   show UnknownPoints   = "?"
 
 
-type RunningGame =
-  ( T.Text, Map.Map (Id SessionId) Vote )
+instance ToJSON Vote where
+  -- @TODO: some perf penalty for translating [ Char ] to Text
+  toJSON = toJSON . T.pack . show
+
+
+data RunningGame =
+  RunningGame T.Text (Map.Map (Id SessionId) Vote)
+
+
+instance ToJSON RunningGame where
+  toJSON (RunningGame name votes) =
+    -- @TODO: encode votes?
+    AT.object
+        [ "name" .= name
+        ]
 
 
 data FinishedGame =
@@ -63,11 +79,11 @@ data GameError
 
 
 newGame :: T.Text -> RunningGame
-newGame name = ( name, Map.empty )
+newGame name = RunningGame name Map.empty
 
 
 finishGame :: Vote -> RunningGame -> FinishedGame
-finishGame vote ( name, votes ) =
+finishGame vote (RunningGame name votes ) =
   FinishedGame { gameName = name
                , gameVotes = votes
                , winningVote = vote
@@ -81,8 +97,8 @@ startGame name =
 
 addVote :: Id SessionId -> Vote -> Games -> Either GameError Games
 addVote _ _ (FinishedGames _)                        = Left GameFinished
-addVote sId vote (RunningGames past ( name, votes )) =
-  Right $ RunningGames past ( name, updatedVotes )
+addVote sId vote (RunningGames past (RunningGame name votes )) =
+  Right $ RunningGames past $ RunningGame name updatedVotes
   where
     updatedVotes :: Map.Map (Id SessionId) Vote
     updatedVotes =
