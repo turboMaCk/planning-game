@@ -21,6 +21,7 @@ import qualified Control.Concurrent as Concurrent
 import AgilePoker.Data.Id (Id, generateId)
 import AgilePoker.Data.Session
 import AgilePoker.Data.Player
+import AgilePoker.Data.Game
 
 import AgilePoker.Data.Table.Event
 import AgilePoker.Data.Table.Type
@@ -30,7 +31,7 @@ createTable :: Session -> T.Text -> Tables -> IO ( Tables, Table )
 createTable Session { sessionId=id' } name tables = do
   tId <- generateId tables
   let banker = createPlayer name
-  let newTable = Table tId ( id', banker ) emptyPlayers
+  let newTable = Table tId ( id', banker ) emptyPlayers Nothing
   mvarTable <- Concurrent.newMVar newTable
   pure $ ( Map.insert tId mvarTable tables
          , newTable
