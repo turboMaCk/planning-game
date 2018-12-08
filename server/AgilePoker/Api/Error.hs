@@ -5,7 +5,7 @@ module AgilePoker.Api.Error
   ) where
 
 import AgilePoker.Api.Error.Class (Error(..), respondError, ErrorType(..))
-import AgilePoker.Data (TableError(..), SessionError(..))
+import AgilePoker.Data (TableError(..), SessionError(..), GameError(..))
 import AgilePoker.Api.Authorization.Type (AuthorizationError(..))
 
 
@@ -23,10 +23,12 @@ instance Error SessionError where
 
 
 instance Error TableError where
-  toType TableNotFound  = NotFound
-  toType NameTaken      = Conflict
-  toType PlayerNotFound = Forbidden
+  toType TableNotFound            = NotFound
+  toType NameTaken                = Conflict
+  toType PlayerNotFound           = Forbidden
+  toType (GameError GameFinished) = Forbidden
 
-  toReadable TableNotFound  = "Table doesn't exist."
-  toReadable NameTaken      = "Name is already taken."
-  toReadable PlayerNotFound = "You're not a player on this table."
+  toReadable TableNotFound            = "Table doesn't exist."
+  toReadable NameTaken                = "Name is already taken."
+  toReadable PlayerNotFound           = "You're not a player on this table."
+  toReadable (GameError GameFinished) = "Game is already finished."

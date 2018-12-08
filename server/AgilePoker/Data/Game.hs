@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances      #-}
 
 module AgilePoker.Data.Game
-  (Vote(..), RunningGame, FinishedGame, Games
+  (Vote(..), GameError(..), RunningGame, FinishedGame, Games
   , startGame, addVote, nextRound, completeGame
   ) where
 
@@ -109,9 +109,12 @@ finishGame vote (RunningGame name votes ) =
                }
 
 
-startGame :: T.Text -> Games
+startGame :: T.Text -> ( Games, RunningGame )
 startGame name =
-  RunningGames [] $ newGame name
+  ( RunningGames [] g, g )
+  where
+    g =
+        newGame name
 
 
 addVote :: Id SessionId -> Vote -> Games -> Either GameError Games

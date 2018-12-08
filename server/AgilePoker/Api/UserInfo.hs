@@ -15,4 +15,4 @@ data UserInfo = UserInfo
 
 instance FromJSON UserInfo where
   parseJSON (AT.Object v) = UserInfo <$> (v .: "name")
-  parseJSON _                 = mzero
+  parseJSON _             = mzero

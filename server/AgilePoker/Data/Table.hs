@@ -8,23 +8,28 @@ module AgilePoker.Data.Table
   , tableStreamHandler
   ) where
 
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isNothing, isJust)
 import Control.Monad (forM_, forever, mzero)
 import Control.Concurrent (MVar)
 import Control.Exception (finally)
-import Data.ByteString (ByteString)
+import Data.ByteString.Lazy (ByteString)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Network.WebSockets as WS
 import qualified Control.Concurrent as Concurrent
+import qualified Data.Aeson as Aeson
 
 import AgilePoker.Data.Id (Id, generateId)
 import AgilePoker.Data.Session
 import AgilePoker.Data.Player
 import AgilePoker.Data.Game
+import AgilePoker.Data.Table.Msg
 
 import AgilePoker.Data.Table.Event
 import AgilePoker.Data.Table.Type
+
+
+-- Basic Operations
 
 
 createTable :: Session -> T.Text -> Tables -> IO ( Tables, Table )
@@ -111,12 +116,18 @@ assignConnection sId conn table@Table { tableBanker=banker, tablePlayers=players
                            , Just pair
                            )
 
+-- WS Handling
 
--- @TODO: implement
-handleStreamMsg :: WS.Connection -> IO ()
-handleStreamMsg conn = forever $ do
-  msg :: ByteString <- WS.receiveData conn
-  pure ()
+
+handleStreamMsg :: Session -> MVar Table -> WS.Connection -> IO ()
+handleStreamMsg session state conn = forever $ do
+  bs :: ByteString <- WS.receiveData conn
+  let decoded :: Maybe Msg = Aeson.decode bs
+  case decoded of
+    -- @TODO: handle unrecosinable msg
+    Nothing  -> pure ()
+    Just msg ->
+      Concurrent.modifyMVar_ state $ handleMsg conn session msg
 
 
 disconnect :: MVar Table -> Id SessionId -> Int -> IO ()
@@ -141,7 +152,7 @@ disconnect state sessionId connId =
 
 
 tableStreamHandler :: MVar Tables -> Session -> Id TableId -> WS.Connection -> IO ()
-tableStreamHandler state Session { sessionId=sId } id' conn = do
+tableStreamHandler state session@Session { sessionId=sId } id' conn = do
   tables <- Concurrent.readMVar state
   let mTable = Map.lookup id' tables
 
@@ -173,7 +184,7 @@ tableStreamHandler state Session { sessionId=sId } id' conn = do
                         mzero
 
                     -- 3.4 Delegate to Msg handler
-                    handleStreamMsg conn
+                    handleStreamMsg session tableState conn
 
             Nothing -> do
                 -- @TODO: player doesn't exist (session is not a member)
@@ -189,3 +200,27 @@ tableStreamHandler state Session { sessionId=sId } id' conn = do
 broadcast :: Table -> Event -> IO ()
 broadcast table event = do
   forM_ (allConnections table) $ flip WS.sendTextData $ encodeEvent event
+
+
+isBanker :: Session -> Table -> Bool
+isBanker Session { sessionId=id } Table { tableBanker=pair } =
+  id == fst pair
+
+
+-- MSG and Event handling
+
+
+-- @TODO: implement missing msgs
+handleMsg :: WS.Connection -> Session -> Msg -> Table -> IO Table
+handleMsg conn session (NewGame name) table
+  | isBanker session table
+  , isNothing (tableGame table) = do
+      let (games, game) = startGame name
+      broadcast table $ GameStarted game
+      pure $ table { tableGame = Just games }
+  | not $ isBanker session table = do
+      -- @TODO: Handle forbidden action
+      pure $ table
+  | isJust (tableGame table) =
+      -- @TODO: Handle already started
+      pure $ table

@@ -4,9 +4,9 @@
 module AgilePoker.Data.Table.Msg where
 
 import Control.Monad (mzero)
+import Data.Aeson.Types (FromJSON(..), (.:))
 import qualified Data.Text as T
 import qualified Data.Aeson.Types as AT
-import Data.Aeson.Types (FromJSON(..), (.:))
 
 import AgilePoker.Data.Game
 

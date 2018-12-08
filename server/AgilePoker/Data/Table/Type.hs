@@ -14,7 +14,7 @@ import qualified Data.Text.Encoding as TE
 import AgilePoker.Data.Id (Id)
 import AgilePoker.Data.Player (Player, Players)
 import AgilePoker.Data.Session (SessionId)
-import AgilePoker.Data.Game (Games)
+import AgilePoker.Data.Game (Games, GameError(..))
 
 
 data TableId
@@ -45,6 +45,7 @@ data TableError
   = TableNotFound
   | NameTaken
   | PlayerNotFound
+  | GameError GameError
 
 
 emptyTables :: Tables
