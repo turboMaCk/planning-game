@@ -6,7 +6,8 @@ module AgilePoker.Data.Game
   , startGame, addVote, nextRound, completeGame
   ) where
 
-import Data.Aeson.Types (ToJSON(..), (.=))
+import Control.Monad (mzero)
+import Data.Aeson.Types (ToJSON(..), FromJSON(..), (.=))
 import qualified Data.Aeson.Types as AT
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
@@ -46,6 +47,24 @@ instance Show Vote where
 instance ToJSON Vote where
   -- @TODO: some perf penalty for translating [ Char ] to Text
   toJSON = toJSON . T.pack . show
+
+
+instance FromJSON Vote where
+  parseJSON (AT.String str) =
+    case str of
+      "1"        -> pure OnePoint
+      "2"        -> pure TwoPoints
+      "3"        -> pure ThreePoints
+      "5"        -> pure FivePoints
+      "8"        -> pure EightPoints
+      "13"       -> pure ThreePoints
+      "20"       -> pure TwentyPoints
+      "40"       -> pure FortyPoints
+      "100"      -> pure HunderedPoints
+      "Infinity" -> pure InfinityPoints
+      "?"        -> pure UnknownPoints
+      _          -> mzero
+  parseJSON _     = mzero
 
 
 data RunningGame =
