@@ -23,6 +23,17 @@ data GameSnapshot
                          }
 
 
+-- @TODO: possible to generalize
+pointsPair :: [ ( T.Text, Vote ) ] -> [ Value ]
+pointsPair = fmap toVal
+  where
+    toVal ( name, points ) =
+      object
+        [ "name" .= name
+        , "value" .= points
+        ]
+
+
 instance ToJSON GameSnapshot where
   toJSON (RunningGameSnapshot name votes points) =
     object
@@ -34,13 +45,13 @@ instance ToJSON GameSnapshot where
   toJSON (LockedGameSnapshot name votes points) =
     object
       [ "name"      .= name
-      , "userVotes" .= votes
+      , "userVotes" .= pointsPair votes
       , "points"    .= points
       , "status"    .= String "Locked"
       ]
   toJSON (FinishedGameSnapshot points votes) =
     object
-      [ "roundVotes" .= votes
+      [ "roundVotes" .= pointsPair votes
       , "points"     .= points
       , "status"     .= String "Finished"
       ]

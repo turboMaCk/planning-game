@@ -1,24 +1,31 @@
 module Data exposing
     ( ApiError
+    , Game(..)
     , Player
     , Session
     , Table
     , TableError(..)
+    , Vote(..)
     , createSession
     , createTable
+    , encodeVote
     , errorIs
     , errorMessage
+    , gameDecoder
     , getMe
     , getSession
     , joinTable
     , playerDecoder
     , tableDecoder
+    , voteDecoder
     )
 
+import Dict exposing (Dict)
 import Http exposing (Expect)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra as Decode
-import Json.Encode as Encode
+import Json.Encode as Encode exposing (Value)
+import Set exposing (Set)
 import Url.Builder as Url
 
 
@@ -242,3 +249,187 @@ getMe token tableId msg =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+
+-- Vote
+
+
+type Vote
+    = OnePoint
+    | TwoPoints
+    | ThreePoints
+    | FivePoints
+    | EightPoints
+    | ThreeteenPoints
+    | TwentyPoints
+    | FortyPoints
+    | HundredPoints
+    | InfinityPoints
+    | UnknownPoints
+
+
+voteDecoder : Decoder Vote
+voteDecoder =
+    let
+        toVote str =
+            case str of
+                "1" ->
+                    Decode.succeed OnePoint
+
+                "2" ->
+                    Decode.succeed TwoPoints
+
+                "3" ->
+                    Decode.succeed ThreePoints
+
+                "5" ->
+                    Decode.succeed FivePoints
+
+                "8" ->
+                    Decode.succeed EightPoints
+
+                "20" ->
+                    Decode.succeed TwentyPoints
+
+                "13" ->
+                    Decode.succeed ThreeteenPoints
+
+                "40" ->
+                    Decode.succeed FortyPoints
+
+                "100" ->
+                    Decode.succeed HundredPoints
+
+                "Infinity" ->
+                    Decode.succeed InfinityPoints
+
+                "?" ->
+                    Decode.succeed UnknownPoints
+
+                _ ->
+                    Decode.fail "unknown vote"
+    in
+    Decode.andThen toVote Decode.string
+
+
+encodeVote : Vote -> Value
+encodeVote vote =
+    let
+        str =
+            case vote of
+                OnePoint ->
+                    "1"
+
+                TwoPoints ->
+                    "2"
+
+                ThreePoints ->
+                    "3"
+
+                FivePoints ->
+                    "5"
+
+                EightPoints ->
+                    "8"
+
+                ThreeteenPoints ->
+                    "13"
+
+                TwentyPoints ->
+                    "20"
+
+                FortyPoints ->
+                    "40"
+
+                HundredPoints ->
+                    "100"
+
+                InfinityPoints ->
+                    "Infinity"
+
+                UnknownPoints ->
+                    "?"
+    in
+    Encode.string str
+
+
+
+-- Game
+
+
+type Game
+    = NotStarted
+    | Voting
+        { name : String
+        , maskedVotes : Set String
+        , totalPoints : Int
+        }
+    | RoundFinished
+        { name : String
+        , userVotes : Dict String Vote
+        , totalPoints : Int
+        }
+    | Overview
+        { totalPoints : Int
+        , results : Dict String Vote
+        }
+
+
+pointsDictDecoder : Decoder (Dict String Vote)
+pointsDictDecoder =
+    let
+        itemDecoder =
+            Decode.succeed Tuple.pair
+                |> Decode.andMap (Decode.field "name" Decode.string)
+                |> Decode.andMap (Decode.field "value" voteDecoder)
+    in
+    Decode.list itemDecoder
+        |> Decode.map Dict.fromList
+
+
+votingDecoder : Decoder Game
+votingDecoder =
+    Decode.succeed (\n v t -> { name = n, maskedVotes = v, totalPoints = t })
+        |> Decode.andMap (Decode.field "name" Decode.string)
+        |> Decode.andMap (Decode.field "makedVotes" <| Decode.map Set.fromList <| Decode.list Decode.string)
+        |> Decode.andMap (Decode.field "points" Decode.int)
+        |> Decode.map Voting
+
+
+lockedDecoder : Decoder Game
+lockedDecoder =
+    Decode.succeed (\n v t -> { name = n, userVotes = v, totalPoints = t })
+        |> Decode.andMap (Decode.field "name" Decode.string)
+        |> Decode.andMap (Decode.field "userVotes" pointsDictDecoder)
+        |> Decode.andMap (Decode.field "points" Decode.int)
+        |> Decode.map RoundFinished
+
+
+overviewDecoder : Decoder Game
+overviewDecoder =
+    Decode.succeed (\r t -> { results = r, totalPoints = t })
+        |> Decode.andMap (Decode.field "roundVotes" pointsDictDecoder)
+        |> Decode.andMap (Decode.field "points" Decode.int)
+        |> Decode.map Overview
+
+
+gameDecoder : Decoder Game
+gameDecoder =
+    let
+        choose str =
+            case str of
+                "Running" ->
+                    votingDecoder
+
+                "Locked" ->
+                    lockedDecoder
+
+                "Finished" ->
+                    overviewDecoder
+
+                _ ->
+                    Decode.fail "unknown status"
+    in
+    Decode.field "status" Decode.string
+        |> Decode.andThen choose
