@@ -274,7 +274,7 @@ handleMsg conn session (FinishGame vote) table
     case tableGame table of
       Just games -> do
         case completeGame vote games of
-          Right newGames ->
+          Right newGames -> do
             broadcast table $ GameEnded
             pure $ table { tableGame = Just newGames }
           Left _ ->
@@ -283,6 +283,6 @@ handleMsg conn session (FinishGame vote) table
       Nothing ->
         -- @TODO: handle game wasn't started
         pure table
-  | not isBanker session table =
+  | not $ isBanker session table =
     -- @TODO: handle forbidden
     pure table
