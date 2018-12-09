@@ -3,13 +3,14 @@ module Page.Table exposing (Model, Msg, init, subscriptions, update, view)
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Component
-import Data exposing (ApiError, Player, Table, TableError(..))
+import Data exposing (ApiError, Game(..), Player, Table, TableError(..))
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Events as Events
 import Http
 import Maybe.Extra as Maybe
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
+import Set exposing (Set)
 import Url.Builder as Url
 
 
@@ -22,6 +23,7 @@ type alias Model =
     , banker : Maybe Player
     , players : Dict String Player
     , tableError : Maybe (ApiError TableError)
+    , game : Game
     }
 
 
@@ -32,6 +34,7 @@ init token id =
       , banker = Nothing
       , players = Dict.empty
       , tableError = Nothing
+      , game = NotStarted
       }
     , Data.getMe token id Me
     )
@@ -42,6 +45,16 @@ type Msg
     | NoOp
     | Event (Result StreamError Event)
     | Send Stream.Msg
+
+
+playerVoted : Player -> Model -> Model
+playerVoted player model =
+    case model.game of
+        Voting data ->
+            { model | game = Voting { data | maskedVotes = Set.insert player.name data.maskedVotes } }
+
+        _ ->
+            model
 
 
 updatePlayer : Player -> Model -> Model
@@ -124,6 +137,18 @@ handleEvent event model =
             , Cmd.none
             )
 
+        GameStarted game ->
+            ( { model | game = game }, Cmd.none )
+
+        VoteAccepted player ->
+            ( playerVoted player model, Cmd.none )
+
+        VotingEnded game ->
+            ( { model | game = game }, Cmd.none )
+
+        GameEnded game ->
+            ( { model | game = game }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -154,12 +179,23 @@ viewUser { me, banker } player =
 
 viewGame : Model -> Html Msg
 viewGame model =
-    if amIBanker model then
-        Html.button [ Events.onClick <| Send <| Stream.NewGame "Test" ]
-            [ Html.text "set name to test" ]
+    case model.game of
+        NotStarted ->
+            if amIBanker model then
+                Html.button [ Events.onClick <| Send <| Stream.NewGame "Test" ]
+                    [ Html.text "set name to test" ]
 
-    else
-        Html.text "not a banker"
+            else
+                Html.text "not a banker"
+
+        Voting _ ->
+            Html.text "voting"
+
+        RoundFinished _ ->
+            Html.text "finishing"
+
+        Overview _ ->
+            Html.text "overview"
 
 
 view : Model -> Html Msg

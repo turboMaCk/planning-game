@@ -8,7 +8,7 @@ port module Page.Table.Stream exposing
     , sendMsg
     )
 
-import Data exposing (Player, Table)
+import Data exposing (Game, Player, Table, Vote)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode exposing (Value)
 
@@ -54,6 +54,10 @@ type Event
     = PlayerJoin Player
     | PlayerStatusUpdate Player
     | SyncTableState Table
+    | GameStarted Game
+    | VoteAccepted Player
+    | VotingEnded Game
+    | GameEnded Game
 
 
 eventField : String -> (a -> Event) -> Decoder a -> Decoder Event
@@ -80,6 +84,10 @@ eventDecoder =
         [ eventField "UserJoined" PlayerJoin <| Decode.field "player" Data.playerDecoder
         , eventField "UserStatusUpdate" PlayerStatusUpdate <| Decode.field "player" Data.playerDecoder
         , eventField "SyncTableState" SyncTableState <| Decode.field "table" Data.tableDecoder
+        , eventField "GameStarted" GameStarted <| Decode.field "game" Data.gameDecoder
+        , eventField "VoteAccepted" VoteAccepted <| Decode.field "player" Data.playerDecoder
+        , eventField "VotingEnded" VotingEnded <| Decode.field "game" Data.gameDecoder
+        , eventField "GameEnded" GameEnded <| Decode.field "game" Data.gameDecoder
         ]
 
 

@@ -392,7 +392,7 @@ votingDecoder : Decoder Game
 votingDecoder =
     Decode.succeed (\n v t -> { name = n, maskedVotes = v, totalPoints = t })
         |> Decode.andMap (Decode.field "name" Decode.string)
-        |> Decode.andMap (Decode.field "makedVotes" <| Decode.map Set.fromList <| Decode.list Decode.string)
+        |> Decode.andMap (Decode.field "maskedVotes" <| Decode.map Set.fromList <| Decode.list Decode.string)
         |> Decode.andMap (Decode.field "points" Decode.int)
         |> Decode.map Voting
 

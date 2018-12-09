@@ -24,21 +24,21 @@ data Event
     = PlayerJoined Player
     | PlayerStatusUpdate Player
     | SyncTableState Table
-    | GameStarted Players Games -- @TODO: add points so far
+    | GameStarted Players Games
     | VoteAccepted Player
     | VotingEnded Players Games
-    | GameEnded -- @TODO: add history overview
+    | GameEnded Players Games
 
 
 instance ToJSON Event where
   toJSON (PlayerJoined player) =
     AT.object
-        [ "event" .= T.pack "UserJoined"
+        [ "event"  .= T.pack "UserJoined"
         , "player" .= player
         ]
   toJSON (PlayerStatusUpdate player) =
     AT.object
-        [ "event" .= T.pack "UserStatusUpdate"
+        [ "event"  .= T.pack "UserStatusUpdate"
         , "player" .= player
         ]
   toJSON (SyncTableState table) =
@@ -58,12 +58,13 @@ instance ToJSON Event where
         ]
   toJSON (VotingEnded players games) =
     AT.object
-        [ "event"  .= T.pack "VotingEnded"
-        , "game"   .= snapshot players games
+        [ "event" .= T.pack "VotingEnded"
+        , "game"  .= snapshot players games
         ]
-  toJSON GameEnded =
+  toJSON (GameEnded players games) =
     AT.object
-        [ "event"  .= T.pack "GameEnded"
+        [ "event" .= T.pack "GameEnded"
+        , "game"  .= snapshot players games
         ]
 
 

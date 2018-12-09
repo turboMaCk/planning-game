@@ -275,7 +275,7 @@ handleMsg conn session (FinishGame vote) table
       Just games -> do
         case completeGame vote games of
           Right newGames -> do
-            broadcast table $ GameEnded
+            broadcast table $ GameEnded (tablePlayers table) newGames
             pure $ table { tableGame = Just newGames }
           Left _ ->
             -- @TODO: handle already canceled
