@@ -112,6 +112,7 @@ observe msg =
 
 type Msg
     = NewGame String
+    | Vote Vote
 
 
 encodeMsg : Msg -> Value
@@ -121,6 +122,12 @@ encodeMsg msg =
             Encode.object
                 [ ( "msg", Encode.string "NewGame" )
                 , ( "name", Encode.string name )
+                ]
+
+        Vote vote ->
+            Encode.object
+                [ ( "msg", Encode.string "Vote" )
+                , ( "vote", Data.encodeVote vote )
                 ]
 
 

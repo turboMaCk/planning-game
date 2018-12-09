@@ -56,14 +56,20 @@ joinTable session@Session { sessionId=id' } tableId name tables =
             mPlayers = addPlayer session name (tablePlayers table)
         in
         case mPlayers of
-          Just (newPlayers, newPlayer) ->
-            Concurrent.modifyMVar mvar $ \t -> do
+          Just ( newPlayers, newPlayer ) -> do
+            res <- Concurrent.modifyMVar mvar $ \t -> do
+                print newPlayers
                 let updatedTable = t { tablePlayers = newPlayers }
 
                 -- Broadcast to connections
                 broadcast t $ PlayerJoined newPlayer
 
                 pure ( updatedTable, Right updatedTable )
+
+            nt <- Concurrent.readMVar mvar
+            print $ tablePlayers nt
+            pure res
+
           Nothing ->
              pure $ Left NameTaken
 
@@ -222,7 +228,7 @@ handleMsg conn session (NewGame name) table
   | not $ isBanker session table = do
       -- @TODO: Handle forbidden action
       pure $ table
-  | isJust (tableGame table) =
+  | otherwise =
       -- @TODO: Handle already started
       pure $ table
 handleMsg conn session FinishRound table
@@ -234,7 +240,7 @@ handleMsg conn session FinishRound table
         Nothing ->
           -- @TODO: handled non started game
           pure table
-  | not $ isBanker session table =
+  | otherwise =
     -- @TODO: handle forbidden
     pure table
 handleMsg conn session (NextRound vote name) table
@@ -251,20 +257,23 @@ handleMsg conn session (NextRound vote name) table
         Nothing ->
           -- @TODO: handled non started game
           pure table
-  | not $ isBanker session table =
+  | otherwise =
     -- @TODO: handle forbidden
     pure table
 handleMsg conn session (Vote vote) table =
   case tableGame table of
     Just game ->
-      let sId = (sessionId session) in
+      let sId = sessionId session
+      in
       case addVote sId vote game of
         Right newGames -> do
-          maybe (pure ()) (broadcast table . VoteAccepted) $ getPlayer sId $ tablePlayers table
+          print $ tablePlayers table
+          maybe (putStrLn ":(") (broadcast table . VoteAccepted) $ getPlayer sId $ tablePlayers table
           pure $ table { tableGame = Just newGames }
 
         -- @TODO: can't vote error
-        Left _ -> pure table
+        Left _ ->
+          pure table
 
     Nothing ->
       -- @TODO: hanlde not started
@@ -283,6 +292,6 @@ handleMsg conn session (FinishGame vote) table
       Nothing ->
         -- @TODO: handle game wasn't started
         pure table
-  | not $ isBanker session table =
+  | otherwise =
     -- @TODO: handle forbidden
     pure table

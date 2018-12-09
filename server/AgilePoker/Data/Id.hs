@@ -17,6 +17,10 @@ newtype Id a =
   Id { unId :: ByteString }
 
 
+instance Show (Id a) where
+  show = show . unId
+
+
 instance Eq (Id a) where
   (==) (Id a) (Id b) = a == b
 

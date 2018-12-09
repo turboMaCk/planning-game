@@ -3,7 +3,7 @@ module Page.Table exposing (Model, Msg, init, subscriptions, update, view)
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Component
-import Data exposing (ApiError, Game(..), Player, Table, TableError(..))
+import Data exposing (ApiError, Game(..), Player, Table, TableError(..), Vote(..))
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Events as Events
@@ -177,6 +177,64 @@ viewUser { me, banker } player =
         ]
 
 
+viewCard : Vote -> Html Msg
+viewCard vote =
+    let
+        text =
+            case vote of
+                OnePoint ->
+                    "1"
+
+                TwoPoints ->
+                    "2"
+
+                ThreePoints ->
+                    "3"
+
+                FivePoints ->
+                    "5"
+
+                EightPoints ->
+                    "8"
+
+                ThreeteenPoints ->
+                    "13"
+
+                TwentyPoints ->
+                    "20"
+
+                FortyPoints ->
+                    "40"
+
+                HundredPoints ->
+                    "100"
+
+                InfinityPoints ->
+                    "Infinity"
+
+                UnknownPoints ->
+                    "?"
+    in
+    Html.button [ Events.onClick <| Send <| Stream.Vote vote ] [ Html.text text ]
+
+
+votingView : Html Msg
+votingView =
+    Html.main_ []
+        [ viewCard OnePoint
+        , viewCard TwoPoints
+        , viewCard ThreePoints
+        , viewCard FivePoints
+        , viewCard EightPoints
+        , viewCard ThreeteenPoints
+        , viewCard TwentyPoints
+        , viewCard FortyPoints
+        , viewCard HundredPoints
+        , viewCard InfinityPoints
+        , viewCard UnknownPoints
+        ]
+
+
 viewGame : Model -> Html Msg
 viewGame model =
     case model.game of
@@ -189,7 +247,7 @@ viewGame model =
                 Html.text "not a banker"
 
         Voting _ ->
-            Html.text "voting"
+            votingView
 
         RoundFinished _ ->
             Html.text "finishing"

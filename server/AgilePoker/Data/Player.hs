@@ -27,6 +27,10 @@ data Player = Player
   }
 
 
+instance Show Player where
+   show Player { playerName=name } = "Name: " <> show name
+
+
 instance ToJSON Player where
   toJSON player@(Player { playerName=name }) =
     AT.object
