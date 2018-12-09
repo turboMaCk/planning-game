@@ -3,9 +3,11 @@
 
 module AgilePoker.Data.Game
   (Vote(..), GameError(..), RunningGame(..), FinishedGame, Games(..)
-  , startGame, addVote, nextRound, completeGame, sumGamePoints, gamesVotes
+  , startGame, addVote, nextRound, completeGame, sumGamePoints
+  , gamesVotes, playersVotes
   ) where
 
+import Data.Maybe (mapMaybe)
 import Control.Monad (mzero)
 import Data.Aeson.Types (ToJSON(..), FromJSON(..), (.=))
 import qualified Data.Aeson.Types as AT
@@ -13,6 +15,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 
 import AgilePoker.Data.Session
+import AgilePoker.Data.Player
 import AgilePoker.Data.Id
 
 
@@ -82,7 +85,7 @@ instance FromJSON Vote where
 
 
 data RunningGame =
-  RunningGame T.Text (Map.Map (Id SessionId) Vote)
+  RunningGame T.Text (Map.Map (Id SessionId) Vote) Bool
 
 
 data FinishedGame =
@@ -101,14 +104,15 @@ data Games
 
 data GameError
   = GameFinished
+  | VotingEnded
 
 
 newGame :: T.Text -> RunningGame
-newGame name = RunningGame name Map.empty
+newGame name = RunningGame name Map.empty False
 
 
 finishGame :: Vote -> RunningGame -> FinishedGame
-finishGame vote (RunningGame name votes ) =
+finishGame vote (RunningGame name votes _) =
   FinishedGame { gameName = name
                , gameVotes = votes
                , winningVote = vote
@@ -122,8 +126,11 @@ startGame name =
 
 addVote :: Id SessionId -> Vote -> Games -> Either GameError Games
 addVote _ _ (FinishedGames _)                        = Left GameFinished
-addVote sId vote (RunningGames past (RunningGame name votes )) =
-  Right $ RunningGames past $ RunningGame name updatedVotes
+addVote sId vote (RunningGames past (RunningGame name votes isLocked)) =
+  if isLocked then
+    Left VotingEnded
+  else
+    Right $ RunningGames past $ RunningGame name updatedVotes False
   where
     updatedVotes :: Map.Map (Id SessionId) Vote
     updatedVotes =
@@ -152,6 +159,13 @@ sumGamePoints games =
   sum $ (voteToInt . winningVote) <$> finishedGames games
 
 
-gamesVotes :: Games -> [( T.Text, Vote )]
+gamesVotes :: Games -> [ ( T.Text, Vote ) ]
 gamesVotes games =
   reverse $ (\g -> ( gameName g, winningVote g )) <$> finishedGames games
+
+
+playersVotes :: Players -> Games -> [ ( T.Text, Vote ) ]
+playersVotes _ (FinishedGames _) = []
+playersVotes players (RunningGames _ (RunningGame _ votes _)) =
+      mapMaybe (\(id, vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id players)
+        $ Map.toList votes
