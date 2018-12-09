@@ -2,8 +2,8 @@
 {-# LANGUAGE FlexibleInstances      #-}
 
 module AgilePoker.Data.Game
-  (Vote(..), GameError(..), RunningGame, FinishedGame, Games
-  , startGame, addVote, nextRound, completeGame
+  (Vote(..), GameError(..), RunningGame(..), FinishedGame, Games(..)
+  , startGame, addVote, nextRound, completeGame, sumGamePoints, gamesVotes
   ) where
 
 import Control.Monad (mzero)
@@ -49,6 +49,20 @@ instance ToJSON Vote where
   toJSON = toJSON . T.pack . show
 
 
+voteToInt :: Vote -> Int
+voteToInt OnePoint        = 1
+voteToInt TwoPoints       = 2
+voteToInt ThreePoints     = 3
+voteToInt FivePoints      = 5
+voteToInt EightPoints     = 8
+voteToInt ThreeteenPoints = 13
+voteToInt TwentyPoints    = 20
+voteToInt FortyPoints     = 40
+voteToInt HunderedPoints  = 100
+voteToInt InfinityPoints  = 0
+voteToInt UnknownPoints   = 0
+
+
 instance FromJSON Vote where
   parseJSON (AT.String str) =
     case str of
@@ -69,14 +83,6 @@ instance FromJSON Vote where
 
 data RunningGame =
   RunningGame T.Text (Map.Map (Id SessionId) Vote)
-
-
-instance ToJSON RunningGame where
-  toJSON (RunningGame name votes) =
-    -- @TODO: encode votes?
-    AT.object
-        [ "name" .= name
-        ]
 
 
 data FinishedGame =
@@ -109,12 +115,9 @@ finishGame vote (RunningGame name votes ) =
                }
 
 
-startGame :: T.Text -> ( Games, RunningGame )
+startGame :: T.Text -> Games
 startGame name =
-  ( RunningGames [] g, g )
-  where
-    g =
-        newGame name
+  RunningGames [] $ newGame name
 
 
 addVote :: Id SessionId -> Vote -> Games -> Either GameError Games
@@ -137,3 +140,18 @@ completeGame :: Vote -> Games -> Either GameError Games
 completeGame _ (FinishedGames _)              = Left GameFinished
 completeGame vote (RunningGames past current) =
   Right $ FinishedGames (finishGame vote current : past)
+
+
+finishedGames :: Games -> [ FinishedGame ]
+finishedGames (RunningGames finished _) = finished
+finishedGames (FinishedGames finished) = finished
+
+
+sumGamePoints :: Games -> Int
+sumGamePoints games =
+  sum $ (voteToInt . winningVote) <$> finishedGames games
+
+
+gamesVotes :: Games -> [( T.Text, Vote )]
+gamesVotes games =
+  reverse $ (\g -> ( gameName g, winningVote g )) <$> finishedGames games

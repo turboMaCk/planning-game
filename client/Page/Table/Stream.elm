@@ -1,7 +1,16 @@
-port module Page.Table.Stream exposing (Event(..), StreamError(..), connect, disconnect, observe)
+port module Page.Table.Stream exposing
+    ( Event(..)
+    , Msg(..)
+    , StreamError(..)
+    , connect
+    , disconnect
+    , observe
+    , sendMsg
+    )
 
 import Data exposing (Player, Table)
 import Json.Decode as Decode exposing (Decoder)
+import Json.Encode as Encode exposing (Value)
 
 
 port observe_ : (String -> msg) -> Sub msg
@@ -16,6 +25,9 @@ port connect : String -> Cmd msg
 port disconnect : () -> Cmd msg
 
 
+port emit : String -> Cmd msg
+
+
 type StreamError
     = CantConnect
     | Disconnected
@@ -25,16 +37,17 @@ type StreamError
 streamErrorDecoder : String -> Maybe StreamError
 streamErrorDecoder str =
     let
-        result (val, c) acc =
+        result ( val, c ) acc =
             if val == str then
                 Just c
+
             else
                 acc
     in
     [ ( "can_not_connect", CantConnect )
     , ( "connection_closed", Disconnected )
     ]
-    |> List.foldl result Nothing
+        |> List.foldl result Nothing
 
 
 type Event
@@ -83,3 +96,26 @@ observe msg =
                 << Maybe.withDefault Disconnected
                 << streamErrorDecoder
         ]
+
+
+
+-- Msg
+
+
+type Msg
+    = NewGame String
+
+
+encodeMsg : Msg -> Value
+encodeMsg msg =
+    case msg of
+        NewGame name ->
+            Encode.object
+                [ ( "msg", Encode.string "NewGame" )
+                , ( "name", Encode.string name )
+                ]
+
+
+sendMsg : Msg -> Cmd msg
+sendMsg =
+    emit << Encode.encode 0 << encodeMsg

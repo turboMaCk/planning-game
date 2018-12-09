@@ -13,8 +13,9 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as AT
 
-import AgilePoker.Data.Player (Player)
-import AgilePoker.Data.Game (RunningGame, Vote)
+import AgilePoker.Api.GameSnapshot (snapshot)
+import AgilePoker.Data.Player (Player, Players)
+import AgilePoker.Data.Game (Games)
 
 import AgilePoker.Data.Table.Type (Table)
 
@@ -23,9 +24,9 @@ data Event
     = PlayerJoined Player
     | PlayerStatusUpdate Player
     | SyncTableState Table
-    | GameStarted RunningGame -- @TODO: add points so far
+    | GameStarted Players Games -- @TODO: add points so far
     | VoteAccepted Player
-    | VotingEnded RunningGame
+    | VotingEnded Players Games
     | GameEnded -- @TODO: add history overview
 
 
@@ -45,20 +46,20 @@ instance ToJSON Event where
         [ "event" .= T.pack "SyncTableState"
         , "table" .= table
         ]
-  toJSON (GameStarted game) =
+  toJSON (GameStarted players games) =
     AT.object
         [ "event" .= T.pack "GameStarted"
-        , "game"  .= game
+        , "game"  .= snapshot players games
         ]
   toJSON (VoteAccepted player) =
     AT.object
         [ "event"  .= T.pack "VoteAccepted"
         , "player" .= player
         ]
-  toJSON (VotingEnded game) =
+  toJSON (VotingEnded players games) =
     AT.object
         [ "event"  .= T.pack "VotingEnded"
-        , "game"   .= game
+        , "game"   .= snapshot players games
         ]
   toJSON GameEnded =
     AT.object

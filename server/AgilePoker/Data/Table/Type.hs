@@ -5,7 +5,7 @@ module AgilePoker.Data.Table.Type
   , emptyTables
   ) where
 
-import Data.Aeson.Types (ToJSON(..), (.=), object)
+import Data.Aeson.Types (ToJSON(..), (.=), object, Value(..))
 import Data.ByteString (ByteString)
 import Control.Concurrent (MVar)
 import qualified Data.Map.Strict as Map
@@ -15,6 +15,7 @@ import AgilePoker.Data.Id (Id)
 import AgilePoker.Data.Player (Player, Players)
 import AgilePoker.Data.Session (SessionId)
 import AgilePoker.Data.Game (Games, GameError(..))
+import AgilePoker.Api.GameSnapshot (snapshot)
 
 
 data TableId
@@ -34,6 +35,12 @@ instance ToJSON Table where
         [ "id" .= tableId table
         , "banker" .= snd (tableBanker table)
         , "players" .= fmap snd (Map.toList $ tablePlayers table)
+        , "game" .= case tableGame table of
+                      Just game ->
+                        toJSON $ snapshot (tablePlayers table) game
+
+                      Nothing ->
+                        Null
         ]
 
 

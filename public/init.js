@@ -65,6 +65,10 @@
         ws.onclose = function() {
             app.ports.streamError.send('connection_closed');
         };
+
+        app.ports.emit.subscribe(function (msg) {
+            ws.send(msg);
+        });
     });
 
     // app.ports.disconnect.subscribe(function() {

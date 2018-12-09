@@ -24,6 +24,7 @@ executable agile-poker
                      , AgilePoker.Api.Error.Class
                      , AgilePoker.Api.Middleware
                      , AgilePoker.Api.UserInfo
+                     , AgilePoker.Api.GameSnapshot
                      , AgilePoker.Data
                      , AgilePoker.Data.Id
                      , AgilePoker.Data.Player

@@ -6,6 +6,7 @@ import Component
 import Data exposing (ApiError, Player, Table, TableError(..))
 import Dict exposing (Dict)
 import Html exposing (Html)
+import Html.Events as Events
 import Http
 import Maybe.Extra as Maybe
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
@@ -40,6 +41,7 @@ type Msg
     = Me (Result (ApiError TableError) Player)
     | NoOp
     | Event (Result StreamError Event)
+    | Send Stream.Msg
 
 
 updatePlayer : Player -> Model -> Model
@@ -49,6 +51,16 @@ updatePlayer player model =
 
     else
         { model | players = Dict.insert player.name player model.players }
+
+
+amIBanker : Model -> Bool
+amIBanker { me, banker } =
+    case ( me, banker ) of
+        ( Just p1, Just p2 ) ->
+            p1.name == p2.name
+
+        _ ->
+            False
 
 
 update : Key -> Msg -> Model -> ( Model, Cmd Msg )
@@ -82,6 +94,9 @@ update navigationKey msg model =
                 Err e ->
                     -- @TODO: handle errors
                     ( model, Cmd.none )
+
+        Send streamMsg ->
+            ( model, Stream.sendMsg streamMsg )
 
 
 handleEvent : Event -> Model -> ( Model, Cmd msg )
@@ -137,6 +152,16 @@ viewUser { me, banker } player =
         ]
 
 
+viewGame : Model -> Html Msg
+viewGame model =
+    if amIBanker model then
+        Html.button [ Events.onClick <| Send <| Stream.NewGame "Test" ]
+            [ Html.text "set name to test" ]
+
+    else
+        Html.text "not a banker"
+
+
 view : Model -> Html Msg
 view model =
     Component.withTableNotFound model.tableError <|
@@ -146,4 +171,5 @@ view model =
                     :: (List.map (viewUser model) <|
                             Dict.values model.players
                        )
+            , viewGame model
             ]

@@ -215,8 +215,9 @@ handleMsg :: WS.Connection -> Session -> Msg -> Table -> IO Table
 handleMsg conn session (NewGame name) table
   | isBanker session table
   , isNothing (tableGame table) = do
-      let (games, game) = startGame name
-      broadcast table $ GameStarted game
+      let games = startGame name
+      let players = tablePlayers table
+      broadcast table $ GameStarted players games
       pure $ table { tableGame = Just games }
   | not $ isBanker session table = do
       -- @TODO: Handle forbidden action
