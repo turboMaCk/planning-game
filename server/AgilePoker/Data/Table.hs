@@ -210,7 +210,7 @@ isBanker Session { sessionId=id } Table { tableBanker=pair } =
 -- MSG and Event handling
 
 
--- @TODO: implement missing msgs
+-- @TODO: refactor
 handleMsg :: WS.Connection -> Session -> Msg -> Table -> IO Table
 handleMsg conn session (NewGame name) table
   | isBanker session table
@@ -225,3 +225,64 @@ handleMsg conn session (NewGame name) table
   | isJust (tableGame table) =
       -- @TODO: Handle already started
       pure $ table
+handleMsg conn session FinishRound table
+  | isBanker session table =
+      case tableGame table of
+        Just games -> do
+          broadcast table $ VotingEnded (tablePlayers table) games
+          pure $ table { tableGame = Just $ finishCurrentGame games }
+        Nothing ->
+          -- @TODO: handled non started game
+          pure table
+  | not $ isBanker session table =
+    -- @TODO: handle forbidden
+    pure table
+handleMsg conn session (NextRound vote name) table
+  | isBanker session table =
+      case tableGame table of
+        Just games -> do
+          case nextRound vote name games of
+            Left err ->
+              -- @TODO: missing err handling
+              pure table
+            Right newGames -> do
+              broadcast table $ GameStarted (tablePlayers table) newGames
+              pure $ table { tableGame = Just newGames }
+        Nothing ->
+          -- @TODO: handled non started game
+          pure table
+  | not $ isBanker session table =
+    -- @TODO: handle forbidden
+    pure table
+handleMsg conn session (Vote vote) table =
+  case tableGame table of
+    Just game ->
+      let sId = (sessionId session) in
+      case addVote sId vote game of
+        Right newGames -> do
+          maybe (pure ()) (broadcast table . VoteAccepted) $ getPlayer sId $ tablePlayers table
+          pure $ table { tableGame = Just newGames }
+
+        -- @TODO: can't vote error
+        Left _ -> pure table
+
+    Nothing ->
+      -- @TODO: hanlde not started
+      pure table
+handleMsg conn session (FinishGame vote) table
+  | isBanker session table =
+    case tableGame table of
+      Just games -> do
+        case completeGame vote games of
+          Right newGames ->
+            broadcast table $ GameEnded
+            pure $ table { tableGame = Just newGames }
+          Left _ ->
+            -- @TODO: handle already canceled
+            pure table
+      Nothing ->
+        -- @TODO: handle game wasn't started
+        pure table
+  | not isBanker session table =
+    -- @TODO: handle forbidden
+    pure table

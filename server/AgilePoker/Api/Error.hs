@@ -23,14 +23,14 @@ instance Error SessionError where
 
 
 instance Error TableError where
-  toType TableNotFound            = NotFound
-  toType NameTaken                = Conflict
-  toType PlayerNotFound           = Forbidden
-  toType (GameError GameFinished) = Forbidden
-  toType (GameError VotingEnded)  = Forbidden
+  toType TableNotFound               = NotFound
+  toType NameTaken                   = Conflict
+  toType PlayerNotFound              = Forbidden
+  toType (GameError GameFinished)    = Forbidden
+  toType (GameError VotingEndedErr)  = Forbidden
 
-  toReadable TableNotFound            = "Table doesn't exist."
-  toReadable NameTaken                = "Name is already taken."
-  toReadable PlayerNotFound           = "You're not a player on this table."
-  toReadable (GameError GameFinished) = "Game is already finished."
-  toReadable (GameError VotingEnded)  = "Voting is already closed."
+  toReadable TableNotFound               = "Table doesn't exist."
+  toReadable NameTaken                   = "Name is already taken."
+  toReadable PlayerNotFound              = "You're not a player on this table."
+  toReadable (GameError GameFinished)    = "Game is already finished."
+  toReadable (GameError VotingEndedErr)  = "Voting is already closed."

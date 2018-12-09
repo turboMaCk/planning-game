@@ -4,7 +4,7 @@
 module AgilePoker.Data.Game
   (Vote(..), GameError(..), RunningGame(..), FinishedGame, Games(..)
   , startGame, addVote, nextRound, completeGame, sumGamePoints
-  , gamesVotes, playersVotes
+  , gamesVotes, playersVotes, isFinished, finishCurrentGame
   ) where
 
 import Data.Maybe (mapMaybe)
@@ -104,7 +104,7 @@ data Games
 
 data GameError
   = GameFinished
-  | VotingEnded
+  | VotingEndedErr
 
 
 newGame :: T.Text -> RunningGame
@@ -128,7 +128,7 @@ addVote :: Id SessionId -> Vote -> Games -> Either GameError Games
 addVote _ _ (FinishedGames _)                        = Left GameFinished
 addVote sId vote (RunningGames past (RunningGame name votes isLocked)) =
   if isLocked then
-    Left VotingEnded
+    Left VotingEndedErr
   else
     Right $ RunningGames past $ RunningGame name updatedVotes False
   where
@@ -147,6 +147,18 @@ completeGame :: Vote -> Games -> Either GameError Games
 completeGame _ (FinishedGames _)              = Left GameFinished
 completeGame vote (RunningGames past current) =
   Right $ FinishedGames (finishGame vote current : past)
+
+
+-- @TODO: fails silently on finished games
+finishCurrentGame :: Games -> Games
+finishCurrentGame (FinishedGames past) = FinishedGames past
+finishCurrentGame (RunningGames past (RunningGame name votes _)) =
+  RunningGames past $ RunningGame name votes True
+
+
+isFinished :: Games -> Bool
+isFinished (FinishedGames _) = True
+isFinished (RunningGames _ (RunningGame _ _ bool)) = bool
 
 
 finishedGames :: Games -> [ FinishedGame ]
