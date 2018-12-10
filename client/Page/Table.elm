@@ -125,7 +125,7 @@ handleEvent event model =
             , Cmd.none
             )
 
-        SyncTableState table ->
+        SyncTableState ( table, game ) ->
             ( { model
                 | tableId = table.id
                 , banker = Just table.banker
@@ -133,6 +133,7 @@ handleEvent event model =
                     List.filter ((/=) (Maybe.map .name model.me) << Just << .name) table.players
                         |> List.map (\player -> ( player.name, player ))
                         |> Dict.fromList
+                , game = game
               }
             , Cmd.none
             )

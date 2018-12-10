@@ -56,19 +56,14 @@ joinTable session@Session { sessionId=id' } tableId name tables =
             mPlayers = addPlayer session name (tablePlayers table)
         in
         case mPlayers of
-          Just ( newPlayers, newPlayer ) -> do
-            res <- Concurrent.modifyMVar mvar $ \t -> do
-                print newPlayers
+          Just ( newPlayers, newPlayer ) ->
+            Concurrent.modifyMVar mvar $ \t -> do
                 let updatedTable = t { tablePlayers = newPlayers }
 
                 -- Broadcast to connections
                 broadcast t $ PlayerJoined newPlayer
 
                 pure ( updatedTable, Right updatedTable )
-
-            nt <- Concurrent.readMVar mvar
-            print $ tablePlayers nt
-            pure res
 
           Nothing ->
              pure $ Left NameTaken
@@ -121,6 +116,15 @@ assignConnection sId conn table@Table { tableBanker=banker, tablePlayers=players
             Just pair -> ( table { tablePlayers = updatedPlayers }
                            , Just pair
                            )
+
+
+allTablePlayers :: Table -> Players
+allTablePlayers table =
+  Map.insert bankerId banker $ tablePlayers table
+
+  where
+    (bankerId, banker) = tableBanker table
+
 
 -- WS Handling
 
@@ -223,7 +227,7 @@ handleMsg conn session (NewGame name) table
   , isNothing (tableGame table) = do
       let games = startGame name
       let players = tablePlayers table
-      broadcast table $ GameStarted players games
+      broadcast table $ GameStarted (tableBanker table) players games
       pure $ table { tableGame = Just games }
   | not $ isBanker session table = do
       -- @TODO: Handle forbidden action
@@ -235,7 +239,7 @@ handleMsg conn session FinishRound table
   | isBanker session table =
       case tableGame table of
         Just games -> do
-          broadcast table $ VotingEnded (tablePlayers table) games
+          broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) games
           pure $ table { tableGame = Just $ finishCurrentGame games }
         Nothing ->
           -- @TODO: handled non started game
@@ -252,7 +256,7 @@ handleMsg conn session (NextRound vote name) table
               -- @TODO: missing err handling
               pure table
             Right newGames -> do
-              broadcast table $ GameStarted (tablePlayers table) newGames
+              broadcast table $ GameStarted (tableBanker table) (tablePlayers table) newGames
               pure $ table { tableGame = Just newGames }
         Nothing ->
           -- @TODO: handled non started game
@@ -267,8 +271,7 @@ handleMsg conn session (Vote vote) table =
       in
       case addVote sId vote game of
         Right newGames -> do
-          print $ tablePlayers table
-          maybe (putStrLn ":(") (broadcast table . VoteAccepted) $ getPlayer sId $ tablePlayers table
+          maybe (pure ()) (broadcast table . VoteAccepted) $ getPlayer sId $ allTablePlayers table
           pure $ table { tableGame = Just newGames }
 
         -- @TODO: can't vote error
@@ -284,7 +287,7 @@ handleMsg conn session (FinishGame vote) table
       Just games -> do
         case completeGame vote games of
           Right newGames -> do
-            broadcast table $ GameEnded (tablePlayers table) newGames
+            broadcast table $ GameEnded (tableBanker table) (tablePlayers table) newGames
             pure $ table { tableGame = Just newGames }
           Left _ ->
             -- @TODO: handle already canceled

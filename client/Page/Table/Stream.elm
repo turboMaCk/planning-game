@@ -53,7 +53,7 @@ streamErrorDecoder str =
 type Event
     = PlayerJoin Player
     | PlayerStatusUpdate Player
-    | SyncTableState Table
+    | SyncTableState ( Table, Game )
     | GameStarted Game
     | VoteAccepted Player
     | VotingEnded Game
@@ -83,7 +83,7 @@ eventDecoder =
     Decode.oneOf
         [ eventField "UserJoined" PlayerJoin <| Decode.field "player" Data.playerDecoder
         , eventField "UserStatusUpdate" PlayerStatusUpdate <| Decode.field "player" Data.playerDecoder
-        , eventField "SyncTableState" SyncTableState <| Decode.field "table" Data.tableDecoder
+        , eventField "SyncTableState" SyncTableState <| Decode.field "table" Data.tableWithGameDecoder
         , eventField "GameStarted" GameStarted <| Decode.field "game" Data.gameDecoder
         , eventField "VoteAccepted" VoteAccepted <| Decode.field "player" Data.playerDecoder
         , eventField "VotingEnded" VotingEnded <| Decode.field "game" Data.gameDecoder

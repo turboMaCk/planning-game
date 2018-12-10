@@ -176,8 +176,11 @@ gamesVotes games =
   reverse $ (\g -> ( gameName g, winningVote g )) <$> finishedGames games
 
 
-playersVotes :: Players -> Games -> [ ( T.Text, Vote ) ]
-playersVotes _ (FinishedGames _) = []
-playersVotes players (RunningGames _ (RunningGame _ votes _)) =
-      mapMaybe (\(id, vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id players)
-        $ Map.toList votes
+playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( T.Text, Vote ) ]
+playersVotes _ _ (FinishedGames _) = []
+playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
+  mapMaybe (\(id, vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id allPlayers)
+  $ Map.toList votes
+
+  where
+    allPlayers = Map.insert bankerId banker players

@@ -37,7 +37,7 @@ instance ToJSON Table where
         , "players" .= fmap snd (Map.toList $ tablePlayers table)
         , "game" .= case tableGame table of
                       Just game ->
-                        toJSON $ snapshot (tablePlayers table) game
+                        toJSON $ snapshot (tableBanker table) (tablePlayers table) game
 
                       Nothing ->
                         Null

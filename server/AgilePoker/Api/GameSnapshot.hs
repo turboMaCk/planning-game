@@ -2,11 +2,14 @@
 
 module AgilePoker.Api.GameSnapshot where
 
-import AgilePoker.Data.Game
-import AgilePoker.Data.Player
 import Data.Aeson.Types (ToJSON(..), Value(..), (.=), object)
 import qualified Data.Map as Map
 import qualified Data.Text as T
+
+import AgilePoker.Data.Id (Id)
+import AgilePoker.Data.Session (SessionId)
+import AgilePoker.Data.Game
+import AgilePoker.Data.Player
 
 
 data GameSnapshot
@@ -57,19 +60,19 @@ instance ToJSON GameSnapshot where
       ]
 
 
-snapshot :: Players -> Games -> GameSnapshot
-snapshot players games@(FinishedGames finised) =
+snapshot :: ( Id SessionId, Player ) -> Players -> Games -> GameSnapshot
+snapshot _ players games@(FinishedGames finised) =
   FinishedGameSnapshot { totalPoints          = sumGamePoints games
                        , snapshotGamesVotes   = gamesVotes games
                        }
-snapshot players games@(RunningGames _ (RunningGame name votes isLocked)) =
+snapshot banker players games@(RunningGames _ (RunningGame name votes isLocked)) =
   if isLocked then
     LockedGameSnapshot  { snapshotName   = name
-                        , userVotes      = playersVotes players games
+                        , userVotes      = playersVotes banker players games
                         , totalPoints    = sumGamePoints games
                         }
   else
     RunningGameSnapshot { snapshotName   = name
-                        , snapshotVotes  = fst <$> playersVotes players games
+                        , snapshotVotes  = fst <$> playersVotes banker players games
                         , totalPoints    = sumGamePoints games
                         }

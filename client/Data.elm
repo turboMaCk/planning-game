@@ -17,6 +17,7 @@ module Data exposing
     , joinTable
     , playerDecoder
     , tableDecoder
+    , tableWithGameDecoder
     , voteDecoder
     )
 
@@ -166,6 +167,17 @@ tableDecoder =
         |> Decode.andMap (Decode.field "id" Decode.string)
         |> Decode.andMap (Decode.field "banker" playerDecoder)
         |> Decode.andMap (Decode.field "players" <| Decode.list playerDecoder)
+
+
+tableWithGameDecoder : Decoder ( Table, Game )
+tableWithGameDecoder =
+    Decode.succeed Tuple.pair
+        |> Decode.andMap tableDecoder
+        |> Decode.andMap
+            (Decode.field "game" <|
+                Decode.map (Maybe.withDefault NotStarted) <|
+                    Decode.maybe gameDecoder
+            )
 
 
 type TableError
