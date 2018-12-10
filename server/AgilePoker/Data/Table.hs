@@ -239,8 +239,9 @@ handleMsg conn session FinishRound table
   | isBanker session table =
       case tableGame table of
         Just games -> do
-          broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) games
-          pure $ table { tableGame = Just $ finishCurrentGame games }
+          let newGames = finishCurrentGame games
+          broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) newGames
+          pure $ table { tableGame = Just newGames }
         Nothing ->
           -- @TODO: handled non started game
           pure table

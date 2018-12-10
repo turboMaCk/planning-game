@@ -23,7 +23,9 @@ type alias Model =
     , banker : Maybe Player
     , players : Dict String Player
     , tableError : Maybe (ApiError TableError)
+    , myVote : Maybe Vote
     , game : Game
+    , gameName : String
     }
 
 
@@ -34,7 +36,9 @@ init token id =
       , banker = Nothing
       , players = Dict.empty
       , tableError = Nothing
+      , myVote = Nothing
       , game = NotStarted
+      , gameName = ""
       }
     , Data.getMe token id Me
     )
@@ -45,6 +49,7 @@ type Msg
     | NoOp
     | Event (Result StreamError Event)
     | Send Stream.Msg
+    | Vote Vote
 
 
 playerVoted : Player -> Model -> Model
@@ -110,6 +115,22 @@ update navigationKey msg model =
 
         Send streamMsg ->
             ( model, Stream.sendMsg streamMsg )
+
+        Vote vote ->
+            let
+                nextMsg =
+                    if Data.isVoting model.game then
+                        Send <| Stream.Vote vote
+
+                    else if Data.isRoundFinished model.game && amIBanker model then
+                        Send <| Stream.NextGame model.gameName vote
+
+                    else
+                        NoOp
+            in
+            ( { model | myVote = Just vote }
+            , Cmd.perform nextMsg
+            )
 
 
 handleEvent : Event -> Model -> ( Model, Cmd msg )
@@ -216,11 +237,11 @@ viewCard vote =
                 UnknownPoints ->
                     "?"
     in
-    Html.button [ Events.onClick <| Send <| Stream.Vote vote ] [ Html.text text ]
+    Html.button [ Events.onClick <| Vote vote ] [ Html.text text ]
 
 
-votingView : Html Msg
-votingView =
+votingView : Model -> Html Msg
+votingView model =
     Html.main_ []
         [ viewCard OnePoint
         , viewCard TwoPoints
@@ -233,7 +254,28 @@ votingView =
         , viewCard HundredPoints
         , viewCard InfinityPoints
         , viewCard UnknownPoints
+        , Html.br [] []
+        , if amIBanker model then
+            Html.button [ Events.onClick <| Send Stream.FinishRound ]
+                [ Html.text "finish round" ]
+
+          else
+            Html.text ""
         ]
+
+
+viewUserVotes : Dict String Vote -> Html Msg
+viewUserVotes dict =
+    let
+        voteView ( name, vote ) =
+            Html.tr []
+                [ Html.td [] [ Html.text name ]
+                , Html.td [] [ viewCard vote ]
+                ]
+    in
+    Html.table [] <|
+        List.map voteView <|
+            Dict.toList dict
 
 
 viewGame : Model -> Html Msg
@@ -248,10 +290,18 @@ viewGame model =
                 Html.text "not a banker"
 
         Voting _ ->
-            votingView
+            votingView model
 
-        RoundFinished _ ->
-            Html.text "finishing"
+        RoundFinished { userVotes } ->
+            Html.div []
+                [ viewUserVotes userVotes
+                , if amIBanker model then
+                    Html.button [ Events.onClick <| Send <| Stream.NewGame "Test" ]
+                        [ Html.text "Finish all voting" ]
+
+                  else
+                    Html.text ""
+                ]
 
         Overview _ ->
             Html.text "overview"

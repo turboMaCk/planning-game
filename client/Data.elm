@@ -14,6 +14,8 @@ module Data exposing
     , gameDecoder
     , getMe
     , getSession
+    , isRoundFinished
+    , isVoting
     , joinTable
     , playerDecoder
     , tableDecoder
@@ -386,6 +388,26 @@ type Game
         { totalPoints : Int
         , results : Dict String Vote
         }
+
+
+isVoting : Game -> Bool
+isVoting game =
+    case game of
+        Voting _ ->
+            True
+
+        _ ->
+            False
+
+
+isRoundFinished : Game -> Bool
+isRoundFinished game =
+    case game of
+        RoundFinished _ ->
+            True
+
+        _ ->
+            False
 
 
 pointsDictDecoder : Decoder (Dict String Vote)
