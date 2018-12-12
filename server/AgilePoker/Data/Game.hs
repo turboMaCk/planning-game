@@ -4,9 +4,10 @@
 module AgilePoker.Data.Game
   (Vote(..), GameError(..), RunningGame(..), FinishedGame, Games(..)
   , startGame, addVote, nextRound, completeGame, sumGamePoints
-  , gamesVotes, playersVotes, isFinished, finishCurrentGame
+  , gamesVotes, playersVotes, isFinished, finishCurrentGame, allVoted
   ) where
 
+-- import Data.List (notNull)
 import Data.Maybe (mapMaybe)
 import Control.Monad (mzero)
 import Data.Aeson.Types (ToJSON(..), FromJSON(..), (.=))
@@ -84,6 +85,7 @@ instance FromJSON Vote where
   parseJSON _     = mzero
 
 
+-- @TODO: use hash
 data RunningGame =
   RunningGame T.Text (Map.Map (Id SessionId) Vote) Bool
 
@@ -184,3 +186,9 @@ playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _
 
   where
     allPlayers = Map.insert bankerId banker players
+
+
+allVoted :: Players -> Games -> Bool
+allVoted _ (FinishedGames _ ) = False
+allVoted players (RunningGames _ (RunningGame _ votes _ )) =
+  not $ Map.null $ Map.filterWithKey (\sId _ -> Map.member sId votes) players

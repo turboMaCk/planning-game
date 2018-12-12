@@ -273,7 +273,15 @@ handleMsg conn session (Vote vote) table =
       case addVote sId vote game of
         Right newGames -> do
           maybe (pure ()) (broadcast table . VoteAccepted) $ getPlayer sId $ allTablePlayers table
-          pure $ table { tableGame = Just newGames }
+
+          -- Auto end game when all voted
+          if allVoted (allTablePlayers table) newGames then do
+            let finishedNewGames = finishCurrentGame newGames
+
+            broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) finishedNewGames
+            pure $ table { tableGame = Just finishedNewGames }
+          else
+            pure $ table { tableGame = Just newGames }
 
         -- @TODO: can't vote error
         Left _ ->
