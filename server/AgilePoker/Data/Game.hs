@@ -91,9 +91,9 @@ data RunningGame =
 
 
 data FinishedGame =
-  FinishedGame { gameVotes :: Map.Map (Id SessionId) Vote
+  FinishedGame { gameVotes   :: Map.Map (Id SessionId) Vote
                , winningVote :: Vote
-               , gameName :: T.Text
+               , gameName    :: T.Text
                }
 
 
@@ -127,7 +127,7 @@ startGame name =
 
 
 addVote :: Id SessionId -> Vote -> Games -> Either GameError Games
-addVote _ _ (FinishedGames _)                        = Left GameFinished
+addVote _ _ (FinishedGames _)                                          = Left GameFinished
 addVote sId vote (RunningGames past (RunningGame name votes isLocked)) =
   if isLocked then
     Left VotingEndedErr
@@ -189,6 +189,6 @@ playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _
 
 
 allVoted :: Players -> Games -> Bool
-allVoted _ (FinishedGames _ ) = False
+allVoted _ (FinishedGames _) = False
 allVoted players (RunningGames _ (RunningGame _ votes _ )) =
-  not $ Map.null $ Map.filterWithKey (\sId _ -> Map.member sId votes) players
+  Map.null $ Map.filterWithKey (\sId _ -> not $ Map.member sId votes) players

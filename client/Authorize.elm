@@ -1,4 +1,4 @@
-module Authorize exposing (Authorize(..), init, by, for)
+module Authorize exposing (Authorize(..), by, for, init)
 
 import Http
 

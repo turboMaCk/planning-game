@@ -112,7 +112,7 @@ assignConnection sId conn table@Table { tableBanker=banker, tablePlayers=players
         let ( updatedPlayers, mPair ) = addPlayerConnection sId conn players
         in
         case mPair of
-            Nothing     -> ( table, Nothing )
+            Nothing   -> ( table, Nothing )
             Just pair -> ( table { tablePlayers = updatedPlayers }
                            , Just pair
                            )
