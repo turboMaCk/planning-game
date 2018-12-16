@@ -48,7 +48,6 @@ primaryBtn : List Style
 primaryBtn =
     [ Css.display Css.block
     , Css.padding Css.zero
-    , Css.marginTop <| Css.px 12
     , Css.fontSize <| Css.px 17
     , Css.border Css.zero
     , Css.borderBottom3 (Css.px 2) Css.solid values.primaryColor
@@ -78,6 +77,8 @@ globalStyles =
         , GCss.body
             [ Css.margin2 (Css.px 8) (Css.px 16)
             ]
-        , GCss.each [ GCss.p, GCss.input ]
-            [ Css.fontWeight <| Css.int 200 ]
+        , GCss.each [ GCss.p, GCss.input, GCss.label ]
+            [ Css.fontWeight <| Css.int 200
+            , Css.margin2 (Css.px 12) Css.zero
+            ]
         ]

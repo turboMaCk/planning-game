@@ -1,5 +1,6 @@
 module Page.Table exposing (Model, Msg, init, subscriptions, update, view)
 
+import Browser.Dom as Dom
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Component
@@ -15,6 +16,7 @@ import Page.Table.Card as Card exposing (Side(..))
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
 import Set exposing (Set)
 import Set.Any as AnySet
+import Task
 import Url.Builder as Url
 
 
@@ -29,7 +31,7 @@ type alias Model =
     , tableError : Maybe (ApiError TableError)
     , myVote : Maybe Vote
     , game : Game
-    , gameName : String
+    , gameName : Maybe String
     }
 
 
@@ -42,7 +44,7 @@ init token id =
       , tableError = Nothing
       , myVote = Nothing
       , game = NotStarted
-      , gameName = ""
+      , gameName = Just ""
       }
     , Data.getMe token id Me
     )
@@ -54,6 +56,19 @@ type Msg
     | Event (Result StreamError Event)
     | Send Stream.Msg
     | Vote Vote
+    | SetName String
+    | NewGame String
+
+
+focusNameField : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+focusNameField ( model, cmd ) =
+    -- @TODO: add check on game state?
+    if amIBanker model then
+        ( model, cmd )
+            |> Cmd.add (Task.attempt (always NoOp) <| Dom.focus nameFieldId)
+
+    else
+        ( model, cmd )
 
 
 playerVoted : Player -> Model -> Model
@@ -121,23 +136,44 @@ update navigationKey msg model =
             ( model, Stream.sendMsg streamMsg )
 
         Vote vote ->
-            let
-                nextMsg =
-                    if Data.isVoting model.game then
-                        Send <| Stream.Vote vote
+            if Data.isVoting model.game then
+                { model | myVote = Just vote }
+                    |> Cmd.with (Stream.sendMsg <| Stream.Vote vote)
 
-                    else if Data.isRoundFinished model.game && amIBanker model then
-                        Send <| Stream.NextGame model.gameName vote
+            else if Data.isRoundFinished model.game && amIBanker model then
+                ( { model | gameName = Just "", myVote = Just vote }, Cmd.none )
+                    |> focusNameField
 
-                    else
-                        NoOp
-            in
-            ( { model | myVote = Just vote }
-            , Cmd.perform nextMsg
-            )
+            else
+                ( model, Cmd.none )
+
+        SetName str ->
+            ( { model | gameName = Just str }, Cmd.none )
+
+        NewGame str ->
+            case model.game of
+                NotStarted ->
+                    { model | gameName = Nothing }
+                        |> Cmd.with (Stream.sendMsg <| Stream.NewGame str)
+
+                RoundFinished _ ->
+                    case model.myVote of
+                        Just vote ->
+                            { model | gameName = Nothing }
+                                |> Cmd.with (Stream.sendMsg <| Stream.NextGame str vote)
+
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
-handleEvent : Event -> Model -> ( Model, Cmd msg )
+
+-- NoOp
+
+
+handleEvent : Event -> Model -> ( Model, Cmd Msg )
 handleEvent event model =
     case event of
         PlayerJoin player ->
@@ -162,6 +198,7 @@ handleEvent event model =
               }
             , Cmd.none
             )
+                |> focusNameField
 
         GameStarted game ->
             ( { model | game = game, myVote = Nothing }, Cmd.none )
@@ -260,24 +297,49 @@ viewUserVotes dict =
         ]
 
 
+nameFieldId : String
+nameFieldId =
+    "game-name-field"
+
+
+setNameView : Model -> Html Msg
+setNameView model =
+    let
+        name =
+            Maybe.withDefault "" model.gameName
+    in
+    if amIBanker model then
+        Component.nameForm
+            { onInput = SetName
+            , onSubmit = NewGame name
+            , submitTxt = "Submit"
+            , value = name
+            , inputId = nameFieldId
+            , labelTxt = "Name of next task"
+            }
+
+    else
+        -- @TODO: nice view
+        Html.text "not a banker"
+
+
 viewGame : Model -> Html Msg
 viewGame model =
     let
         inner =
             case model.game of
                 NotStarted ->
-                    if amIBanker model then
-                        Html.button [ Events.onClick <| Send <| Stream.NewGame "Test" ]
-                            [ Html.text "set name to test" ]
-
-                    else
-                        Html.text "not a banker"
+                    setNameView model
 
                 Voting _ ->
                     votingView model
 
                 RoundFinished { userVotes } ->
-                    viewUserVotes userVotes
+                    if amIBanker model && model.gameName /= Nothing then
+                        setNameView model
+
+                    else
+                        viewUserVotes userVotes
 
                 Overview _ ->
                     Html.text "overview"
@@ -290,8 +352,8 @@ viewGame model =
         [ inner ]
 
 
-playersView : Model -> Html Msg
-playersView model =
+viewPlayers : Model -> Html Msg
+viewPlayers model =
     Html.ul [] <|
         Maybe.unwrap (Html.text "") (viewUser model) model.banker
             :: (List.map (viewUser model) <|
@@ -321,6 +383,6 @@ view model =
                 [ Css.float Css.left ]
                 []
                 [ Html.h2 [] [ Html.text <| currentGameName model.game ]
-                , playersView model
+                , viewPlayers model
                 ]
             ]

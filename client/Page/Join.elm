@@ -7,7 +7,6 @@ import Css
 import Data exposing (ApiError, Session, Table, TableError(..))
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
-import Html.Styled.Events as Events
 import Http
 import Task
 import Theme
@@ -81,32 +80,19 @@ fieldId =
 view : Model -> Html Msg
 view { userName, tableError } =
     Component.withTableNotFound tableError <|
-        Html.styled Html.div
-            [ Css.width <| Css.px 300
-            , Css.margin2 (Css.px 150) Css.auto
-            ]
-            []
-            [ Html.p [] [ Html.text "Choose your player name." ]
-            , Html.form
-                [ Events.onSubmit Submit
-                ]
-                [ Html.styled Html.input
-                    Theme.textField
-                    [ Events.onInput UpdateName
-                    , Attrs.id fieldId
-                    , Attrs.value userName
-                    ]
-                    []
-                , Html.styled Html.button
-                    Theme.primaryBtn
-                    [ Attrs.type_ "submit"
-                    ]
-                    [ Html.text "Submit" ]
-                , case tableError of
-                    Just err ->
-                        viewError err
+        Html.div []
+            [ Component.nameForm
+                { onInput = UpdateName
+                , onSubmit = Submit
+                , submitTxt = "Sbumit"
+                , value = userName
+                , inputId = fieldId
+                , labelTxt = "Choose your \"player name\" for the table"
+                }
+            , case tableError of
+                Just err ->
+                    viewError err
 
-                    Nothing ->
-                        Html.text ""
-                ]
+                Nothing ->
+                    Html.text ""
             ]
