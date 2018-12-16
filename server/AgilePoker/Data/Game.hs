@@ -7,7 +7,6 @@ module AgilePoker.Data.Game
   , gamesVotes, playersVotes, isFinished, finishCurrentGame, allVoted
   ) where
 
--- import Data.List (notNull)
 import Data.Maybe (mapMaybe)
 import Control.Monad (mzero)
 import Data.Aeson.Types (ToJSON(..), FromJSON(..), (.=))
@@ -133,6 +132,7 @@ addVote sId vote (RunningGames past (RunningGame name votes isLocked)) =
     Left VotingEndedErr
   else
     Right $ RunningGames past $ RunningGame name updatedVotes False
+
   where
     updatedVotes :: Map.Map (Id SessionId) Vote
     updatedVotes =

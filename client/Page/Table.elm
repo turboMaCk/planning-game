@@ -6,9 +6,11 @@ import Component
 import Data exposing (ApiError, Game(..), Player, Table, TableError(..), Vote(..))
 import Dict exposing (Dict)
 import Html exposing (Html)
+import Html.Attributes as Attrs
 import Html.Events as Events
 import Http
 import Maybe.Extra as Maybe
+import Page.Table.Card as Card
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
 import Set exposing (Set)
 import Url.Builder as Url
@@ -199,61 +201,27 @@ viewUser { me, banker } player =
         ]
 
 
-viewCard : Vote -> Html Msg
-viewCard vote =
-    let
-        text =
-            case vote of
-                OnePoint ->
-                    "1"
-
-                TwoPoints ->
-                    "2"
-
-                ThreePoints ->
-                    "3"
-
-                FivePoints ->
-                    "5"
-
-                EightPoints ->
-                    "8"
-
-                ThreeteenPoints ->
-                    "13"
-
-                TwentyPoints ->
-                    "20"
-
-                FortyPoints ->
-                    "40"
-
-                HundredPoints ->
-                    "100"
-
-                InfinityPoints ->
-                    "Infinity"
-
-                UnknownPoints ->
-                    "?"
-    in
-    Html.button [ Events.onClick <| Vote vote ] [ Html.text text ]
-
-
 votingView : Model -> Html Msg
 votingView model =
-    Html.main_ []
-        [ viewCard OnePoint
-        , viewCard TwoPoints
-        , viewCard ThreePoints
-        , viewCard FivePoints
-        , viewCard EightPoints
-        , viewCard ThreeteenPoints
-        , viewCard TwentyPoints
-        , viewCard FortyPoints
-        , viewCard HundredPoints
-        , viewCard InfinityPoints
-        , viewCard UnknownPoints
+    Html.main_
+        [ Attrs.style "width" "835px"
+        , Attrs.style "margin" "0 auto"
+        ]
+        [ Html.p
+            [ Attrs.style "margin-left" "6px"
+            , Attrs.style "font-weight" "200"
+            ]
+            [ Html.text "Pick your card:" ]
+        , Card.view Vote OnePoint
+        , Card.view Vote TwoPoints
+        , Card.view Vote ThreePoints
+        , Card.view Vote FivePoints
+        , Card.view Vote EightPoints
+        , Card.view Vote ThreeteenPoints
+        , Card.view Vote TwentyPoints
+        , Card.view Vote FortyPoints
+        , Card.view Vote HundredPoints
+        , Card.view Vote InfinityPoints
         , Html.br [] []
         , if amIBanker model then
             Html.button [ Events.onClick <| Send Stream.FinishRound ]
@@ -270,7 +238,7 @@ viewUserVotes dict =
         voteView ( name, vote ) =
             Html.tr []
                 [ Html.td [] [ Html.text name ]
-                , Html.td [] [ viewCard vote ]
+                , Html.td [] [ Card.view Vote vote ]
                 ]
     in
     Html.table [] <|
@@ -307,14 +275,33 @@ viewGame model =
             Html.text "overview"
 
 
+playersView : Model -> Html Msg
+playersView model =
+    Html.ul [ Attrs.style "float" "left" ] <|
+        Maybe.unwrap (Html.text "") (viewUser model) model.banker
+            :: (List.map (viewUser model) <|
+                    Dict.values model.players
+               )
+
+
+currentGameName : Game -> String
+currentGameName game =
+    case game of
+        Voting { name } ->
+            name
+
+        RoundFinished { name } ->
+            name
+
+        _ ->
+            ""
+
+
 view : Model -> Html Msg
 view model =
     Component.withTableNotFound model.tableError <|
         Html.div []
-            [ Html.ul [] <|
-                Maybe.unwrap (Html.text "") (viewUser model) model.banker
-                    :: (List.map (viewUser model) <|
-                            Dict.values model.players
-                       )
+            [ Html.h2 [] [ Html.text <| currentGameName model.game ]
+            , playersView model
             , viewGame model
             ]

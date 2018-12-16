@@ -4,8 +4,8 @@ import Browser.Navigation as Navigation exposing (Key)
 import Component
 import Data exposing (ApiError, Session, Table, TableError(..))
 import Html exposing (Html)
-import Html.Attributes as Attr
-import Html.Events as Event
+import Html.Attributes as Attrs
+import Html.Events as Events
 import Http
 import Url.Builder as Url
 
@@ -68,20 +68,44 @@ viewError err =
 view : Model -> Html Msg
 view { userName, tableError } =
     Component.withTableNotFound tableError <|
-        Html.form
-            [ Event.onSubmit Submit ]
-            [ Html.input
-                [ Attr.value userName
-                , Event.onInput UpdateName
+        Html.div
+            [ Attrs.style "width" "300px"
+            , Attrs.style "margin" "150px auto"
+            ]
+            [ Html.p [ Attrs.style "font-weight" "200" ] [ Html.text "Choose your player name." ]
+            , Html.form
+                [ Events.onSubmit Submit
                 ]
-                []
-            , Html.button [ Attr.type_ "submit" ]
-                [ Html.text "Submit" ]
-            , Html.a [ Attr.href "/some-room" ] [ Html.text "some room" ]
-            , case tableError of
-                Just err ->
-                    viewError err
+                [ Html.input
+                    [ Events.onInput UpdateName
+                    , Attrs.value userName
+                    , Attrs.style "border" "0"
+                    , Attrs.style "width" "230px"
+                    , Attrs.style "line-height" "25px"
+                    , Attrs.style "font-size" "17px"
+                    , Attrs.style "outline" "0"
+                    , Attrs.style "font-weight" "600"
+                    , Attrs.style "border-bottom" "3px solid #3280ff"
+                    , Attrs.style "background" "#d6e5ff"
+                    ]
+                    []
+                , Html.button
+                    [ Attrs.type_ "submit"
+                    , Attrs.style "display" "block"
+                    , Attrs.style "border" "0"
+                    , Attrs.style "font-size" "17px"
+                    , Attrs.style "border-bottom" "2px solid red"
+                    , Attrs.style "padding" "0"
+                    , Attrs.style "margin-top" "12px"
+                    , Attrs.style "outline" "0"
+                    , Attrs.style "cursor" "pointer"
+                    ]
+                    [ Html.text "Submit" ]
+                , case tableError of
+                    Just err ->
+                        viewError err
 
-                Nothing ->
-                    Html.text ""
+                    Nothing ->
+                        Html.text ""
+                ]
             ]
