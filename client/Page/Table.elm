@@ -8,6 +8,7 @@ import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes as Attrs
 import Html.Events as Events
+import Html.Styled exposing (toUnstyled)
 import Http
 import Maybe.Extra as Maybe
 import Page.Table.Card as Card
@@ -212,16 +213,16 @@ votingView model =
             , Attrs.style "font-weight" "200"
             ]
             [ Html.text "Pick your card:" ]
-        , Card.view Vote OnePoint
-        , Card.view Vote TwoPoints
-        , Card.view Vote ThreePoints
-        , Card.view Vote FivePoints
-        , Card.view Vote EightPoints
-        , Card.view Vote ThreeteenPoints
-        , Card.view Vote TwentyPoints
-        , Card.view Vote FortyPoints
-        , Card.view Vote HundredPoints
-        , Card.view Vote InfinityPoints
+        , toUnstyled <| Card.view Vote OnePoint
+        , toUnstyled <| Card.view Vote TwoPoints
+        , toUnstyled <| Card.view Vote ThreePoints
+        , toUnstyled <| Card.view Vote FivePoints
+        , toUnstyled <| Card.view Vote EightPoints
+        , toUnstyled <| Card.view Vote ThreeteenPoints
+        , toUnstyled <| Card.view Vote TwentyPoints
+        , toUnstyled <| Card.view Vote FortyPoints
+        , toUnstyled <| Card.view Vote HundredPoints
+        , toUnstyled <| Card.view Vote InfinityPoints
         , Html.br [] []
         , if amIBanker model then
             Html.button [ Events.onClick <| Send Stream.FinishRound ]
@@ -238,7 +239,7 @@ viewUserVotes dict =
         voteView ( name, vote ) =
             Html.tr []
                 [ Html.td [] [ Html.text name ]
-                , Html.td [] [ Card.view Vote vote ]
+                , Html.td [] [ toUnstyled <| Card.view Vote vote ]
                 ]
     in
     Html.table [] <|

@@ -1,9 +1,11 @@
 module Page.Table.Card exposing (view)
 
+import Css
+import Css.Transitions as Transitions
 import Data exposing (Vote(..))
-import Html exposing (Attribute, Html)
-import Html.Attributes as Attrs
-import Html.Events as Events
+import Html.Styled as Html exposing (Attribute, Html)
+import Html.Styled.Attributes as Attrs
+import Html.Styled.Events as Events
 
 
 getSvgPath : Vote -> String
@@ -44,24 +46,30 @@ getSvgPath vote =
                 UnknownPoints ->
                     "unknown"
     in
-    "url('/svg/card-" ++ name ++ ".svg')"
+    "/svg/card-" ++ name ++ ".svg"
 
 
 view : (Vote -> msg) -> Vote -> Html msg
 view msg vote =
-    Html.button
+    Html.styled Html.button
+        [ Css.width <| Css.px 155
+        , Css.height <| Css.px 231
+        , Css.margin <| Css.px 6
+        , Css.padding Css.zero
+        , Css.border Css.zero
+        , Css.cursor Css.pointer
+        , Css.borderRadius <| Css.px 4
+        , Css.backgroundImage <| Css.url <| getSvgPath vote
+        , Css.boxShadow4 (Css.px 1) (Css.px 2) (Css.px 4) <| Css.rgba 0 0 0 0.3
+        , Transitions.transition
+            [ Transitions.textShadow 200
+            , Transitions.transform 200
+            ]
+        , Css.hover
+            [ Css.boxShadow4 (Css.px 3) (Css.px 5) (Css.px 7) <| Css.rgba 0 0 0 0.3
+            , Css.transform <| Css.scale 1.05
+            ]
+        ]
         [ Events.onClick <| msg vote
-        , Attrs.class "card"
-        , Attrs.style "width" "155px"
-        , Attrs.style "height" "231px"
-        , Attrs.style "margin" "6px"
-        , Attrs.style "padding" "0"
-        , Attrs.style "border" "0"
-        , Attrs.style "outline" "0"
-        , Attrs.style "cursor" "pointer"
-        , Attrs.style "transition" "all .2s"
-        , Attrs.style "border-radius" "4px"
-        , Attrs.style "box-shadow" "1px 2px 3px rgba(0,0,0,.3)"
-        , Attrs.style "background" <| getSvgPath vote
         ]
         []
