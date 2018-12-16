@@ -5,15 +5,14 @@ import Browser exposing (Document, UrlRequest(..))
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Data exposing (Session)
-import Html exposing (Html)
-import Html.Attributes as Attrs
+import Html.Styled as Html exposing (Html)
+import Html.Styled.Attributes as Attrs
 import Http
 import Page.Join as Join
 import Page.Table as Table
 import Router exposing (Route)
 import Url exposing (Url)
 import Theme
-import Html.Styled exposing (toUnstyled)
 
 
 port storeSession : String -> Cmd msg
@@ -193,15 +192,15 @@ withLayout inner =
         [ Attrs.style "max-width" "1200px"
         , Attrs.style "margin" "0 auto"
         ]
-        [ toUnstyled Theme.logo
+        [ Theme.logo
         , inner
-        , toUnstyled Theme.globalStyles
+        , Theme.globalStyles
         ]
     ]
 
 
-view : Model -> Document Msg
-view model =
+document : Model -> Document Msg
+document model =
     let
         ( title, body ) =
             case model.page of
@@ -209,17 +208,17 @@ view model =
                     case page of
                         Home m ->
                             ( "Agile Poker"
-                            , withLayout <| Html.map HomeMsg <| toUnstyled <| Join.view m
+                            , withLayout <| Html.map HomeMsg <| Join.view m
                             )
 
                         Table m ->
                             ( "Table | Agile Poker"
-                            , withLayout <| Html.map TableMsg <| Table.view m
+                            , withLayout <| Html.map TableMsg <| Html.fromUnstyled <| Table.view m
                             )
 
                         JoinTable _ m ->
                             ( "Join | Agile Poker"
-                            , withLayout <| Html.map JoinTableMsg <| toUnstyled <| Join.view m
+                            , withLayout <| Html.map JoinTableMsg <| Join.view m
                             )
 
                         NotFound ->
@@ -234,7 +233,7 @@ view model =
                     )
     in
     { title = title
-    , body = body
+    , body = List.map Html.toUnstyled body
     }
 
 
@@ -242,7 +241,7 @@ main : Program Flags Model Msg
 main =
     Browser.application
         { init = init
-        , view = view
+        , view = document
         , update = update
         , subscriptions = subscriptions
         , onUrlRequest = RouteTo
