@@ -12,7 +12,8 @@ import Page.Join as Join
 import Page.Table as Table
 import Router exposing (Route)
 import Url exposing (Url)
-import Url.Builder as Url
+import Theme
+import Html.Styled exposing (toUnstyled)
 
 
 port storeSession : String -> Cmd msg
@@ -186,34 +187,16 @@ subscriptions model =
 -- View
 
 
-logo : Html a
-logo =
-    Html.h1 []
-        [ Html.a
-            [ Attrs.href <| Url.absolute [] []
-            , Attrs.style "cursor" "pointer"
-            , Attrs.style "color" "#000000"
-            , Attrs.style "text-decoration" "none"
-            ]
-            [ Html.span
-                [ Attrs.style "font-weight" "500"
-                ]
-                [ Html.span
-                    [ Attrs.style "background" "#ff495f"
-                    , Attrs.style "color" "#ffffff"
-                    ]
-                    [ Html.text "A" ]
-                , Html.text "gile "
-                ]
-            , Html.span [ Attrs.style "border-bottom" "3px solid #3280ff" ] [ Html.text "Poker" ]
-            ]
-        ]
-
-
 withLayout : Html Msg -> List (Html Msg)
 withLayout inner =
-    [ logo
-    , inner
+    [ Html.div
+        [ Attrs.style "max-width" "1200px"
+        , Attrs.style "margin" "0 auto"
+        ]
+        [ toUnstyled Theme.logo
+        , inner
+        , toUnstyled Theme.globalStyles
+        ]
     ]
 
 
@@ -226,7 +209,7 @@ view model =
                     case page of
                         Home m ->
                             ( "Agile Poker"
-                            , withLayout <| Html.map HomeMsg <| Join.view m
+                            , withLayout <| Html.map HomeMsg <| toUnstyled <| Join.view m
                             )
 
                         Table m ->
@@ -236,14 +219,12 @@ view model =
 
                         JoinTable _ m ->
                             ( "Join | Agile Poker"
-                            , withLayout <| Html.map JoinTableMsg <| Join.view m
+                            , withLayout <| Html.map JoinTableMsg <| toUnstyled <| Join.view m
                             )
 
                         NotFound ->
                             ( "404 | Agile Poker"
-                            , [ logo
-                              , Html.text "404"
-                              ]
+                            , withLayout <| Html.text "404"
                             )
 
                 Unauthorized _ ->

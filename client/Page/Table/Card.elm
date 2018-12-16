@@ -1,4 +1,4 @@
-module Page.Table.Card exposing (Side(..), table, view)
+module Page.Table.Card exposing (Side(..), table)
 
 import Css
 import Css.Global as GCss
@@ -14,8 +14,8 @@ type Side
     | Back
 
 
-getSvgPath : Vote -> String
-getSvgPath vote =
+cardBackground : Vote -> String
+cardBackground vote =
     let
         name =
             case vote of
@@ -55,15 +55,6 @@ getSvgPath vote =
     "/svg/card-" ++ name ++ ".svg"
 
 
-cardBackground : (Vote -> Side) -> Vote -> String
-cardBackground f vote =
-    if f vote == Front then
-        getSvgPath vote
-
-    else
-        "/svg/card-cover.svg"
-
-
 view : (Vote -> Side) -> (Vote -> msg) -> Vote -> Html msg
 view toSide msg vote =
     let
@@ -84,24 +75,14 @@ view toSide msg vote =
                    , Css.height <| Css.pct 100
                    , Css.borderRadius radius
                    , Css.property "backface-visibility" "hidden"
+                   , Css.backgroundSize2 Css.auto <| Css.pct 100
+                   , Css.backgroundPosition Css.center
                    ]
-
-        globalCss =
-            GCss.global
-                [ GCss.selector ".card:hover .inner-card"
-                    [ Css.transforms
-                        [ Css.rotateY <| Css.deg 0
-                        , Css.scale 1.1
-                        ]
-                    , Css.boxShadow4 (Css.px -4) (Css.px -7) (Css.px 20) <| Css.rgba 0 0 0 0.2
-                    , Css.zIndex <| Css.int 2
-                    ]
-                ]
     in
     Html.styled Html.button
         [ Css.transform <| Css.perspective 1000
         , Css.width <| Css.px 155
-        , Css.height <| Css.px 231
+        , Css.height <| Css.px 238
         , Css.margin <| Css.px 6
         , Css.padding Css.zero
         , Css.border Css.zero
@@ -116,7 +97,18 @@ view toSide msg vote =
             , Css.width <| Css.pct 100
             , Css.height <| Css.pct 100
             , Css.transformStyle Css.preserve3d
-            , Css.boxShadow4 (Css.px -1) (Css.px -2) (Css.px 5) <| Css.rgba 0 0 0 0.3
+            , Css.boxShadow4
+                (Css.px <|
+                    if toSide vote == Front then
+                        -1
+
+                    else
+                        1
+                )
+                (Css.px -1)
+                (Css.px 5)
+              <|
+                Css.rgba 0 0 0 0.3
             , Css.transform <|
                 Css.rotateY <|
                     Css.deg <|
@@ -132,7 +124,7 @@ view toSide msg vote =
                 ]
             , Css.before <|
                 cardStyles
-                    [ Css.backgroundImage <| Css.url <| cardBackground (always Front) vote
+                    [ Css.backgroundImage <| Css.url <| cardBackground vote
                     , Css.zIndex <| Css.int 2
                     , Css.transform <| Css.rotateY <| Css.deg 0
                     ]
@@ -143,7 +135,7 @@ view toSide msg vote =
                     ]
             ]
             [ Attrs.class "inner-card" ]
-            [ globalCss ]
+            []
         ]
 
 
@@ -159,4 +151,14 @@ table toSide msg =
     , view toSide msg FortyPoints
     , view toSide msg HundredPoints
     , view toSide msg InfinityPoints
+    , GCss.global
+        [ GCss.selector ".card:hover .inner-card"
+            [ Css.transforms
+                [ Css.rotateY <| Css.deg 0
+                , Css.scale 1.1
+                ]
+            , Css.boxShadow4 (Css.px -4) (Css.px -7) (Css.px 20) <| Css.rgba 0 0 0 0.2
+            , Css.zIndex <| Css.int 2
+            ]
+        ]
     ]

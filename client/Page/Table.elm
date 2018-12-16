@@ -8,12 +8,13 @@ import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes as Attrs
 import Html.Events as Events
-import Html.Styled exposing (toUnstyled)
+import Html.Styled exposing (fromUnstyled, toUnstyled)
 import Http
 import Maybe.Extra as Maybe
 import Page.Table.Card as Card exposing (Side(..))
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
 import Set exposing (Set)
+import Set.Any as AnySet
 import Url.Builder as Url
 
 
@@ -217,16 +218,11 @@ votingView model =
                 Nothing ->
                     Front
     in
-    Html.main_
-        [ Attrs.style "width" "835px"
-        , Attrs.style "margin" "0 auto"
-        ]
+    Html.main_ []
         [ Html.p
-            [ Attrs.style "margin-left" "6px"
-            , Attrs.style "font-weight" "200"
-            ]
+            [ Attrs.style "font-weight" "200" ]
             [ Html.text "Pick your card:" ]
-        , Html.div [] <| List.map toUnstyled <| Card.table toSide Vote
+        , Html.div [ Attrs.style "margin-left" "-6px" ] <| List.map toUnstyled <| Card.table toSide Vote
         , Html.br [] []
         , if amIBanker model then
             Html.button [ Events.onClick <| Send Stream.FinishRound ]
@@ -240,49 +236,60 @@ votingView model =
 viewUserVotes : Dict String Vote -> Html Msg
 viewUserVotes dict =
     let
-        voteView ( name, vote ) =
-            Html.tr []
-                [ Html.td [] [ Html.text name ]
-                , Html.td [] [ toUnstyled <| Card.view (always Front) Vote vote ]
-                ]
+        voteSet =
+            Dict.values dict
+                |> AnySet.fromList Data.voteToInt
+
+        toSide vote =
+            if AnySet.member vote voteSet then
+                Front
+
+            else
+                Back
     in
-    Html.table [] <|
-        List.map voteView <|
-            Dict.toList dict
+    Html.main_ []
+        [ Html.p
+            [ Attrs.style "font-weight" "200"
+            ]
+            [ Html.text "Grrr" ]
+        , Html.div [ Attrs.style "margin-left" "-6px" ] <|
+            List.map toUnstyled <|
+                Card.table toSide Vote
+        ]
 
 
 viewGame : Model -> Html Msg
 viewGame model =
-    case model.game of
-        NotStarted ->
-            if amIBanker model then
-                Html.button [ Events.onClick <| Send <| Stream.NewGame "Test" ]
-                    [ Html.text "set name to test" ]
+    let
+        inner =
+            case model.game of
+                NotStarted ->
+                    if amIBanker model then
+                        Html.button [ Events.onClick <| Send <| Stream.NewGame "Test" ]
+                            [ Html.text "set name to test" ]
 
-            else
-                Html.text "not a banker"
+                    else
+                        Html.text "not a banker"
 
-        Voting _ ->
-            votingView model
+                Voting _ ->
+                    votingView model
 
-        RoundFinished { userVotes } ->
-            Html.div []
-                [ viewUserVotes userVotes
-                , if amIBanker model then
-                    Html.button [ Events.onClick <| Send <| Stream.NewGame "Test" ]
-                        [ Html.text "Finish all voting" ]
+                RoundFinished { userVotes } ->
+                    viewUserVotes userVotes
 
-                  else
-                    Html.text ""
-                ]
-
-        Overview _ ->
-            Html.text "overview"
+                Overview _ ->
+                    Html.text "overview"
+    in
+    Html.main_
+        [ Attrs.style "width" "835px"
+        , Attrs.style "float" "left"
+        ]
+        [ inner ]
 
 
 playersView : Model -> Html Msg
 playersView model =
-    Html.ul [ Attrs.style "float" "left" ] <|
+    Html.ul [] <|
         Maybe.unwrap (Html.text "") (viewUser model) model.banker
             :: (List.map (viewUser model) <|
                     Dict.values model.players
@@ -304,9 +311,12 @@ currentGameName game =
 
 view : Model -> Html Msg
 view model =
-    Component.withTableNotFound model.tableError <|
-        Html.div []
-            [ Html.h2 [] [ Html.text <| currentGameName model.game ]
-            , playersView model
-            , viewGame model
-            ]
+    toUnstyled <| Component.withTableNotFound model.tableError <|
+        fromUnstyled <|
+            Html.div []
+                [ viewGame model
+                , Html.aside [ Attrs.style "float" "left" ]
+                    [ Html.h2 [] [ Html.text <| currentGameName model.game ]
+                    , playersView model
+                    ]
+                ]

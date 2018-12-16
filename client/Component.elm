@@ -1,8 +1,8 @@
 module Component exposing (withTableNotFound)
 
 import Data exposing (ApiError, TableError(..))
-import Html exposing (Html)
-import Html.Attributes as Attr
+import Html.Styled as Html exposing (Html)
+import Html.Styled.Attributes as Attr
 import Maybe.Extra as Maybe
 import Url.Builder as Url
 

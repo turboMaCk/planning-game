@@ -21,6 +21,7 @@ module Data exposing
     , tableDecoder
     , tableWithGameDecoder
     , voteDecoder
+    , voteToInt
     )
 
 import Dict exposing (Dict)
@@ -281,6 +282,43 @@ type Vote
     | HundredPoints
     | InfinityPoints
     | UnknownPoints
+
+
+voteToInt : Vote -> Int
+voteToInt vote =
+    case vote of
+        OnePoint ->
+            1
+
+        TwoPoints ->
+            2
+
+        ThreePoints ->
+            3
+
+        FivePoints ->
+            5
+
+        EightPoints ->
+            8
+
+        ThreeteenPoints ->
+            13
+
+        TwentyPoints ->
+            20
+
+        FortyPoints ->
+            40
+
+        HundredPoints ->
+            100
+
+        InfinityPoints ->
+            0
+
+        UnknownPoints ->
+            0
 
 
 voteDecoder : Decoder Vote
