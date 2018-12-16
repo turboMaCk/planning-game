@@ -11,8 +11,8 @@ import Http
 import Page.Join as Join
 import Page.Table as Table
 import Router exposing (Route)
-import Url exposing (Url)
 import Theme
+import Url exposing (Url)
 
 
 port storeSession : String -> Cmd msg
@@ -55,6 +55,7 @@ routePage authorizeF route model =
             case route of
                 Router.Home ->
                     Tuple.mapFirst Home Join.init
+                        |> Tuple.mapSecond (Cmd.map HomeMsg)
 
                 Router.Table id ->
                     Table.init session.id id
@@ -63,6 +64,7 @@ routePage authorizeF route model =
 
                 Router.JoinTable id ->
                     Tuple.mapFirst (JoinTable id) Join.init
+                        |> Tuple.mapSecond (Cmd.map JoinTableMsg)
 
                 Router.NotFound ->
                     ( NotFound, Cmd.none )
@@ -213,7 +215,7 @@ document model =
 
                         Table m ->
                             ( "Table | Agile Poker"
-                            , withLayout <| Html.map TableMsg <| Html.fromUnstyled <| Table.view m
+                            , withLayout <| Html.map TableMsg <| Table.view m
                             )
 
                         JoinTable _ m ->

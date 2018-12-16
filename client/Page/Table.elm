@@ -3,12 +3,12 @@ module Page.Table exposing (Model, Msg, init, subscriptions, update, view)
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Component
+import Css
 import Data exposing (ApiError, Game(..), Player, Table, TableError(..), Vote(..))
 import Dict exposing (Dict)
-import Html exposing (Html)
-import Html.Attributes as Attrs
-import Html.Events as Events
-import Html.Styled exposing (fromUnstyled, toUnstyled)
+import Html.Styled as Html exposing (Html)
+import Html.Styled.Attributes as Attrs
+import Html.Styled.Events as Events
 import Http
 import Maybe.Extra as Maybe
 import Page.Table.Card as Card exposing (Side(..))
@@ -203,6 +203,12 @@ viewUser { me, banker } player =
         ]
 
 
+viewTable : (Vote -> Side) -> Html Msg
+viewTable toSide =
+    Html.styled Html.div [ Css.marginLeft <| Css.px -6 ] [] <|
+        Card.table toSide Vote
+
+
 votingView : Model -> Html Msg
 votingView model =
     let
@@ -220,9 +226,9 @@ votingView model =
     in
     Html.main_ []
         [ Html.p
-            [ Attrs.style "font-weight" "200" ]
+            []
             [ Html.text "Pick your card:" ]
-        , Html.div [ Attrs.style "margin-left" "-6px" ] <| List.map toUnstyled <| Card.table toSide Vote
+        , viewTable toSide
         , Html.br [] []
         , if amIBanker model then
             Html.button [ Events.onClick <| Send Stream.FinishRound ]
@@ -248,13 +254,9 @@ viewUserVotes dict =
                 Back
     in
     Html.main_ []
-        [ Html.p
-            [ Attrs.style "font-weight" "200"
-            ]
+        [ Html.p []
             [ Html.text "Grrr" ]
-        , Html.div [ Attrs.style "margin-left" "-6px" ] <|
-            List.map toUnstyled <|
-                Card.table toSide Vote
+        , viewTable toSide
         ]
 
 
@@ -280,10 +282,11 @@ viewGame model =
                 Overview _ ->
                     Html.text "overview"
     in
-    Html.main_
-        [ Attrs.style "width" "835px"
-        , Attrs.style "float" "left"
+    Html.styled Html.div
+        [ Css.width <| Css.px 835
+        , Css.float Css.left
         ]
+        []
         [ inner ]
 
 
@@ -311,12 +314,13 @@ currentGameName game =
 
 view : Model -> Html Msg
 view model =
-    toUnstyled <| Component.withTableNotFound model.tableError <|
-        fromUnstyled <|
-            Html.div []
-                [ viewGame model
-                , Html.aside [ Attrs.style "float" "left" ]
-                    [ Html.h2 [] [ Html.text <| currentGameName model.game ]
-                    , playersView model
-                    ]
+    Component.withTableNotFound model.tableError <|
+        Html.div []
+            [ viewGame model
+            , Html.styled Html.aside
+                [ Css.float Css.left ]
+                []
+                [ Html.h2 [] [ Html.text <| currentGameName model.game ]
+                , playersView model
                 ]
+            ]

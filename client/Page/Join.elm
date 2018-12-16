@@ -1,5 +1,6 @@
 module Page.Join exposing (Model, Msg(..), init, update, view)
 
+import Browser.Dom as Dom
 import Browser.Navigation as Navigation exposing (Key)
 import Component
 import Css
@@ -8,6 +9,7 @@ import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
 import Http
+import Task
 import Theme
 import Url.Builder as Url
 
@@ -18,15 +20,16 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd msg )
+init : ( Model, Cmd Msg )
 init =
     ( Model "" Nothing
-    , Cmd.none
+    , Task.attempt (always NoOp) <| Dom.focus fieldId
     )
 
 
 type Msg
-    = UpdateName String
+    = NoOp
+    | UpdateName String
     | Submit
     | JoinResponse (Result (ApiError TableError) Table)
 
@@ -40,6 +43,9 @@ update :
     -> ( Model, Cmd Msg )
 update action navigationKey session msg model =
     case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
         UpdateName str ->
             ( { model | userName = str }, Cmd.none )
 
@@ -67,6 +73,11 @@ viewError err =
         [ Html.text <| Data.errorMessage err ]
 
 
+fieldId : String
+fieldId =
+    "join-name-field"
+
+
 view : Model -> Html Msg
 view { userName, tableError } =
     Component.withTableNotFound tableError <|
@@ -82,6 +93,7 @@ view { userName, tableError } =
                 [ Html.styled Html.input
                     Theme.textField
                     [ Events.onInput UpdateName
+                    , Attrs.id fieldId
                     , Attrs.value userName
                     ]
                     []
