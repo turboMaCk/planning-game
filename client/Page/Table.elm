@@ -11,7 +11,7 @@ import Html.Events as Events
 import Html.Styled exposing (toUnstyled)
 import Http
 import Maybe.Extra as Maybe
-import Page.Table.Card as Card
+import Page.Table.Card as Card exposing (Side(..))
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
 import Set exposing (Set)
 import Url.Builder as Url
@@ -163,13 +163,13 @@ handleEvent event model =
             )
 
         GameStarted game ->
-            ( { model | game = game }, Cmd.none )
+            ( { model | game = game, myVote = Nothing }, Cmd.none )
 
         VoteAccepted player ->
             ( playerVoted player model, Cmd.none )
 
         VotingEnded game ->
-            ( { model | game = game }, Cmd.none )
+            ( { model | game = game, myVote = Nothing }, Cmd.none )
 
         GameEnded game ->
             ( { model | game = game }, Cmd.none )
@@ -204,6 +204,19 @@ viewUser { me, banker } player =
 
 votingView : Model -> Html Msg
 votingView model =
+    let
+        toSide vote =
+            case model.myVote of
+                Just myVote ->
+                    if vote == myVote then
+                        Front
+
+                    else
+                        Back
+
+                Nothing ->
+                    Front
+    in
     Html.main_
         [ Attrs.style "width" "835px"
         , Attrs.style "margin" "0 auto"
@@ -213,16 +226,7 @@ votingView model =
             , Attrs.style "font-weight" "200"
             ]
             [ Html.text "Pick your card:" ]
-        , toUnstyled <| Card.view Vote OnePoint
-        , toUnstyled <| Card.view Vote TwoPoints
-        , toUnstyled <| Card.view Vote ThreePoints
-        , toUnstyled <| Card.view Vote FivePoints
-        , toUnstyled <| Card.view Vote EightPoints
-        , toUnstyled <| Card.view Vote ThreeteenPoints
-        , toUnstyled <| Card.view Vote TwentyPoints
-        , toUnstyled <| Card.view Vote FortyPoints
-        , toUnstyled <| Card.view Vote HundredPoints
-        , toUnstyled <| Card.view Vote InfinityPoints
+        , Html.div [] <| List.map toUnstyled <| Card.table toSide Vote
         , Html.br [] []
         , if amIBanker model then
             Html.button [ Events.onClick <| Send Stream.FinishRound ]
@@ -239,7 +243,7 @@ viewUserVotes dict =
         voteView ( name, vote ) =
             Html.tr []
                 [ Html.td [] [ Html.text name ]
-                , Html.td [] [ toUnstyled <| Card.view Vote vote ]
+                , Html.td [] [ toUnstyled <| Card.view (always Front) Vote vote ]
                 ]
     in
     Html.table [] <|
