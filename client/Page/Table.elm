@@ -11,8 +11,8 @@ import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
 import Http
-import Maybe.Extra as Maybe
 import Page.Table.Card as Card exposing (Side(..))
+import Page.Table.Players as Players
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
 import Set exposing (Set)
 import Set.Any as AnySet
@@ -218,36 +218,24 @@ subscriptions model =
     Stream.observe Event
 
 
-viewUser : Model -> Player -> Html msg
-viewUser { me, banker } player =
-    Html.li []
-        [ Html.text player.name
-        , if player.isConnected then
-            Html.text " o"
-
-          else
-            Html.text " x"
-        , if Maybe.map .name banker == Just player.name then
-            Html.text " banker"
-
-          else
-            Html.text ""
-        , if Maybe.map .name me == Just player.name then
-            Html.text " change name"
-
-          else
-            Html.text ""
-        ]
-
-
 viewTable : (Vote -> Side) -> Html Msg
 viewTable toSide =
-    Html.styled Html.div [ Css.marginLeft <| Css.px -6 ] [] <|
+    Html.styled Html.div [ Css.marginLeft <| Css.px -12 ] [] <|
         Card.table toSide Vote
 
 
-votingView : Model -> Html Msg
-votingView model =
+tableContainer : String -> List (Html msg) -> Html msg
+tableContainer text inner =
+    Html.main_ [] <|
+        Html.styled Html.p
+            [ Css.fontSize <| Css.px 20 ]
+            []
+            [ Html.text text ]
+            :: inner
+
+
+viewVoting : Model -> Html Msg
+viewVoting model =
     let
         toSide vote =
             case model.myVote of
@@ -261,11 +249,8 @@ votingView model =
                 Nothing ->
                     Front
     in
-    Html.main_ []
-        [ Html.p
-            []
-            [ Html.text "Pick your card:" ]
-        , viewTable toSide
+    tableContainer "Pick your card:"
+        [ viewTable toSide
         , Html.br [] []
         , if amIBanker model then
             Html.button [ Events.onClick <| Send Stream.FinishRound ]
@@ -290,10 +275,8 @@ viewUserVotes dict =
             else
                 Back
     in
-    Html.main_ []
-        [ Html.p []
-            [ Html.text "Grrr" ]
-        , viewTable toSide
+    tableContainer "Select agreed estimation:"
+        [ viewTable toSide
         ]
 
 
@@ -332,7 +315,7 @@ viewGame model =
                     setNameView model
 
                 Voting _ ->
-                    votingView model
+                    viewVoting model
 
                 RoundFinished { userVotes } ->
                     if amIBanker model && model.gameName /= Nothing then
@@ -352,26 +335,86 @@ viewGame model =
         [ inner ]
 
 
-viewPlayers : Model -> Html Msg
-viewPlayers model =
-    Html.ul [] <|
-        Maybe.unwrap (Html.text "") (viewUser model) model.banker
-            :: (List.map (viewUser model) <|
-                    Dict.values model.players
-               )
+currentGameView : Game -> Html msg
+currentGameView game =
+    let
+        headlineStyle =
+            Css.batch
+                [ Css.margin2 (Css.px 12) Css.zero
+                , Css.fontSize <| Css.px 27
+                ]
 
+        headline =
+            Html.styled Html.h2
 
-currentGameName : Game -> String
-currentGameName game =
+        showName name =
+            headline [ headlineStyle ]
+                []
+                [ Html.styled Html.span
+                    [ Css.fontWeight <| Css.int 200
+                    , Css.display Css.block
+                    , Css.fontSize <| Css.px 20
+                    , Css.marginBottom <| Css.px 6
+                    ]
+                    []
+                    [ Html.text "Estimating ticket:" ]
+                , Html.text <|
+                    if String.isEmpty name then
+                        "[unnamed]"
+
+                    else
+                        name
+                ]
+    in
     case game of
+        NotStarted ->
+            headline [ Css.fontWeight <| Css.int 200 ]
+                []
+                [ Html.text "Waiting for first ticket" ]
+
         Voting { name } ->
-            name
+            showName name
 
         RoundFinished { name } ->
-            name
+            showName name
 
-        _ ->
-            ""
+        Overview _ ->
+            headline [ Css.fontWeight <| Css.int 200 ]
+                []
+                [ Html.text "Table overview" ]
+
+
+pointsSoFarView : Game -> Html msg
+pointsSoFarView game =
+    let
+        showPoints int =
+            Html.styled Html.h3
+                [ Css.margin Css.zero
+                , Css.fontSize <| Css.px 37
+                ]
+                []
+                [ Html.styled Html.span
+                    [ Css.fontWeight <| Css.int 200
+                    , Css.fontSize <| Css.px 20
+                    , Css.display Css.block
+                    ]
+                    []
+                    [ Html.text "Points so far:" ]
+                , Html.text <| String.fromInt int
+                ]
+    in
+    case game of
+        NotStarted ->
+            Html.text ""
+
+        Voting { totalPoints } ->
+            showPoints totalPoints
+
+        RoundFinished { totalPoints } ->
+            showPoints totalPoints
+
+        Overview { totalPoints } ->
+            showPoints totalPoints
 
 
 view : Model -> Html Msg
@@ -382,7 +425,8 @@ view model =
             , Html.styled Html.aside
                 [ Css.float Css.left ]
                 []
-                [ Html.h2 [] [ Html.text <| currentGameName model.game ]
-                , viewPlayers model
+                [ currentGameView model.game
+                , pointsSoFarView model.game
+                , Players.view model.me model.banker model.players
                 ]
             ]

@@ -64,26 +64,26 @@ view toSide msg vote =
         radius =
             Css.px 12
 
-        cardStyles styles =
-            styles
-                ++ [ Css.property "content" "''"
-                   , Css.display Css.block
-                   , Css.position Css.absolute
-                   , Css.top Css.zero
-                   , Css.left Css.zero
-                   , Css.width <| Css.pct 100
-                   , Css.height <| Css.pct 100
-                   , Css.borderRadius radius
-                   , Css.property "backface-visibility" "hidden"
-                   , Css.backgroundSize2 Css.auto <| Css.pct 100
-                   , Css.backgroundPosition Css.center
-                   ]
+        cardStyles =
+            Css.batch
+                [ Css.property "content" "''"
+                , Css.display Css.block
+                , Css.position Css.absolute
+                , Css.top Css.zero
+                , Css.left Css.zero
+                , Css.width <| Css.pct 100
+                , Css.height <| Css.pct 100
+                , Css.borderRadius radius
+                , Css.property "backface-visibility" "hidden"
+                , Css.backgroundSize2 Css.auto <| Css.pct 100
+                , Css.backgroundPosition Css.center
+                ]
     in
     Html.styled Html.button
         [ Css.transform <| Css.perspective 1000
-        , Css.width <| Css.px 155
-        , Css.height <| Css.px 238
-        , Css.margin <| Css.px 6
+        , Css.width <| Css.px 144
+        , Css.height <| Css.px 224
+        , Css.margin <| Css.px 12
         , Css.padding Css.zero
         , Css.border Css.zero
         , Css.outline Css.zero
@@ -123,16 +123,16 @@ view toSide msg vote =
                 , Transitions.transform transitionMs
                 ]
             , Css.before <|
-                cardStyles
-                    [ Css.backgroundImage <| Css.url <| cardBackground vote
-                    , Css.zIndex <| Css.int 2
-                    , Css.transform <| Css.rotateY <| Css.deg 0
-                    ]
+                [ cardStyles
+                , Css.backgroundImage <| Css.url <| cardBackground vote
+                , Css.zIndex <| Css.int 2
+                , Css.transform <| Css.rotateY <| Css.deg 0
+                ]
             , Css.after <|
-                cardStyles
-                    [ Css.backgroundImage <| Css.url <| "/svg/card-cover.svg"
-                    , Css.transform <| Css.rotateY <| Css.deg 180
-                    ]
+                [ cardStyles
+                , Css.backgroundImage <| Css.url <| "/svg/card-cover.svg"
+                , Css.transform <| Css.rotateY <| Css.deg 180
+                ]
             ]
             [ Attrs.class "inner-card" ]
             []
