@@ -53,6 +53,7 @@ primaryBtn =
     , Css.borderBottom3 (Css.px 2) Css.solid values.primaryColor
     , Css.outline Css.zero
     , Css.cursor Css.pointer
+    , Css.backgroundColor Css.transparent
     ]
 
 

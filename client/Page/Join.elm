@@ -50,7 +50,6 @@ update action navigationKey session msg model =
 
         Submit ->
             ( model
-              -- or join table
             , action session JoinResponse model.userName
             )
 
@@ -84,7 +83,7 @@ view { userName, tableError } =
             [ Component.nameForm
                 { onInput = UpdateName
                 , onSubmit = Submit
-                , submitTxt = "Sbumit"
+                , submitTxt = "Submit"
                 , value = userName
                 , inputId = fieldId
                 , labelTxt = "Choose your \"player name\" for the table"

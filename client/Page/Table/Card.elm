@@ -88,6 +88,7 @@ view toSide msg vote =
         , Css.border Css.zero
         , Css.outline Css.zero
         , Css.cursor Css.pointer
+        , Css.backgroundColor Css.transparent
         ]
         [ Events.onClick <| msg vote
         , Attrs.class "card"
