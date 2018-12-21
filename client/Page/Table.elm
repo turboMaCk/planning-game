@@ -462,9 +462,12 @@ view model =
                 NotStarted ->
                     Hidden
 
-                Voting _ ->
-                    -- @TODO: base on voted state
-                    Hidden
+                Voting { maskedVotes } ->
+                    if Set.member player.name maskedVotes then
+                        Unknown
+
+                    else
+                        Hidden
 
                 RoundFinished { userVotes } ->
                     Dict.get player.name userVotes
