@@ -339,7 +339,7 @@ setNameView model =
 
     else
         -- @TODO: nice view
-        Html.text "not a banker"
+        Html.text "waiting for first ticket..."
 
 
 viewGame : Model -> Html Msg
@@ -354,7 +354,7 @@ viewGame model =
                     viewVoting model
 
                 RoundFinished { userVotes } ->
-                    if amIBanker model && model.gameName /= Nothing then
+                    if amIBanker model && model.myVote /= Nothing then
                         setNameView model
 
                     else
