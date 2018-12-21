@@ -13,6 +13,7 @@ values =
     , secondaryColor = Css.hex "#3280ff"
     , darkColor = Css.hex "#000000"
     , lightColor = Css.hex "#ffffff"
+    , greenColor = Css.hex "#8fdb41"
     }
 
 
