@@ -24,7 +24,7 @@ voteIndicator playerVote =
                 , Css.backgroundColor Theme.values.primaryColor
                 , Css.borderRadius <| Css.pct 100
                 ]
-                []
+                [ Attrs.title <| "player voted: " ++ txt ]
                 [ Html.text txt ]
     in
     case playerVote of

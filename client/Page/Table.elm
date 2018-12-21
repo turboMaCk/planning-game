@@ -203,8 +203,7 @@ handleEvent event model =
                 | tableId = table.id
                 , banker = Just table.banker
                 , players =
-                    List.filter ((/=) (Maybe.map .name model.me) << Just << .name) table.players
-                        |> List.map (\player -> ( player.name, player ))
+                    List.map (\player -> ( player.name, player )) table.players
                         |> Dict.fromList
                 , game = game
               }
