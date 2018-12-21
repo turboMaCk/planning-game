@@ -48,9 +48,6 @@ cardBackground vote =
 
                 InfinityPoints ->
                     "infinity"
-
-                UnknownPoints ->
-                    "unknown"
     in
     "/svg/card-" ++ name ++ ".svg"
 

@@ -281,7 +281,6 @@ type Vote
     | FortyPoints
     | HundredPoints
     | InfinityPoints
-    | UnknownPoints
 
 
 voteToInt : Vote -> Int
@@ -315,9 +314,6 @@ voteToInt vote =
             100
 
         InfinityPoints ->
-            0
-
-        UnknownPoints ->
             0
 
 
@@ -355,9 +351,6 @@ voteDecoder =
 
                 "Infinity" ->
                     Decode.succeed InfinityPoints
-
-                "?" ->
-                    Decode.succeed UnknownPoints
 
                 _ ->
                     Decode.fail "unknown vote"
@@ -399,9 +392,6 @@ encodeVote vote =
 
                 InfinityPoints ->
                     "Infinity"
-
-                UnknownPoints ->
-                    "?"
     in
     Encode.string str
 

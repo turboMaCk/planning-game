@@ -30,7 +30,6 @@ data Vote
   | FortyPoints
   | HunderedPoints
   | InfinityPoints
-  | UnknownPoints
 
 
 instance Show Vote where
@@ -44,7 +43,6 @@ instance Show Vote where
   show FortyPoints     = "40"
   show HunderedPoints  = "100"
   show InfinityPoints  = "Infinity"
-  show UnknownPoints   = "?"
 
 
 instance ToJSON Vote where
@@ -63,7 +61,6 @@ voteToInt TwentyPoints    = 20
 voteToInt FortyPoints     = 40
 voteToInt HunderedPoints  = 100
 voteToInt InfinityPoints  = 0
-voteToInt UnknownPoints   = 0
 
 
 instance FromJSON Vote where
@@ -79,7 +76,6 @@ instance FromJSON Vote where
       "40"       -> pure FortyPoints
       "100"      -> pure HunderedPoints
       "Infinity" -> pure InfinityPoints
-      "?"        -> pure UnknownPoints
       _          -> mzero
   parseJSON _     = mzero
 
@@ -109,7 +105,8 @@ data GameError
 
 
 newGame :: T.Text -> RunningGame
-newGame name = RunningGame name Map.empty False
+newGame name =
+  RunningGame name Map.empty False
 
 
 finishGame :: Vote -> RunningGame -> FinishedGame
@@ -182,7 +179,7 @@ playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( T.Text, Vote
 playersVotes _ _ (FinishedGames _) = []
 playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
   mapMaybe (\(id, vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id allPlayers)
-  $ Map.toList votes
+    $ Map.toList votes
 
   where
     allPlayers = Map.insert bankerId banker players
