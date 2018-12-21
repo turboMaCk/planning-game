@@ -1,7 +1,7 @@
-module Page.Table.Players exposing (view)
+module Page.Table.Players exposing (PlayerVote(..), view)
 
 import Css
-import Data exposing (Player)
+import Data exposing (Player, Vote)
 import Dict exposing (Dict)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
@@ -9,8 +9,52 @@ import Maybe.Extra as Maybe
 import Theme
 
 
-viewOnlineIndicator : Bool -> Html msg
-viewOnlineIndicator isActive =
+type PlayerVote
+    = Hidden
+    | Unknown
+    | Voted Vote
+
+
+voteIndicator : PlayerVote -> Html msg
+voteIndicator playerVote =
+    let
+        show txt =
+            Html.styled Html.span
+                [ Theme.pill
+                , Css.backgroundColor Theme.values.primaryColor
+                , Css.borderRadius <| Css.pct 100
+                ]
+                []
+                [ Html.text txt ]
+    in
+    case playerVote of
+        Hidden ->
+            Html.text ""
+
+        Unknown ->
+            show "?"
+
+        Voted vote ->
+            show <| String.fromInt <| Data.voteToInt vote
+
+
+bankerIndicator : Bool -> Html msg
+bankerIndicator isBanker =
+    if isBanker then
+        Html.styled Html.span
+            [ Theme.pill
+            , Css.backgroundColor Theme.values.secondaryColor
+            , Css.marginLeft Css.zero
+            ]
+            [ Attrs.title "Banker" ]
+            [ Html.text "B" ]
+
+    else
+        Html.text ""
+
+
+onlineIndicator : Bool -> Html msg
+onlineIndicator isActive =
     let
         size =
             Css.px 8
@@ -42,27 +86,8 @@ viewOnlineIndicator isActive =
         ]
 
 
-bankerIndicator : Bool -> Html msg
-bankerIndicator isBanker =
-    if isBanker then
-        Html.styled Html.span
-            [ Css.display Css.inlineBlock
-            , Css.marginRight <| Css.px 4
-            , Css.padding2 Css.zero <| Css.px 4
-            , Css.fontSize <| Css.px 12
-            , Css.fontWeight <| Css.int 600
-            , Css.backgroundColor Theme.values.secondaryColor
-            , Css.color Theme.values.lightColor
-            ]
-            [ Attrs.title "Banker" ]
-            [ Html.text "B" ]
-
-    else
-        Html.text ""
-
-
-viewPlayer : Maybe Player -> Maybe Player -> Player -> Html msg
-viewPlayer me banker player =
+viewPlayer : (Player -> PlayerVote) -> (Player -> Bool) -> Player -> Html msg
+viewPlayer toVote isBanker player =
     Html.styled Html.li
         [ Css.listStyle Css.none
         , Css.margin4 Css.zero Css.zero (Css.px 6) Css.zero
@@ -71,14 +96,21 @@ viewPlayer me banker player =
         , Css.textOverflow Css.ellipsis
         ]
         []
-        [ viewOnlineIndicator player.isConnected
-        , bankerIndicator <| banker == Just player
+        [ onlineIndicator player.isConnected
+        , bankerIndicator <| isBanker player
         , Html.text player.name
+        , voteIndicator <| toVote player
         ]
 
 
-view : Maybe Player -> Maybe Player -> Dict String Player -> Html msg
-view me banker players =
+{-| @TODO: Odd api
+-}
+view : (Player -> PlayerVote) -> Maybe Player -> Dict String Player -> Html msg
+view toVote banker players =
+    let
+        isBanker =
+            (==) banker << Just
+    in
     Html.div []
         [ Html.h3 [] [ Html.text "Players:" ]
         , Html.styled Html.ul
@@ -88,8 +120,8 @@ view me banker players =
             ]
             []
           <|
-            Maybe.unwrap (Html.text "") (viewPlayer me banker) banker
-                :: (List.map (viewPlayer me banker) <|
+            Maybe.unwrap (Html.text "") (viewPlayer toVote isBanker) banker
+                :: (List.map (viewPlayer toVote isBanker) <|
                         Dict.values players
                    )
         ]

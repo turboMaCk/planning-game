@@ -11,8 +11,9 @@ import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
 import Http
+import Maybe.Extra as Maybe
 import Page.Table.Card as Card exposing (Side(..))
-import Page.Table.Players as Players
+import Page.Table.Players as Players exposing (PlayerVote(..))
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
 import Set exposing (Set)
 import Set.Any as AnySet
@@ -455,6 +456,23 @@ pointsSoFarView game =
 
 view : Model -> Html Msg
 view model =
+    let
+        toVote player =
+            case model.game of
+                NotStarted ->
+                    Hidden
+
+                Voting _ ->
+                    -- @TODO: base on voted state
+                    Hidden
+
+                RoundFinished { userVotes } ->
+                    Dict.get player.name userVotes
+                        |> Maybe.unwrap Unknown Voted
+
+                Overview _ ->
+                    Hidden
+    in
     Component.withTableNotFound model.tableError <|
         Html.div []
             [ viewGame model
@@ -463,6 +481,6 @@ view model =
                 []
                 [ currentGameView model.game
                 , pointsSoFarView model.game
-                , Players.view model.me model.banker model.players
+                , Players.view toVote model.banker model.players
                 ]
             ]

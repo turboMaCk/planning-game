@@ -1,4 +1,4 @@
-module Theme exposing (globalStyles, heading, logo, primaryBtn, secondaryBtn, textField, values)
+module Theme exposing (globalStyles, heading, logo, pill, primaryBtn, secondaryBtn, textField, values)
 
 import Css exposing (Style)
 import Css.Global as GCss
@@ -94,6 +94,20 @@ textField =
         , Css.fontWeight <| Css.int 600
         , Css.borderBottom3 (Css.px 3) Css.solid values.secondaryColor
         , Css.backgroundColor <| Css.hex "#d6e5ff"
+        ]
+
+
+pill : Style
+pill =
+    Css.batch
+        [ Css.display Css.inlineBlock
+        , Css.minWidth <| Css.px 8
+        , Css.margin2 Css.zero <| Css.px 4
+        , Css.padding2 Css.zero <| Css.px 4
+        , Css.fontSize <| Css.px 12
+        , Css.fontWeight <| Css.int 600
+        , Css.color values.lightColor
+        , Css.textAlign Css.center
         ]
 
 
