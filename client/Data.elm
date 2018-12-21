@@ -14,6 +14,7 @@ module Data exposing
     , gameDecoder
     , getMe
     , getSession
+    , isNewGame
     , isRoundFinished
     , isVoting
     , joinTable
@@ -416,6 +417,16 @@ type Game
         { totalPoints : Int
         , results : Dict String Vote
         }
+
+
+isNewGame : Game -> Bool
+isNewGame game =
+    case game of
+        NotStarted ->
+            True
+
+        _ ->
+            False
 
 
 isVoting : Game -> Bool

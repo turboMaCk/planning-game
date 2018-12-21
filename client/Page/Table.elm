@@ -17,6 +17,7 @@ import Page.Table.Stream as Stream exposing (Event(..), StreamError)
 import Set exposing (Set)
 import Set.Any as AnySet
 import Task
+import Theme
 import Url.Builder as Url
 
 
@@ -58,6 +59,7 @@ type Msg
     | Vote Vote
     | SetName String
     | NewGame String
+    | FinishGame
 
 
 focusNameField : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -168,6 +170,15 @@ update navigationKey msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        FinishGame ->
+            case model.myVote of
+                Just vote ->
+                    { model | gameName = Nothing }
+                        |> Cmd.with (Stream.sendMsg <| Stream.Finish vote)
+
+                Nothing ->
+                    ( model, Cmd.none )
+
 
 
 -- NoOp
@@ -253,7 +264,9 @@ viewVoting model =
         [ viewTable toSide
         , Html.br [] []
         , if amIBanker model then
-            Html.button [ Events.onClick <| Send Stream.FinishRound ]
+            Html.styled Html.button
+                [ Theme.secondaryBtn ]
+                [ Events.onClick <| Send Stream.FinishRound ]
                 [ Html.text "finish round" ]
 
           else
@@ -295,11 +308,34 @@ setNameView model =
         Component.nameForm
             { onInput = SetName
             , onSubmit = NewGame name
-            , submitTxt = "Submit"
+            , submitTxt =
+                if Data.isNewGame model.game then
+                    "Start"
+
+                else
+                    "Next Ticket"
             , value = name
             , inputId = nameFieldId
-            , labelTxt = "Name of next task"
+            , labelTxt = "Name the task"
             }
+            (if Data.isNewGame model.game then
+                Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "First Ticket" ]
+
+             else
+                Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "Next Ticket" ]
+            )
+            (if Data.isNewGame model.game then
+                []
+
+             else
+                [ Html.styled Html.button
+                    [ Theme.secondaryBtn
+                    , Css.marginTop <| Css.px 12
+                    ]
+                    [ Events.onClick FinishGame ]
+                    [ Html.text "Finish Game" ]
+                ]
+            )
 
     else
         -- @TODO: nice view

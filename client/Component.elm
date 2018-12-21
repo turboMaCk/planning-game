@@ -33,24 +33,29 @@ nameForm :
     , labelTxt : String
     }
     -> Html msg
-nameForm { onInput, onSubmit, submitTxt, value, inputId, labelTxt } =
+    -> List (Html msg)
+    -> Html msg
+nameForm { onInput, onSubmit, submitTxt, value, inputId, labelTxt } above otherBtns =
     Html.styled Html.form
         [ Css.width <| Css.px 300
         , Css.margin2 (Css.px 150) Css.auto
         ]
         [ Events.onSubmit onSubmit
         ]
-        [ Html.label [ Attrs.for inputId ] [ Html.text labelTxt ]
-        , Html.styled Html.input
-            Theme.textField
+        ([ above
+         , Html.label [ Attrs.for inputId ] [ Html.text labelTxt ]
+         , Html.styled Html.input
+            [ Theme.textField ]
             [ Events.onInput onInput
             , Attrs.id inputId
             , Attrs.value value
             ]
             []
-        , Html.styled Html.button
-            Theme.primaryBtn
+         , Html.styled Html.button
+            [ Theme.primaryBtn ]
             [ Attrs.type_ "submit"
             ]
             [ Html.text submitTxt ]
-        ]
+         ]
+            ++ otherBtns
+        )

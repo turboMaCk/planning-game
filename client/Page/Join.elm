@@ -76,8 +76,8 @@ fieldId =
     "join-name-field"
 
 
-view : Model -> Html Msg
-view { userName, tableError } =
+view : Html Msg -> Model -> Html Msg
+view headline { userName, tableError } =
     Component.withTableNotFound tableError <|
         Html.div []
             [ Component.nameForm
@@ -86,8 +86,10 @@ view { userName, tableError } =
                 , submitTxt = "Submit"
                 , value = userName
                 , inputId = fieldId
-                , labelTxt = "Choose your \"player name\" for the table"
+                , labelTxt = "Choose your name for the table"
                 }
+                headline
+                []
             , case tableError of
                 Just err ->
                     viewError err

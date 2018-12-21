@@ -147,7 +147,7 @@ encodeMsg msg =
 
         Finish vote ->
             Encode.object
-                [ ( "msg", Encode.string "FinishRound" )
+                [ ( "msg", Encode.string "Finish" )
                 , ( "name", Data.encodeVote vote )
                 ]
 

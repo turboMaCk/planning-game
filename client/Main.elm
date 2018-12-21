@@ -210,7 +210,15 @@ document model =
                     case page of
                         Home m ->
                             ( "Agile Poker"
-                            , withLayout <| Html.map HomeMsg <| Join.view m
+                            , withLayout <|
+                                Html.map HomeMsg <|
+                                    Join.view
+                                        (Html.styled Html.h2
+                                            [ Theme.heading ]
+                                            []
+                                            [ Html.text "Create New Table" ]
+                                        )
+                                        m
                             )
 
                         Table m ->
@@ -220,7 +228,7 @@ document model =
 
                         JoinTable _ m ->
                             ( "Join | Agile Poker"
-                            , withLayout <| Html.map JoinTableMsg <| Join.view m
+                            , withLayout <| Html.map JoinTableMsg <| Join.view (Html.text "") m
                             )
 
                         NotFound ->
