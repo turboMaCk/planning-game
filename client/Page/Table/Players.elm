@@ -86,14 +86,19 @@ onlineIndicator isActive =
         ]
 
 
-viewPlayer : (Player -> PlayerVote) -> (Player -> Bool) -> Player -> Html msg
-viewPlayer toVote isBanker player =
+viewPlayer : (Player -> Bool) -> (Player -> PlayerVote) -> (Player -> Bool) -> Player -> Html msg
+viewPlayer isMe toVote isBanker player =
     Html.styled Html.li
         [ Css.listStyle Css.none
         , Css.margin4 Css.zero Css.zero (Css.px 6) Css.zero
         , Css.fontWeight <| Css.int 200
         , Css.overflow Css.hidden
         , Css.textOverflow Css.ellipsis
+        , if isMe player then
+            Css.textDecoration Css.underline
+
+          else
+            Css.property "foo" "bar"
         ]
         []
         [ onlineIndicator player.isConnected
@@ -103,10 +108,8 @@ viewPlayer toVote isBanker player =
         ]
 
 
-{-| @TODO: Odd api
--}
-view : (Player -> PlayerVote) -> Maybe Player -> Dict String Player -> Html msg
-view toVote banker players =
+view : (Player -> Bool) -> (Player -> PlayerVote) -> Maybe Player -> Dict String Player -> Html msg
+view isMe toVote banker players =
     let
         isBanker =
             (==) banker << Just
@@ -120,8 +123,8 @@ view toVote banker players =
             ]
             []
           <|
-            Maybe.unwrap (Html.text "") (viewPlayer toVote isBanker) banker
-                :: (List.map (viewPlayer toVote isBanker) <|
+            Maybe.unwrap (Html.text "") (viewPlayer isMe toVote isBanker) banker
+                :: (List.map (viewPlayer isMe toVote isBanker) <|
                         Dict.values players
                    )
         ]

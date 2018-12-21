@@ -456,6 +456,9 @@ pointsSoFarView game =
 view : Model -> Html Msg
 view model =
     let
+        isMe { name } =
+            Maybe.unwrap False ((==) name << .name) model.me
+
         toVote player =
             case model.game of
                 NotStarted ->
@@ -483,6 +486,6 @@ view model =
                 []
                 [ currentGameView model.game
                 , pointsSoFarView model.game
-                , Players.view toVote model.banker model.players
+                , Players.view isMe toVote model.banker model.players
                 ]
             ]
