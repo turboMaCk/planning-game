@@ -1,6 +1,7 @@
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE ExplicitForAll    #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module AgilePoker.Api.Error.Class
   ( Error(..)
@@ -8,13 +9,15 @@ module AgilePoker.Api.Error.Class
   , respondError
   ) where
 
-import Servant (ServantErr, throwError, errBody, errHeaders, err401, err403, err404, err409)
-import GHC.Generics (Generic)
-import Data.Text (Text)
-import Data.Aeson.Types (ToJSON(..), (.=))
-import Data.Aeson (encode)
-import Control.Monad.Error.Class (MonadError)
-import qualified Data.Aeson.Types as AT
+import           Control.Monad.Error.Class (MonadError)
+import           Data.Aeson.Types          (ToJSON (..), (.=))
+import           Data.Text                 (Text)
+import           GHC.Generics              (Generic)
+import           Servant                   (ServantErr, err401, err403, err404,
+                                            err409, errBody, errHeaders,
+                                            throwError)
+
+import qualified Data.Aeson                as Aeson
 
 
 data ErrorType
@@ -33,23 +36,25 @@ class Error a where
   toReadable :: a -> Text
 
 
--- Just to trick the compiler
+{-- Just to trick the compiler
+--}
 newtype Wrap a = Wrap { unWrap :: a }
 
 
 instance Error a => ToJSON (Wrap a) where
   toJSON (Wrap err) =
-    AT.object
+    Aeson.object
       [ "error"   .= toType err
       , "message" .= toReadable err
       ]
 
 
 respondError :: Error a => MonadError ServantErr m => a -> m b
-respondError res = throwError $ err
-  { errBody = encode $ toJSON (Wrap res)
-  , errHeaders = [ ( "Content-Type", "application/json;charset=utf-8" ) ]
-  }
+respondError res =
+  throwError $ err
+    { errBody = Aeson.encode $ toJSON (Wrap res)
+    , errHeaders = [ ( "Content-Type", "application/json;charset=utf-8" ) ]
+    }
   where
     err =
         case toType res of

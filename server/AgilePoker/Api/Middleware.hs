@@ -23,7 +23,8 @@ indexMiddleware application request respond =
 
   where
     indexRes :: Response
-    indexRes = responseFile status200 headers fileName Nothing
+    indexRes =
+      responseFile status200 headers fileName Nothing
         where
             fileName = "public/index.html"
             headers = [ ( "Content-Type", "text/html" )

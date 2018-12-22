@@ -13,17 +13,20 @@ module AgilePoker.Api.Authorization
   ) where
 
 import           Control.Concurrent                (MVar)
-import qualified Control.Concurrent                as Concurrent
 import           Control.Monad.IO.Class            (liftIO)
-import           Data.ByteString                   (ByteString, stripPrefix)
-import qualified Data.ByteString.Lazy              as LB
-import           Network.Wai                       (Request, requestHeaders)
+import           Data.ByteString                   (ByteString)
+import           Network.Wai                       (Request)
 import           Servant                           (AuthProtect, Handler,
                                                     err401, err403, errBody,
                                                     throwError)
 import           Servant.Server.Experimental.Auth  (AuthHandler, AuthServerData,
                                                     mkAuthHandler)
-import           Web.Cookie                        (parseCookies)
+
+
+import qualified Network.Wai as Wai
+import qualified Control.Concurrent                as Concurrent
+import qualified Data.ByteString                   as ByteString
+import qualified Web.Cookie                        as Cookie
 
 import           AgilePoker.Api.Authorization.Type (AuthorizationError (..))
 import           AgilePoker.Api.Error              (respondError)
@@ -67,7 +70,7 @@ type SessionHeaderAuth =
 -- Correct format is `Bearer xxxx` where xxxx is a SessionId itself
 parseAuthorizationHeader :: ByteString -> Maybe (Id SessionId)
 parseAuthorizationHeader headerVal =
-  Id <$> stripPrefix "Bearer " headerVal
+  Id <$> ByteString.stripPrefix "Bearer " headerVal
 
 
 authHeaderHandler :: MVar Sessions -> AuthHandler Request (HeaderAuth Session)
@@ -76,7 +79,7 @@ authHeaderHandler = mkAuthHandler . handler get HeaderAuth
     get :: Request -> Maybe (Id SessionId)
     get req =
         parseAuthorizationHeader
-            =<< lookup "Authorization" (requestHeaders req)
+            =<< lookup "Authorization" (Wai.requestHeaders req)
 
 
 -- | We need to specify the data returned after authentication
@@ -99,8 +102,8 @@ authCookieHandler = mkAuthHandler . handler get CookieAuth
   where
     get :: Request -> Maybe (Id SessionId)
     get req = Id <$>
-        (lookup "sessionId" . parseCookies
-            =<< lookup "Cookie" (requestHeaders req))
+        (lookup "sessionId" . Cookie.parseCookies
+            =<< lookup "Cookie" (Wai.requestHeaders req))
 
 
 -- | We need to specify the data returned after authentication

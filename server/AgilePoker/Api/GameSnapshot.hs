@@ -5,8 +5,7 @@ module AgilePoker.Api.GameSnapshot
   ) where
 
 import           Data.Aeson.Types        (ToJSON (..), Value (..), object, (.=))
-import qualified Data.Map                as Map
-import qualified Data.Text               as T
+import           Data.Text               (Text)
 
 import           AgilePoker.Data.Game
 import           AgilePoker.Data.Id      (Id)
@@ -21,22 +20,25 @@ woth Player name's for the public API so private information
 doesn't leak outside.
 --}
 data GameSnapshot
-  = RunningGameSnapshot  { snapshotName  :: T.Text
-                         , snapshotVotes :: [ T.Text ]
-                         , totalPoints   :: Int
-                         }
-  | LockedGameSnapshot   { snapshotName :: T.Text
-                         , userVotes    :: [ ( T.Text, Vote ) ]
-                         , totalPoints  :: Int
-                         }
-  | FinishedGameSnapshot { totalPoints       :: Int
-                         , snapshotGameVotes :: [ ( T.Text, Vote ) ]
-                         , playerGameVotes   :: [ ( T.Text, [ ( T.Text, Vote ) ] ) ]
-                         }
+  = RunningGameSnapshot
+    { snapshotName  :: Text
+    , snapshotVotes :: [ Text ]
+    , totalPoints   :: Int
+    }
+  | LockedGameSnapshot
+    { snapshotName :: Text
+    , userVotes    :: [ ( Text, Vote ) ]
+    , totalPoints  :: Int
+    }
+  | FinishedGameSnapshot
+    { totalPoints       :: Int
+    , snapshotGameVotes :: [ ( Text, Vote ) ]
+    , playerGameVotes   :: [ ( Text, [ ( Text, Vote ) ] ) ]
+    }
 
 
 -- @TODO: possible to generalize
-pointsPair :: [ ( T.Text, Vote ) ] -> [ Value ]
+pointsPair :: [ ( Text, Vote ) ] -> [ Value ]
 pointsPair = fmap toVal
   where
     toVal ( name, points ) =
@@ -77,18 +79,21 @@ instance ToJSON GameSnapshot where
 -- @TODO: might need banker as well
 snapshot :: ( Id SessionId, Player ) -> Players -> Games -> GameSnapshot
 snapshot banker players games@(FinishedGames _) =
-  FinishedGameSnapshot { totalPoints       = sumGamePoints games
-                       , snapshotGameVotes = gamesVotes games
-                       , playerGameVotes   = gamesPlayerVotes banker players games
-                       }
+  FinishedGameSnapshot
+    { totalPoints       = sumGamePoints games
+    , snapshotGameVotes = gamesVotes games
+    , playerGameVotes   = gamesPlayerVotes banker players games
+    }
 snapshot banker players games@(RunningGames _ (RunningGame name votes isLocked)) =
   if isLocked then
-    LockedGameSnapshot  { snapshotName = name
-                        , userVotes    = playersVotes banker players games
-                        , totalPoints  = sumGamePoints games
-                        }
+    LockedGameSnapshot
+        { snapshotName = name
+        , userVotes    = playersVotes banker players games
+        , totalPoints  = sumGamePoints games
+        }
   else
-    RunningGameSnapshot { snapshotName  = name
-                        , snapshotVotes = fst <$> playersVotes banker players games
-                        , totalPoints   = sumGamePoints games
-                        }
+    RunningGameSnapshot
+        { snapshotName  = name
+        , snapshotVotes = fst <$> playersVotes banker players games
+        , totalPoints   = sumGamePoints games
+        }

@@ -5,13 +5,12 @@ module AgilePoker.Data.Table.Event
   , encodeEvent
   ) where
 
-import qualified Data.Aeson                  as Aeson
-import           Data.Aeson.Types            (ToJSON (..), (.=))
-import qualified Data.Aeson.Types            as AT
+import           Data.Aeson.Types            (ToJSON (..), (.=), object)
 import           Data.ByteString             (ByteString)
-import qualified Data.ByteString.Lazy        as LB
-import qualified Data.IntMap                 as IntMap
-import qualified Data.Text                   as T
+
+import qualified Data.ByteString.Lazy        as LazyByteString
+import qualified Data.Aeson                  as Aeson
+import qualified Data.Text                   as Text
 
 import           AgilePoker.Api.GameSnapshot (snapshot)
 import           AgilePoker.Data.Game        (Games)
@@ -34,41 +33,42 @@ data Event
 
 instance ToJSON Event where
   toJSON (PlayerJoined player) =
-    AT.object
-        [ "event"  .= T.pack "UserJoined"
+    object
+        [ "event"  .= Text.pack "UserJoined"
         , "player" .= player
         ]
   toJSON (PlayerStatusUpdate player) =
-    AT.object
-        [ "event"  .= T.pack "UserStatusUpdate"
+    object
+        [ "event"  .= Text.pack "UserStatusUpdate"
         , "player" .= player
         ]
   toJSON (SyncTableState table) =
-    AT.object
-        [ "event" .= T.pack "SyncTableState"
+    object
+        [ "event" .= Text.pack "SyncTableState"
         , "table" .= table
         ]
   toJSON (GameStarted dealer players games) =
-    AT.object
-        [ "event" .= T.pack "GameStarted"
+    object
+        [ "event" .= Text.pack "GameStarted"
         , "game"  .= snapshot dealer players games
         ]
   toJSON (VoteAccepted player) =
-    AT.object
-        [ "event"  .= T.pack "VoteAccepted"
+    object
+        [ "event"  .= Text.pack "VoteAccepted"
         , "player" .= player
         ]
   toJSON (VotingEnded dealer players games) =
-    AT.object
-        [ "event" .= T.pack "VotingEnded"
+    object
+        [ "event" .= Text.pack "VotingEnded"
         , "game"  .= snapshot dealer players games
         ]
   toJSON (GameEnded dealer players games) =
-    AT.object
-        [ "event" .= T.pack "GameEnded"
+    object
+        [ "event" .= Text.pack "GameEnded"
         , "game"  .= snapshot dealer players games
         ]
 
 
 encodeEvent :: Event -> ByteString
-encodeEvent = LB.toStrict . Aeson.encode
+encodeEvent =
+  LazyByteString.toStrict . Aeson.encode

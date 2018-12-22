@@ -16,8 +16,8 @@ module AgilePoker.Data.Session
 
 import           Data.Aeson.Types   (ToJSON (..), object, (.=))
 import           Data.Set           (Set)
-import qualified Data.Set           as Set
 
+import qualified Data.Set           as Set
 
 import           AgilePoker.Data.Id (Id, generateId)
 

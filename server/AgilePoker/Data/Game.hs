@@ -21,11 +21,14 @@ module AgilePoker.Data.Game
   ) where
 
 import           Control.Monad           (mzero)
-import           Data.Aeson.Types        (FromJSON (..), ToJSON (..), (.=))
-import qualified Data.Aeson.Types        as AT
-import qualified Data.Map.Strict         as Map
+import           Data.Aeson.Types        (FromJSON (..), ToJSON (..),
+                                          Value (..), (.=))
+import           Data.Map.Strict         (Map)
 import           Data.Maybe              (mapMaybe)
-import qualified Data.Text               as T
+import           Data.Text               (Text)
+
+import qualified Data.Map.Strict         as Map
+import qualified Data.Text               as Text
 
 import           AgilePoker.Data.Id
 import           AgilePoker.Data.Player
@@ -60,7 +63,7 @@ instance Show Vote where
 
 instance ToJSON Vote where
   -- @TODO: some perf penalty for translating [ Char ] to Text
-  toJSON = toJSON . T.pack . show
+  toJSON = toJSON . Text.pack . show
 
 
 voteToInt :: Vote -> Int
@@ -77,7 +80,7 @@ voteToInt InfinityPoints  = 0
 
 
 instance FromJSON Vote where
-  parseJSON (AT.String str) =
+  parseJSON (String str) =
     case str of
       "1"        -> pure OnePoint
       "2"        -> pure TwoPoints
@@ -95,13 +98,13 @@ instance FromJSON Vote where
 
 -- @TODO: named members
 data RunningGame =
-  RunningGame T.Text (Map.Map (Id SessionId) Vote) Bool
+  RunningGame Text (Map (Id SessionId) Vote) Bool
 
 
 data FinishedGame =
-  FinishedGame { gameVotes   :: Map.Map (Id SessionId) Vote
+  FinishedGame { gameVotes   :: Map (Id SessionId) Vote
                , winningVote :: Vote
-               , gameName    :: T.Text
+               , gameName    :: Text
                }
 
 
@@ -117,7 +120,7 @@ data GameError
   | VotingEndedErr
 
 
-newGame :: T.Text -> RunningGame
+newGame :: Text -> RunningGame
 newGame name =
   RunningGame name Map.empty False
 
@@ -130,7 +133,7 @@ finishGame vote (RunningGame name votes _) =
                }
 
 
-startGame :: T.Text -> Games
+startGame :: Text -> Games
 startGame name =
   RunningGames [] $ newGame name
 
@@ -144,12 +147,12 @@ addVote sId vote (RunningGames past (RunningGame name votes isLocked)) =
     Right $ RunningGames past $ RunningGame name updatedVotes False
 
   where
-    updatedVotes :: Map.Map (Id SessionId) Vote
+    updatedVotes :: Map (Id SessionId) Vote
     updatedVotes =
       Map.insert sId vote votes
 
 
-nextRound :: Vote -> T.Text -> Games -> Either GameError Games
+nextRound :: Vote -> Text -> Games -> Either GameError Games
 nextRound _ _ (FinishedGames _)                    = Left GameFinished
 nextRound vote newName (RunningGames past current) =
   Right $ RunningGames (finishGame vote current : past) $ newGame newName
@@ -183,17 +186,17 @@ sumGamePoints games =
   sum $ (voteToInt . winningVote) <$> finishedGames games
 
 
-gamesVotes :: Games -> [ ( T.Text, Vote ) ]
+gamesVotes :: Games -> [ ( Text, Vote ) ]
 gamesVotes games =
   reverse $ (\g -> ( gameName g, winningVote g )) <$> finishedGames games
 
 
-gamesPlayerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( T.Text, [ ( T.Text, Vote ) ] ) ]
+gamesPlayerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, [ ( Text, Vote ) ] ) ]
 gamesPlayerVotes ( bankerId, bankerName ) players' games =
   reverse $ (\g -> ( gameName g, playerVotes g )) <$> finishedGames games
 
   where
-    playerVotes :: FinishedGame -> [ ( T.Text, Vote ) ]
+    playerVotes :: FinishedGame -> [ ( Text, Vote ) ]
     playerVotes game =
       -- @TODO: Better errr handling
       fmap (\(sId, vote) -> (maybe "" playerName $ Map.lookup sId players, vote)) $ Map.toList $ gameVotes game
@@ -204,7 +207,7 @@ gamesPlayerVotes ( bankerId, bankerName ) players' games =
 
 
 -- @TODO: unify API with gamesPlayerVotes?
-playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( T.Text, Vote ) ]
+playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, Vote ) ]
 playersVotes _ _ (FinishedGames _) = []
 playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
   mapMaybe (\(id, vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id allPlayers)

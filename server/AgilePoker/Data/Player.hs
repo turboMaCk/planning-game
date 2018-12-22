@@ -16,13 +16,13 @@ module AgilePoker.Data.Player
   , playerNumberOfConnections
   ) where
 
-import           Data.Aeson.Types        (ToJSON (..), (.=))
-import qualified Data.Aeson.Types        as AT
-import qualified Data.IntMap             as IntMap
+import           Data.Aeson.Types        (ToJSON (..), object, (.=))
 import           Data.IntMap.Strict      (IntMap)
-import qualified Data.Map                as Map
 import           Data.Map.Strict         (Map)
-import qualified Data.Text               as T
+import           Data.Text               (Text)
+
+import qualified Data.IntMap             as IntMap
+import qualified Data.Map                as Map
 import qualified Network.WebSockets      as WS
 
 import           AgilePoker.Data.Id      (Id)
@@ -30,7 +30,7 @@ import           AgilePoker.Data.Session
 
 
 data Player = Player
-  { playerName        :: T.Text
+  { playerName        :: Text
   , playerConnections :: IntMap WS.Connection
   }
 
@@ -41,7 +41,7 @@ instance Show Player where
 
 instance ToJSON Player where
   toJSON player@(Player { playerName=name }) =
-    AT.object
+    object
         [ "name" .= name
         , "connected" .= hasConnection player
         ]
@@ -50,16 +50,16 @@ instance ToJSON Player where
 type Players = Map (Id SessionId) Player
 
 
-createPlayer :: T.Text -> Player
+createPlayer :: Text -> Player
 createPlayer n = Player n IntMap.empty
 
 
-nameTaken :: T.Text -> Players -> Bool
+nameTaken :: Text -> Players -> Bool
 nameTaken name sessions = not $ Map.null $
   Map.filter ((==) name . playerName) sessions
 
 
-addPlayer :: Session -> T.Text -> Players -> Maybe ( Players, Player )
+addPlayer :: Session -> Text -> Players -> Maybe ( Players, Player )
 addPlayer id' name players =
   if nameTaken name players then
     Nothing

@@ -5,22 +5,22 @@ module AgilePoker.Data.Table.Msg (Msg(..)) where
 
 import           Control.Monad        (mzero)
 import           Data.Aeson.Types     (FromJSON (..), (.:))
-import qualified Data.Aeson.Types     as AT
-import qualified Data.Text            as T
+import           Data.Aeson.Types     (Value (..))
+import           Data.Text            (Text)
 
-import           AgilePoker.Data.Game
+import           AgilePoker.Data.Game (Games (..), Vote)
 
 
 data Msg
-  = NewGame T.Text
+  = NewGame Text
   | FinishRound
-  | NextRound Vote T.Text
+  | NextRound Vote Text
   | Vote Vote
   | FinishGame Vote
 
 
 instance FromJSON Msg where
-  parseJSON obj@(AT.Object v) =
+  parseJSON (Object v) =
     (v .: "msg") >>= \(msg :: String) ->
        case msg of
          "NewGame" ->

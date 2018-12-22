@@ -12,8 +12,9 @@ import           Control.Concurrent          (MVar)
 import           Data.Aeson.Types            (ToJSON (..), Value (..), object,
                                               (.=))
 import           Data.ByteString             (ByteString)
+import           Data.Map                    (Map)
+
 import qualified Data.Map.Strict             as Map
-import qualified Data.Text.Encoding          as TE
 
 import           AgilePoker.Api.GameSnapshot (snapshot)
 import           AgilePoker.Data.Game        (GameError (..), Games)
@@ -49,7 +50,7 @@ instance ToJSON Table where
 
 
 type Tables =
-  Map.Map (Id TableId) (MVar Table)
+  Map (Id TableId) (MVar Table)
 
 
 data TableError

@@ -1,25 +1,24 @@
-{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE AllowAmbiguousTypes   #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
 
 module AgilePoker.Data.Id
   ( Id(..)
   , generateId
   ) where
 
-import Data.Maybe (fromMaybe)
-import Data.ByteString (ByteString)
-import Servant (FromHttpApiData(..))
-import Data.Map.Strict (Map)
-import System.Random (randomRs, newStdGen)
-import Data.Text.Encoding (encodeUtf8)
-import Control.Monad (liftM)
-import Data.Aeson.Types (ToJSON(..))
-import qualified Data.Map as Map
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
+import           Control.Monad      (liftM)
+import           Data.Aeson.Types   (ToJSON (..))
+import           Data.ByteString    (ByteString)
+import qualified Data.Map           as Map
+import           Data.Map.Strict    (Map)
 import           Data.Set           (Set)
 import qualified Data.Set           as Set
+import qualified Data.Text          as Text
+import           Data.Text.Encoding (encodeUtf8)
+import qualified Data.Text.Encoding as TextEncoding
+import           Servant            (FromHttpApiData (..))
+import           System.Random      (newStdGen, randomRs)
 
 
 {-- This is implementation of Id as a so called phantom type
@@ -41,11 +40,11 @@ instance Ord (Id a) where
 
 
 instance FromHttpApiData (Id a) where
-  parseUrlPiece bs = Right . Id $ TE.encodeUtf8 bs
+  parseUrlPiece bs = Right . Id $ TextEncoding.encodeUtf8 bs
 
 
 instance ToJSON (Id a) where
-  toJSON = toJSON . TE.decodeUtf8 . unId
+  toJSON = toJSON . TextEncoding.decodeUtf8 . unId
 
 
 randString :: IO String
@@ -67,7 +66,7 @@ instance Lookupable (Map (Id id) a) id where
 
 generateId :: Lookupable a id => a -> IO (Id id)
 generateId m = do
-  newId <- Id . encodeUtf8 . T.pack <$> randString
+  newId <- Id . encodeUtf8 . Text.pack <$> randString
   if member newId m then
     generateId m
   else
