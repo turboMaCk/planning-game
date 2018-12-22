@@ -188,8 +188,8 @@ gamesVotes games =
   reverse $ (\g -> ( gameName g, winningVote g )) <$> finishedGames games
 
 
-gamesPlayerVotes :: Players -> Games -> [ ( T.Text, [ ( T.Text, Vote ) ] ) ]
-gamesPlayerVotes players games =
+gamesPlayerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( T.Text, [ ( T.Text, Vote ) ] ) ]
+gamesPlayerVotes ( bankerId, bankerName ) players' games =
   reverse $ (\g -> ( gameName g, playerVotes g )) <$> finishedGames games
 
   where
@@ -197,6 +197,9 @@ gamesPlayerVotes players games =
     playerVotes game =
       -- @TODO: Better errr handling
       fmap (\(sId, vote) -> (maybe "" playerName $ Map.lookup sId players, vote)) $ Map.toList $ gameVotes game
+
+    players =
+      Map.insert bankerId bankerName players'
 
 
 

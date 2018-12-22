@@ -281,8 +281,8 @@ viewVoting model =
         ]
 
 
-viewUserVotes : Dict String Vote -> Html Msg
-viewUserVotes dict =
+viewPlayerVotes : Dict String Vote -> Html Msg
+viewPlayerVotes dict =
     let
         voteSet =
             Dict.values dict
@@ -362,12 +362,12 @@ viewGame model =
                 Voting _ ->
                     viewVoting model
 
-                RoundFinished { userVotes } ->
+                RoundFinished { playerVotes } ->
                     if amIBanker model && model.myVote /= Nothing then
                         setNameView model
 
                     else
-                        viewUserVotes userVotes
+                        viewPlayerVotes playerVotes
 
                 Overview { results } ->
                     Html.table [] <|
@@ -490,8 +490,8 @@ view model =
                     else
                         Hidden
 
-                RoundFinished { userVotes } ->
-                    Dict.get player.name userVotes
+                RoundFinished { playerVotes } ->
+                    Dict.get player.name playerVotes
                         |> Maybe.unwrap Unknown Voted
 
                 Overview _ ->

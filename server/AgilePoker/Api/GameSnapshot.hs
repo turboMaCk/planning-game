@@ -49,21 +49,21 @@ pointsPair = fmap toVal
 instance ToJSON GameSnapshot where
   toJSON (RunningGameSnapshot name votes points) =
     object
-      [ "name" .= name
+      [ "name"        .= name
       , "maskedVotes" .= votes
-      , "points" .= points
-      , "status" .= String "Running"
+      , "points"      .= points
+      , "status"      .= String "Running"
       ]
   toJSON (LockedGameSnapshot name votes points) =
     object
-      [ "name" .= name
+      [ "name"        .= name
       , "playerVotes" .= pointsPair votes
-      , "points" .= points
-      , "status" .= String "Locked"
+      , "points"      .= points
+      , "status"      .= String "Locked"
       ]
   toJSON (FinishedGameSnapshot points votes playerVotes) =
     object
-      [ "roundVotes" .= pointsPair votes
+      [ "roundVotes"  .= pointsPair votes
       , "playerVotes" .=
         fmap
           (\(task, xs) ->
@@ -76,10 +76,10 @@ instance ToJSON GameSnapshot where
 
 -- @TODO: might need banker as well
 snapshot :: ( Id SessionId, Player ) -> Players -> Games -> GameSnapshot
-snapshot _ players games@(FinishedGames _) =
+snapshot banker players games@(FinishedGames _) =
   FinishedGameSnapshot { totalPoints       = sumGamePoints games
                        , snapshotGameVotes = gamesVotes games
-                       , playerGameVotes   = gamesPlayerVotes players games
+                       , playerGameVotes   = gamesPlayerVotes banker players games
                        }
 snapshot banker players games@(RunningGames _ (RunningGame name votes isLocked)) =
   if isLocked then
