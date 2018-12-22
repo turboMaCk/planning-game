@@ -39,7 +39,7 @@ import           AgilePoker.Data.Table.Type
 
 
 createTable :: Session -> T.Text -> Tables -> IO ( Tables, Table )
-createTable Session { sessionId=id' } name tables = do
+createTable id' name tables = do
   tId <- generateId tables
   let banker = createPlayer name
   let newTable = Table tId ( id', banker ) emptyPlayers Nothing
@@ -51,7 +51,7 @@ createTable Session { sessionId=id' } name tables = do
 
 -- @TODO: Add check if session is not already present
 joinTable :: Session -> Id TableId -> T.Text -> Tables -> IO ( Either TableError Table )
-joinTable session@Session { sessionId=id' } tableId name tables =
+joinTable session tableId name tables =
   case Map.lookup tableId tables of
     Just mvar -> do
       table <- Concurrent.readMVar mvar
@@ -84,7 +84,7 @@ joinTable session@Session { sessionId=id' } tableId name tables =
 
 
 getTablePlayer :: Session -> Id TableId -> Tables -> IO (Either TableError Player)
-getTablePlayer Session { sessionId=sId } tableId tables =
+getTablePlayer session tableId tables =
   fromMaybe (pure $ Left TableNotFound) $ getPlayer' <$>
     Map.lookup tableId tables
 
@@ -93,11 +93,11 @@ getTablePlayer Session { sessionId=sId } tableId tables =
     getPlayer' mvar = do
       table <- Concurrent.readMVar mvar
 
-      if fst (tableBanker table) == sId then
+      if fst (tableBanker table) == session then
           pure $ Right $ snd (tableBanker table)
       else
           pure $ maybe (Left PlayerNotFound) Right $
-            Map.lookup sId $ tablePlayers table
+            Map.lookup session $ tablePlayers table
 
 
 allConnections :: Table -> [ WS.Connection ]
@@ -168,7 +168,7 @@ disconnect state sessionId connId =
 
 
 tableStreamHandler :: MVar Tables -> Session -> Id TableId -> WS.Connection -> IO ()
-tableStreamHandler state session@Session { sessionId=sId } id' conn = do
+tableStreamHandler state session id' conn = do
   tables <- Concurrent.readMVar state
   let mTable = Map.lookup id' tables
 
@@ -176,7 +176,7 @@ tableStreamHandler state session@Session { sessionId=sId } id' conn = do
     Just tableState -> do
 
         -- 1. Assign connection to player
-        mConnId <- Concurrent.modifyMVar tableState $ pure . assignConnection sId conn
+        mConnId <- Concurrent.modifyMVar tableState $ pure . assignConnection session conn
 
         -- 2. Sync sate to new player
         table <- Concurrent.readMVar tableState
@@ -187,7 +187,7 @@ tableStreamHandler state session@Session { sessionId=sId } id' conn = do
             Just ( player, connId ) ->
 
                 -- 3.1 Remove connection on disconnection
-                flip finally (disconnect tableState sId connId) $ do
+                flip finally (disconnect tableState session connId) $ do
 
                     -- 3.2 Ping Thread
                     WS.forkPingThread conn 30
@@ -219,8 +219,8 @@ broadcast table event = do
 
 
 isBanker :: Session -> Table -> Bool
-isBanker Session { sessionId=id } Table { tableBanker=pair } =
-  id == fst pair
+isBanker session Table { tableBanker=pair } =
+  session == fst pair
 
 
 -- MSG and Event handling
@@ -274,11 +274,9 @@ handleMsg conn session (NextRound vote name) table
 handleMsg conn session (Vote vote) table =
   case tableGame table of
     Just game ->
-      let sId = sessionId session
-      in
-      case addVote sId vote game of
+      case addVote session vote game of
         Right newGames -> do
-          maybe (pure ()) (broadcast table . VoteAccepted) $ getPlayer sId $ allTablePlayers table
+          maybe (pure ()) (broadcast table . VoteAccepted) $ getPlayer session $ allTablePlayers table
 
           -- Auto end game when all voted
           if allVoted (allTablePlayers table) newGames then do

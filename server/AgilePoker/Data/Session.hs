@@ -1,69 +1,70 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module AgilePoker.Data.Session
   ( Session(..)
   , SessionId
   , Sessions
   , SessionError(..)
+  , SessionJSON(..)
   , emptySessions
   , addSession
   , getSession
   , removeSession
   ) where
 
-import           Data.Aeson.Types   (ToJSON (..), (.=))
-import qualified Data.Aeson.Types   as AT
-import           Data.ByteString    (ByteString)
-import qualified Data.IntMap        as IntMap
-import           Data.IntMap.Strict (IntMap)
-import qualified Data.Map           as Map
-import           Data.Map.Strict    (Map)
-import qualified Data.Text          as T
-import qualified Data.Text.Encoding as TE
+import           Data.Aeson.Types   (ToJSON (..), object, (.=))
+import           Data.Set           (Set)
+import qualified Data.Set           as Set
 
 
 import           AgilePoker.Data.Id (Id, generateId)
 
 
-data Session = Session
-  { sessionId :: Id SessionId
-  }
-
-
-instance ToJSON Session where
-  toJSON (Session { sessionId=id }) =
-    AT.object
-        [ "id" .= id
-        ]
-
-
 data SessionId
 
 
+type Session =
+  Id SessionId
+
+
 type Sessions =
-  Map (Id SessionId) Session
+  Set (Id SessionId)
 
 
 data SessionError
   = SessionDoesNotExist
 
 
-addSession :: Sessions -> IO ( Sessions, ( Id SessionId, Session ) )
+newtype SessionJSON =
+  SessionJSON { unSessionJSON :: Session }
+
+
+instance ToJSON SessionJSON where
+  toJSON id =
+    object
+        [ "id" .= unSessionJSON id
+        ]
+
+
+addSession :: Sessions -> IO ( Sessions, Id SessionId )
 addSession sessions = do
     newId <- generateId sessions
-    let newSession = Session newId
-    pure $ ( Map.insert newId newSession sessions
-           , ( newId, newSession )
-           )
-
-
-getSession :: Id SessionId -> Sessions -> Maybe Session
-getSession = Map.lookup
+    pure $ ( Set.insert newId sessions, newId )
 
 
 emptySessions :: Sessions
-emptySessions = Map.empty
+emptySessions = Set.empty
 
 
 removeSession :: Id SessionId -> Sessions -> Sessions
-removeSession = Map.delete
+removeSession = Set.delete
+
+
+getSession :: Session -> Sessions -> Maybe Session
+getSession session sessions =
+  if Set.member session sessions then
+    Just session
+  else
+    Nothing

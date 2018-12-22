@@ -1,5 +1,13 @@
-module AgilePoker.Data.Id (Id(..), generateId) where
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
+module AgilePoker.Data.Id
+  ( Id(..)
+  , generateId
+  ) where
+
+import Data.Maybe (fromMaybe)
 import Data.ByteString (ByteString)
 import Servant (FromHttpApiData(..))
 import Data.Map.Strict (Map)
@@ -10,9 +18,12 @@ import Data.Aeson.Types (ToJSON(..))
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+import           Data.Set           (Set)
+import qualified Data.Set           as Set
 
 
--- This is implementation of Id as a so called phantom type
+{-- This is implementation of Id as a so called phantom type
+--}
 newtype Id a =
   Id { unId :: ByteString }
 
@@ -42,10 +53,22 @@ randString =
     liftM (take 32 . randomRs ('a','z')) newStdGen
 
 
-generateId :: Map (Id id) a -> IO (Id id)
+class Lookupable a id where
+  member :: Id id -> a -> Bool
+
+
+instance Lookupable (Set (Id a)) a where
+  member = Set.member
+
+
+instance Lookupable (Map (Id id) a) id where
+  member = Map.member
+
+
+generateId :: Lookupable a id => a -> IO (Id id)
 generateId m = do
   newId <- Id . encodeUtf8 . T.pack <$> randString
-  if Map.member newId m then
+  if member newId m then
     generateId m
   else
     pure newId

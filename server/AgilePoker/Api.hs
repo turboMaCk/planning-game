@@ -46,9 +46,9 @@ initState = ServerState
 
 
 type Api = "status"                                :> Get  '[JSON] T.Text
-      :<|> "session"                               :> Post '[JSON] Session
-      :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] Session
-      :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
+      :<|> "session"                               :> Post '[JSON] SessionJSON
+      :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] SessionJSON
+      :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] UserInfo        :> Post '[JSON] Table
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "join"
                      :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "me"
@@ -81,12 +81,14 @@ server state = status
     status :: Handler T.Text
     status = pure "OK"
 
-    createSession :: Handler Session
-    createSession = pure . snd =<<
-      (liftIO $ Concurrent.modifyMVar (sessions state) addSession)
+    createSession :: Handler SessionJSON
+    createSession =
+      pure . SessionJSON =<<
+        (liftIO $ Concurrent.modifyMVar (sessions state) addSession)
 
-    getSession :: (HeaderAuth Session) -> Handler Session
-    getSession = pure . unHeaderAuth
+    getSession :: (HeaderAuth Session) -> Handler SessionJSON
+    getSession =
+      pure . SessionJSON . unHeaderAuth
 
     createTableHandler :: (HeaderAuth Session) -> UserInfo -> Handler Table
     createTableHandler (HeaderAuth session) UserInfo { userName=name } =
@@ -108,7 +110,7 @@ server state = status
       either respondError pure playerRes
 
     streamTableHandler :: MonadIO m => (CookieAuth Session) -> Id TableId -> WS.Connection -> m ()
-    streamTableHandler (CookieAuth session) id' conn = do
+    streamTableHandler (CookieAuth session) id' conn =
       liftIO $ tableStreamHandler (tables state) session id' conn
 
 

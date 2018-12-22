@@ -60,7 +60,7 @@ nameTaken name sessions = not $ Map.null $
 
 
 addPlayer :: Session -> T.Text -> Players -> Maybe ( Players, Player )
-addPlayer Session { sessionId=id' } name players =
+addPlayer id' name players =
   if nameTaken name players then
     Nothing
   else
