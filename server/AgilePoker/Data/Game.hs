@@ -1,22 +1,34 @@
-{-# LANGUAGE OverloadedStrings      #-}
-{-# LANGUAGE FlexibleInstances      #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module AgilePoker.Data.Game
-  (Vote(..), GameError(..), RunningGame(..), FinishedGame, Games(..)
-  , startGame, addVote, nextRound, completeGame, sumGamePoints
-  , gamesVotes, playersVotes, isFinished, finishCurrentGame, allVoted
+  ( Vote(..)
+  , GameError(..)
+  , RunningGame(..)
+  , FinishedGame
+  , Games(..)
+  , startGame
+  , addVote
+  , nextRound
+  , completeGame
+  , sumGamePoints
+  , gamesVotes
+  , playersVotes
+  , isFinished
+  , finishCurrentGame
+  , allVoted
   ) where
 
-import Data.Maybe (mapMaybe)
-import Control.Monad (mzero)
-import Data.Aeson.Types (ToJSON(..), FromJSON(..), (.=))
-import qualified Data.Aeson.Types as AT
-import qualified Data.Map.Strict as Map
-import qualified Data.Text as T
+import           Control.Monad           (mzero)
+import           Data.Aeson.Types        (FromJSON (..), ToJSON (..), (.=))
+import qualified Data.Aeson.Types        as AT
+import qualified Data.Map.Strict         as Map
+import           Data.Maybe              (mapMaybe)
+import qualified Data.Text               as T
 
-import AgilePoker.Data.Session
-import AgilePoker.Data.Player
-import AgilePoker.Data.Id
+import           AgilePoker.Data.Id
+import           AgilePoker.Data.Player
+import           AgilePoker.Data.Session
 
 
 data Vote
@@ -156,13 +168,13 @@ finishCurrentGame (RunningGames past (RunningGame name votes _)) =
 
 
 isFinished :: Games -> Bool
-isFinished (FinishedGames _) = True
+isFinished (FinishedGames _)                       = True
 isFinished (RunningGames _ (RunningGame _ _ bool)) = bool
 
 
 finishedGames :: Games -> [ FinishedGame ]
 finishedGames (RunningGames finished _) = finished
-finishedGames (FinishedGames finished) = finished
+finishedGames (FinishedGames finished)  = finished
 
 
 sumGamePoints :: Games -> Int

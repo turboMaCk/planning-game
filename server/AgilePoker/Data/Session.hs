@@ -1,22 +1,28 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module AgilePoker.Data.Session
-  ( Session(..), SessionId, Sessions, SessionError(..)
-  , emptySessions, addSession, getSession, removeSession
+  ( Session(..)
+  , SessionId
+  , Sessions
+  , SessionError(..)
+  , emptySessions
+  , addSession
+  , getSession
+  , removeSession
   ) where
 
-import Data.ByteString (ByteString)
-import Data.IntMap.Strict (IntMap)
-import Data.Map.Strict (Map)
-import Data.Aeson.Types (ToJSON(..), (.=))
-import qualified Data.Map as Map
-import qualified Data.IntMap as IntMap
-import qualified Data.Text as T
+import           Data.Aeson.Types   (ToJSON (..), (.=))
+import qualified Data.Aeson.Types   as AT
+import           Data.ByteString    (ByteString)
+import qualified Data.IntMap        as IntMap
+import           Data.IntMap.Strict (IntMap)
+import qualified Data.Map           as Map
+import           Data.Map.Strict    (Map)
+import qualified Data.Text          as T
 import qualified Data.Text.Encoding as TE
-import qualified Data.Aeson.Types as AT
 
 
-import AgilePoker.Data.Id (Id, generateId)
+import           AgilePoker.Data.Id (Id, generateId)
 
 
 data Session = Session

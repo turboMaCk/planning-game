@@ -1,32 +1,38 @@
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module AgilePoker.Data.Table
-  (Table(..), Tables, TableId, Event, TableError(..)
-  , emptyTables, createTable, joinTable
+  ( Table(..)
+  , Tables
+  , TableId
+  , Event
+  , TableError(..)
+  , emptyTables
+  , createTable
+  , joinTable
   , getTablePlayer
   , tableStreamHandler
   ) where
 
-import Data.Maybe (fromMaybe, isNothing, isJust)
-import Control.Monad (forM_, forever, mzero)
-import Control.Concurrent (MVar)
-import Control.Exception (finally)
-import Data.ByteString.Lazy (ByteString)
-import qualified Data.Map.Strict as Map
-import qualified Data.Text as T
-import qualified Network.WebSockets as WS
-import qualified Control.Concurrent as Concurrent
-import qualified Data.Aeson as Aeson
+import           Control.Concurrent          (MVar)
+import qualified Control.Concurrent          as Concurrent
+import           Control.Exception           (finally)
+import           Control.Monad               (forM_, forever, mzero)
+import qualified Data.Aeson                  as Aeson
+import           Data.ByteString.Lazy        (ByteString)
+import qualified Data.Map.Strict             as Map
+import           Data.Maybe                  (fromMaybe, isJust, isNothing)
+import qualified Data.Text                   as T
+import qualified Network.WebSockets          as WS
 
-import AgilePoker.Data.Id (Id, generateId)
-import AgilePoker.Data.Session
-import AgilePoker.Data.Player
-import AgilePoker.Data.Game
-import AgilePoker.Data.Table.Msg
+import           AgilePoker.Data.Game
+import           AgilePoker.Data.Id          (Id, generateId)
+import           AgilePoker.Data.Player
+import           AgilePoker.Data.Session
+import           AgilePoker.Data.Table.Msg
 
-import AgilePoker.Data.Table.Event
-import AgilePoker.Data.Table.Type
+import           AgilePoker.Data.Table.Event
+import           AgilePoker.Data.Table.Type
 
 
 -- Basic Operations

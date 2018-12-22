@@ -1,31 +1,35 @@
-{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module AgilePoker.Data.Table.Type
-  (TableId, Table(..), Tables, TableError(..)
+  ( TableId
+  , Table(..)
+  , Tables
+  , TableError(..)
   , emptyTables
   ) where
 
-import Data.Aeson.Types (ToJSON(..), (.=), object, Value(..))
-import Data.ByteString (ByteString)
-import Control.Concurrent (MVar)
-import qualified Data.Map.Strict as Map
-import qualified Data.Text.Encoding as TE
+import           Control.Concurrent          (MVar)
+import           Data.Aeson.Types            (ToJSON (..), Value (..), object,
+                                              (.=))
+import           Data.ByteString             (ByteString)
+import qualified Data.Map.Strict             as Map
+import qualified Data.Text.Encoding          as TE
 
-import AgilePoker.Data.Id (Id)
-import AgilePoker.Data.Player (Player, Players)
-import AgilePoker.Data.Session (SessionId)
-import AgilePoker.Data.Game (Games, GameError(..))
-import AgilePoker.Api.GameSnapshot (snapshot)
+import           AgilePoker.Api.GameSnapshot (snapshot)
+import           AgilePoker.Data.Game        (GameError (..), Games)
+import           AgilePoker.Data.Id          (Id)
+import           AgilePoker.Data.Player      (Player, Players)
+import           AgilePoker.Data.Session     (SessionId)
 
 
 data TableId
 
 
 data Table = Table
-  { tableId :: Id TableId
-  , tableBanker :: ( Id SessionId, Player )
+  { tableId      :: Id TableId
+  , tableBanker  :: ( Id SessionId, Player )
   , tablePlayers :: Players
-  , tableGame :: Maybe Games
+  , tableGame    :: Maybe Games
   }
 
 

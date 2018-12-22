@@ -1,30 +1,30 @@
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module AgilePoker.Api (ServerState, initState, app) where
 
-import Servant
-import Data.Maybe (maybe)
-import Data.ByteString (ByteString)
-import Control.Concurrent (MVar)
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import Network.Wai (Response)
-import Servant.API.WebSocket (WebSocket)
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
-import qualified Data.Text.Encoding as TE
-import qualified Network.WebSockets as WS
-import qualified Control.Concurrent as Concurrent
+import           Control.Concurrent           (MVar)
+import qualified Control.Concurrent           as Concurrent
+import           Control.Monad.IO.Class       (MonadIO, liftIO)
+import           Data.ByteString              (ByteString)
+import           Data.Maybe                   (maybe)
+import qualified Data.Text                    as T
+import qualified Data.Text.Encoding           as TE
+import qualified Data.Text.IO                 as T
+import           Network.Wai                  (Response)
+import qualified Network.WebSockets           as WS
+import           Servant
+import           Servant.API.WebSocket        (WebSocket)
 
-import AgilePoker.Api.Authorization
-import AgilePoker.Api.UserInfo
-import AgilePoker.Api.Error
-import AgilePoker.Api.Middleware
+import           AgilePoker.Api.Authorization
+import           AgilePoker.Api.Error
+import           AgilePoker.Api.Middleware
+import           AgilePoker.Api.UserInfo
 
-import AgilePoker.Data
+import           AgilePoker.Data
 
 
 -- State
@@ -32,7 +32,7 @@ import AgilePoker.Data
 
 data ServerState = ServerState
   { sessions :: MVar Sessions
-  , tables :: MVar Tables
+  , tables   :: MVar Tables
   }
 
 

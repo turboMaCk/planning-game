@@ -1,28 +1,36 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module AgilePoker.Data.Player
-  ( Player(..), Players, createPlayer
-  , addPlayer, addPlayerConnection, disconnectPlayer
-  , getPlayer, emptyPlayers, allPlayerConnections
-  , addConnectionToPlayer, removeConnectionFromPlayer
-  , hasConnection, playerNumberOfConnections
+  ( Player(..)
+  , Players
+  , createPlayer
+  , addPlayer
+  , addPlayerConnection
+  , disconnectPlayer
+  , getPlayer
+  , emptyPlayers
+  , allPlayerConnections
+  , addConnectionToPlayer
+  , removeConnectionFromPlayer
+  , hasConnection
+  , playerNumberOfConnections
   ) where
 
-import Data.IntMap.Strict (IntMap)
-import Data.Map.Strict (Map)
-import Data.Aeson.Types (ToJSON(..), (.=))
-import qualified Data.Text as T
-import qualified Network.WebSockets as WS
-import qualified Data.Map as Map
-import qualified Data.IntMap as IntMap
-import qualified Data.Aeson.Types as AT
+import           Data.Aeson.Types        (ToJSON (..), (.=))
+import qualified Data.Aeson.Types        as AT
+import qualified Data.IntMap             as IntMap
+import           Data.IntMap.Strict      (IntMap)
+import qualified Data.Map                as Map
+import           Data.Map.Strict         (Map)
+import qualified Data.Text               as T
+import qualified Network.WebSockets      as WS
 
-import AgilePoker.Data.Id (Id)
-import AgilePoker.Data.Session
+import           AgilePoker.Data.Id      (Id)
+import           AgilePoker.Data.Session
 
 
 data Player = Player
-  { playerName :: T.Text
+  { playerName        :: T.Text
   , playerConnections :: IntMap WS.Connection
   }
 

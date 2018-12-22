@@ -1,11 +1,11 @@
-{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module AgilePoker.Api.UserInfo (UserInfo(..)) where
 
-import Control.Monad (mzero)
-import Data.Aeson (FromJSON(..), (.:))
-import qualified Data.Text as T
+import           Control.Monad    (mzero)
+import           Data.Aeson       (FromJSON (..), (.:))
 import qualified Data.Aeson.Types as AT
+import qualified Data.Text        as T
 
 
 data UserInfo = UserInfo

@@ -1,27 +1,35 @@
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 module AgilePoker.Api.Authorization
-  ( HeaderAuth(..), CookieAuth(..), SessionHeaderAuth, SessionCookieAuth
-  , authHeaderHandler, authCookieHandler
+  ( HeaderAuth(..)
+  , CookieAuth(..)
+  , SessionHeaderAuth
+  , SessionCookieAuth
+  , authHeaderHandler
+  , authCookieHandler
   ) where
 
-import Servant (Handler, AuthProtect, errBody, throwError, err401, err403)
-import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
-import Control.Concurrent (MVar)
-import Control.Monad.IO.Class (liftIO)
-import Data.ByteString (ByteString, stripPrefix)
-import qualified Data.ByteString.Lazy as LB
-import Network.Wai (Request, requestHeaders)
-import Web.Cookie (parseCookies)
-import qualified Control.Concurrent as Concurrent
+import           Control.Concurrent                (MVar)
+import qualified Control.Concurrent                as Concurrent
+import           Control.Monad.IO.Class            (liftIO)
+import           Data.ByteString                   (ByteString, stripPrefix)
+import qualified Data.ByteString.Lazy              as LB
+import           Network.Wai                       (Request, requestHeaders)
+import           Servant                           (AuthProtect, Handler,
+                                                    err401, err403, errBody,
+                                                    throwError)
+import           Servant.Server.Experimental.Auth  (AuthHandler, AuthServerData,
+                                                    mkAuthHandler)
+import           Web.Cookie                        (parseCookies)
 
-import AgilePoker.Data.Id (Id(..))
-import AgilePoker.Data.Session (SessionId, Session, Sessions, getSession)
-import AgilePoker.Api.Authorization.Type (AuthorizationError(..))
-import AgilePoker.Api.Error (respondError)
+import           AgilePoker.Api.Authorization.Type (AuthorizationError (..))
+import           AgilePoker.Api.Error              (respondError)
+import           AgilePoker.Data.Id                (Id (..))
+import           AgilePoker.Data.Session           (Session, SessionId,
+                                                    Sessions, getSession)
 
 
 lookupSession :: MVar Sessions -> Id SessionId -> Handler Session

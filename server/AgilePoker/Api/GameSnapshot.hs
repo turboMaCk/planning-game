@@ -1,28 +1,31 @@
-{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Api.GameSnapshot where
+module AgilePoker.Api.GameSnapshot
+  ( snapshot
+  ) where
 
-import Data.Aeson.Types (ToJSON(..), Value(..), (.=), object)
-import qualified Data.Map as Map
-import qualified Data.Text as T
+import           Data.Aeson.Types        (ToJSON (..), Value (..), object, (.=))
+import qualified Data.Map                as Map
+import qualified Data.Text               as T
 
-import AgilePoker.Data.Id (Id)
-import AgilePoker.Data.Session (SessionId)
-import AgilePoker.Data.Game
-import AgilePoker.Data.Player
+import           AgilePoker.Data.Game
+import           AgilePoker.Data.Id      (Id)
+import           AgilePoker.Data.Player
+import           AgilePoker.Data.Session (SessionId)
 
 
 data GameSnapshot
-  = RunningGameSnapshot  { snapshotName         :: T.Text
-                         , snapshotVotes        :: [ T.Text ]
-                         , totalPoints          :: Int
+  = RunningGameSnapshot  { snapshotName  :: T.Text
+                         , snapshotVotes :: [ T.Text ]
+                         , totalPoints   :: Int
                          }
-  | LockedGameSnapshot   { snapshotName         :: T.Text
-                         , userVotes            :: [ ( T.Text, Vote ) ]
-                         , totalPoints          :: Int
+  | LockedGameSnapshot   { snapshotName :: T.Text
+                         , userVotes    :: [ ( T.Text, Vote ) ]
+                         , totalPoints  :: Int
                          }
-  | FinishedGameSnapshot { totalPoints          :: Int
-                         , snapshotGamesVotes   :: [ ( T.Text, Vote ) ]
+  | FinishedGameSnapshot { totalPoints       :: Int
+                         , snapshotGameVotes :: [ ( T.Text, Vote ) ]
+                         , playerGameVotes   :: [ ( T.Text, [ ( T.Text, Vote ) ] ) ]
                          }
 
 
@@ -52,7 +55,7 @@ instance ToJSON GameSnapshot where
       , "points"    .= points
       , "status"    .= String "Locked"
       ]
-  toJSON (FinishedGameSnapshot points votes) =
+  toJSON (FinishedGameSnapshot points votes playerVotes) =
     object
       [ "roundVotes" .= pointsPair votes
       , "points"     .= points
@@ -62,17 +65,18 @@ instance ToJSON GameSnapshot where
 
 snapshot :: ( Id SessionId, Player ) -> Players -> Games -> GameSnapshot
 snapshot _ players games@(FinishedGames finised) =
-  FinishedGameSnapshot { totalPoints          = sumGamePoints games
-                       , snapshotGamesVotes   = gamesVotes games
+  FinishedGameSnapshot { totalPoints       = sumGamePoints games
+                       , snapshotGameVotes = gamesVotes games
+                       , playerGameVotes   = []
                        }
 snapshot banker players games@(RunningGames _ (RunningGame name votes isLocked)) =
   if isLocked then
-    LockedGameSnapshot  { snapshotName   = name
-                        , userVotes      = playersVotes banker players games
-                        , totalPoints    = sumGamePoints games
+    LockedGameSnapshot  { snapshotName = name
+                        , userVotes    = playersVotes banker players games
+                        , totalPoints  = sumGamePoints games
                         }
   else
-    RunningGameSnapshot { snapshotName   = name
-                        , snapshotVotes  = fst <$> playersVotes banker players games
-                        , totalPoints    = sumGamePoints games
+    RunningGameSnapshot { snapshotName  = name
+                        , snapshotVotes = fst <$> playersVotes banker players games
+                        , totalPoints   = sumGamePoints games
                         }

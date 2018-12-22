@@ -5,21 +5,21 @@ module AgilePoker.Data.Table.Event
   , encodeEvent
   ) where
 
-import Data.ByteString (ByteString)
-import Data.Aeson.Types (ToJSON(..), (.=))
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.Text as T
-import qualified Data.IntMap as IntMap
-import qualified Data.Aeson as Aeson
-import qualified Data.Aeson.Types as AT
+import qualified Data.Aeson                  as Aeson
+import           Data.Aeson.Types            (ToJSON (..), (.=))
+import qualified Data.Aeson.Types            as AT
+import           Data.ByteString             (ByteString)
+import qualified Data.ByteString.Lazy        as LB
+import qualified Data.IntMap                 as IntMap
+import qualified Data.Text                   as T
 
-import AgilePoker.Data.Id (Id)
-import AgilePoker.Data.Session (SessionId)
-import AgilePoker.Api.GameSnapshot (snapshot)
-import AgilePoker.Data.Player (Player, Players)
-import AgilePoker.Data.Game (Games)
+import           AgilePoker.Api.GameSnapshot (snapshot)
+import           AgilePoker.Data.Game        (Games)
+import           AgilePoker.Data.Id          (Id)
+import           AgilePoker.Data.Player      (Player, Players)
+import           AgilePoker.Data.Session     (SessionId)
 
-import AgilePoker.Data.Table.Type (Table)
+import           AgilePoker.Data.Table.Type  (Table)
 
 
 data Event

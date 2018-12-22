@@ -1,14 +1,14 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module AgilePoker.Data.Table.Msg where
+module AgilePoker.Data.Table.Msg (Msg(..)) where
 
-import Control.Monad (mzero)
-import Data.Aeson.Types (FromJSON(..), (.:))
-import qualified Data.Text as T
-import qualified Data.Aeson.Types as AT
+import           Control.Monad        (mzero)
+import           Data.Aeson.Types     (FromJSON (..), (.:))
+import qualified Data.Aeson.Types     as AT
+import qualified Data.Text            as T
 
-import AgilePoker.Data.Game
+import           AgilePoker.Data.Game
 
 
 data Msg

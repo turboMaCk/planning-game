@@ -1,12 +1,14 @@
-{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module AgilePoker.Api.Middleware (staticMiddleware) where
 
-import Data.Maybe (fromMaybe)
-import Network.HTTP.Types (status200)
-import Network.Wai (Response, Middleware, responseFile, rawPathInfo, requestHeaders)
-import Network.Wai.Middleware.Static (staticPolicy, addBase)
-import Network.Wai.Parse (parseHttpAccept)
+import           Data.Maybe                    (fromMaybe)
+import           Network.HTTP.Types            (status200)
+import           Network.Wai                   (Middleware, Response,
+                                                rawPathInfo, requestHeaders,
+                                                responseFile)
+import           Network.Wai.Middleware.Static (addBase, staticPolicy)
+import           Network.Wai.Parse             (parseHttpAccept)
 
 
 indexMiddleware :: Middleware
