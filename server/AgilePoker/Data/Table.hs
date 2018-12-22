@@ -15,13 +15,15 @@ module AgilePoker.Data.Table
   ) where
 
 import           Control.Concurrent          (MVar)
-import qualified Control.Concurrent          as Concurrent
 import           Control.Exception           (finally)
 import           Control.Monad               (forM_, forever, mzero)
-import qualified Data.Aeson                  as Aeson
 import           Data.ByteString.Lazy        (ByteString)
-import qualified Data.Map.Strict             as Map
 import           Data.Maybe                  (fromMaybe, isJust, isNothing)
+
+
+import qualified Control.Concurrent          as Concurrent
+import qualified Data.Aeson                  as Aeson
+import qualified Data.Map.Strict             as Map
 import qualified Data.Text                   as T
 import qualified Network.WebSockets          as WS
 

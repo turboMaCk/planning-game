@@ -102,10 +102,11 @@ data RunningGame =
 
 
 data FinishedGame =
-  FinishedGame { gameVotes   :: Map (Id SessionId) Vote
-               , winningVote :: Vote
-               , gameName    :: Text
-               }
+  FinishedGame
+    { gameVotes   :: Map (Id SessionId) Vote
+    , winningVote :: Vote
+    , gameName    :: Text
+    }
 
 
 -- Isomorphic to ( [ PatGame ], Maybe RunningGame ) but more explicit
@@ -127,10 +128,11 @@ newGame name =
 
 finishGame :: Vote -> RunningGame -> FinishedGame
 finishGame vote (RunningGame name votes _) =
-  FinishedGame { gameName = name
-               , gameVotes = votes
-               , winningVote = vote
-               }
+  FinishedGame
+    { gameName = name
+    , gameVotes = votes
+    , winningVote = vote
+    }
 
 
 startGame :: Text -> Games

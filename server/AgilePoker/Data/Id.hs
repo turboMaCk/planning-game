@@ -10,15 +10,16 @@ module AgilePoker.Data.Id
 import           Control.Monad      (liftM)
 import           Data.Aeson.Types   (ToJSON (..))
 import           Data.ByteString    (ByteString)
-import qualified Data.Map           as Map
 import           Data.Map.Strict    (Map)
 import           Data.Set           (Set)
-import qualified Data.Set           as Set
-import qualified Data.Text          as Text
 import           Data.Text.Encoding (encodeUtf8)
-import qualified Data.Text.Encoding as TextEncoding
 import           Servant            (FromHttpApiData (..))
 import           System.Random      (newStdGen, randomRs)
+
+import qualified Data.Map           as Map
+import qualified Data.Set           as Set
+import qualified Data.Text          as Text
+import qualified Data.Text.Encoding as TextEncoding
 
 
 {-- This is implementation of Id as a so called phantom type
