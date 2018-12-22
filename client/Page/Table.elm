@@ -369,8 +369,18 @@ viewGame model =
                     else
                         viewUserVotes userVotes
 
-                Overview _ ->
-                    Html.text "overview"
+                Overview { results } ->
+                    Html.table [] <|
+                        List.map
+                            (\( name, vote ) ->
+                                Html.tr []
+                                    [ Html.td []
+                                        [ Html.text name ]
+                                    , Html.td [] [ Html.text <| String.fromInt <| Data.voteToInt vote ]
+                                    ]
+                            )
+                        <|
+                            Dict.toList results
     in
     Html.styled Html.div
         [ Css.width <| Css.px 835

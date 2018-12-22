@@ -7,6 +7,7 @@ module AgilePoker.Data.Game
   , RunningGame(..)
   , FinishedGame
   , Games(..)
+  , gamesPlayerVotes
   , startGame
   , addVote
   , nextRound
@@ -92,7 +93,7 @@ instance FromJSON Vote where
   parseJSON _     = mzero
 
 
--- @TODO: use hash
+-- @TODO: named members
 data RunningGame =
   RunningGame T.Text (Map.Map (Id SessionId) Vote) Bool
 
@@ -187,6 +188,19 @@ gamesVotes games =
   reverse $ (\g -> ( gameName g, winningVote g )) <$> finishedGames games
 
 
+gamesPlayerVotes :: Players -> Games -> [ ( T.Text, [ ( T.Text, Vote ) ] ) ]
+gamesPlayerVotes players games =
+  reverse $ (\g -> ( gameName g, playerVotes g )) <$> finishedGames games
+
+  where
+    playerVotes :: FinishedGame -> [ ( T.Text, Vote ) ]
+    playerVotes game =
+      -- @TODO: Better errr handling
+      fmap (\(sId, vote) -> (maybe "" playerName $ Map.lookup sId players, vote)) $ Map.toList $ gameVotes game
+
+
+
+-- @TODO: unify API with gamesPlayerVotes?
 playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( T.Text, Vote ) ]
 playersVotes _ _ (FinishedGames _) = []
 playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
