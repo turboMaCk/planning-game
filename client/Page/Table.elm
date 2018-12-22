@@ -78,7 +78,14 @@ playerVoted : Player -> Model -> Model
 playerVoted player model =
     case model.game of
         Voting data ->
-            { model | game = Voting { data | maskedVotes = Set.insert player.name data.maskedVotes } }
+            { model
+                | game =
+                    Voting
+                        { data
+                            | maskedVotes =
+                                Set.insert player.name data.maskedVotes
+                        }
+            }
 
         _ ->
             model
@@ -332,7 +339,9 @@ setNameView model =
                     [ Theme.secondaryBtn
                     , Css.marginTop <| Css.px 12
                     ]
-                    [ Events.onClick FinishGame ]
+                    [ Events.onClick FinishGame
+                    , Attrs.type_ "button"
+                    ]
                     [ Html.text "Finish Game" ]
                 ]
             )

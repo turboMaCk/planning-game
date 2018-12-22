@@ -305,5 +305,5 @@ handleMsg conn session (FinishGame vote) table
         -- @TODO: handle game wasn't started
         pure table
   | otherwise =
-    -- @TODO: handle forbidden
-    pure table
+      -- @TODO: handle forbidden
+      pure table
