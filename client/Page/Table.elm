@@ -351,6 +351,76 @@ setNameView model =
         Html.text "waiting for first ticket..."
 
 
+viewOverviewTable : { a | playerVotes : List ( String, Dict String Vote ), results : Dict String Vote } -> Html msg
+viewOverviewTable { playerVotes, results } =
+    let
+        toString =
+            String.fromInt << Data.voteToInt
+
+        voteCell vote =
+            Html.styled Html.td [ tdStyle ] [] [ Html.text <| toString vote ]
+
+        tdStyle =
+            Css.batch
+                [ Css.textAlign Css.center
+                , Css.padding2 (Css.px 6) (Css.px 6)
+                , Css.fontWeight <| Css.int 200
+                ]
+
+        thStyle =
+            Css.batch
+                [ tdStyle
+                , Css.fontWeight <| Css.int 400
+                ]
+
+        highlighted =
+            Css.batch
+                [ tdStyle
+                , Css.fontWeight <| Css.int 600
+                ]
+
+        viewTr ( name, votes ) =
+            Html.styled Html.tr [ Css.borderTop3 (Css.px 1) Css.solid (Css.hex "#cccccc") ] [] <|
+                [ Html.styled Html.td
+                    [ highlighted
+                    , Css.textAlign Css.left
+                    ]
+                    []
+                    [ Html.text name ]
+                , Html.styled Html.td [ highlighted ] [] <|
+                    [ Html.text <|
+                        Maybe.unwrap "?" toString <|
+                            Dict.get name results
+                    ]
+                ]
+                    ++ List.map voteCell (Dict.values votes)
+
+        tBody =
+            Html.tbody [] <|
+                List.map viewTr playerVotes
+
+        names =
+            List.head playerVotes
+                |> Maybe.map (Dict.keys << Tuple.second)
+                |> Maybe.withDefault []
+    in
+    Html.styled Html.table
+        [ Css.minWidth <| Css.pct 100
+        , Css.fontSize <| Css.px 16
+        , Css.borderCollapse Css.collapse
+        ]
+        []
+        [ Html.thead [] <|
+            [ Html.tr [] <|
+                [ Html.styled Html.th [ thStyle, Css.textAlign Css.left ] [] [ Html.text "Task" ]
+                , Html.styled Html.th [ thStyle ] [] [ Html.text "Agreed" ]
+                ]
+                    ++ List.map (\n -> Html.styled Html.th [ thStyle ] [] [ Html.text n ]) names
+            ]
+        , tBody
+        ]
+
+
 viewGame : Model -> Html Msg
 viewGame model =
     let
@@ -369,18 +439,8 @@ viewGame model =
                     else
                         viewPlayerVotes playerVotes
 
-                Overview { results } ->
-                    Html.table [] <|
-                        List.map
-                            (\( name, vote ) ->
-                                Html.tr []
-                                    [ Html.td []
-                                        [ Html.text name ]
-                                    , Html.td [] [ Html.text <| String.fromInt <| Data.voteToInt vote ]
-                                    ]
-                            )
-                        <|
-                            Dict.toList results
+                Overview data ->
+                    viewOverviewTable data
     in
     Html.styled Html.div
         [ Css.width <| Css.px 835
@@ -501,7 +561,9 @@ view model =
         Html.div []
             [ viewGame model
             , Html.styled Html.aside
-                [ Css.float Css.left ]
+                [ Css.float Css.left
+                , Css.marginLeft <| Css.px 20
+                ]
                 []
                 [ currentGameView model.game
                 , pointsSoFarView model.game
