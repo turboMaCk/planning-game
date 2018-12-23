@@ -34,12 +34,12 @@ data Event
 instance ToJSON Event where
   toJSON (PlayerJoined player) =
     object
-        [ "event"  .= Text.pack "UserJoined"
+        [ "event"  .= Text.pack "PlayerJoined"
         , "player" .= player
         ]
   toJSON (PlayerStatusUpdate player) =
     object
-        [ "event"  .= Text.pack "UserStatusUpdate"
+        [ "event"  .= Text.pack "PlayerStatusUpdate"
         , "player" .= player
         ]
   toJSON (SyncTableState table) =

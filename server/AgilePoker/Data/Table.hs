@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns      #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -116,21 +117,21 @@ getTablePlayer session tableId tables =
 
 
 allConnections :: Table -> [ WS.Connection ]
-allConnections Table { tableBanker=banker, tablePlayers=players } =
-  concat $ (allPlayerConnections $ snd banker)
-         : (foldr (\p acc -> allPlayerConnections p : acc) [] players)
+allConnections Table { tableBanker, tablePlayers } =
+  concat $ (allPlayerConnections $ snd tableBanker)
+         : (foldr (\p acc -> allPlayerConnections p : acc) [] tablePlayers)
 
 
-assignConnection :: Id SessionId -> WS.Connection -> Table -> ( Table, Maybe ( Player, Int ) )
-assignConnection sId conn table@Table { tableBanker=banker, tablePlayers=players } =
-    if fst banker == sId then
-        let ( updatedBanker, connId ) = addConnectionToPlayer conn $ snd banker
+assignConnection :: Session -> WS.Connection -> Table -> ( Table, Maybe ( Player, Int ) )
+assignConnection session conn table@Table { tableBanker, tablePlayers } =
+    if fst tableBanker == session then
+        let ( updatedBanker, connId ) = addConnectionToPlayer conn $ snd tableBanker
         in
-        ( table { tableBanker = ( sId, updatedBanker ) }
+        ( table { tableBanker = ( session, updatedBanker ) }
         , Just ( updatedBanker, connId )
         )
     else
-        let ( updatedPlayers, mPair ) = addPlayerConnection sId conn players
+        let ( updatedPlayers, mPair ) = addPlayerConnection session conn tablePlayers
         in
         case mPair of
             Nothing   -> ( table, Nothing )
@@ -217,9 +218,8 @@ tableStreamHandler state session id' conn = do
                     -- 3.4 Delegate to Msg handler
                     handleStreamMsg session tableState conn
 
-            Nothing -> do
+            Nothing ->
                 -- @TODO: player doesn't exist (session is not a member)
-                putStrLn "User not a member"
                 mzero
 
     Nothing -> do

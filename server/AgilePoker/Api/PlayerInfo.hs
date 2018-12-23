@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Api.UserInfo (UserInfo(..)) where
+module AgilePoker.Api.PlayerInfo (PlayerInfo(..)) where
 
 import           Control.Monad    (mzero)
 import           Data.Aeson       (FromJSON (..), (.:))
@@ -8,11 +8,11 @@ import           Data.Aeson.Types (Value (..))
 import           Data.Text        (Text)
 
 
-data UserInfo = UserInfo
-  { userName :: Text
+data PlayerInfo = PlayerInfo
+  { playerInfoName :: Text
   }
   deriving (Eq, Show)
 
-instance FromJSON UserInfo where
-  parseJSON (Object v) = UserInfo <$> (v .: "name")
+instance FromJSON PlayerInfo where
+  parseJSON (Object v) = PlayerInfo <$> (v .: "name")
   parseJSON _          = mzero

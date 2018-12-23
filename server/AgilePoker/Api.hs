@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE NamedFieldPuns      #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
@@ -22,7 +23,7 @@ import           Servant.API.WebSocket        (WebSocket)
 import           AgilePoker.Api.Authorization
 import           AgilePoker.Api.Error
 import           AgilePoker.Api.Middleware
-import           AgilePoker.Api.UserInfo
+import           AgilePoker.Api.PlayerInfo
 
 import           AgilePoker.Data
 
@@ -48,9 +49,9 @@ initState = ServerState
 type Api = "status"                                :> Get  '[JSON] T.Text
       :<|> "session"                               :> Post '[JSON] SessionJSON
       :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] SessionJSON
-      :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] UserInfo        :> Post '[JSON] Table
+      :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] PlayerInfo      :> Post '[JSON] Table
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "join"
-                     :> ReqBody '[JSON] UserInfo   :> Post '[JSON] Table
+                     :> ReqBody '[JSON] PlayerInfo :> Post '[JSON] Table
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "me"
                                                    :> Get '[JSON] Player
       :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" (Id TableId)  :> "stream" :> WebSocket
@@ -90,17 +91,17 @@ server state = status
     getSession =
       pure . SessionJSON . unHeaderAuth
 
-    createTableHandler :: (HeaderAuth Session) -> UserInfo -> Handler Table
-    createTableHandler (HeaderAuth session) UserInfo { userName=name } = do
+    createTableHandler :: (HeaderAuth Session) -> PlayerInfo -> Handler Table
+    createTableHandler (HeaderAuth session) PlayerInfo { playerInfoName } = do
       res <- liftIO $ Concurrent.modifyMVar (tables state)
-                $ createTable session name
+                $ createTable session playerInfoName
 
       either respondError pure res
 
-    joinTableHandler :: (HeaderAuth Session) -> Id TableId -> UserInfo -> Handler Table
-    joinTableHandler (HeaderAuth session) id' UserInfo { userName=name } = do
+    joinTableHandler :: (HeaderAuth Session) -> Id TableId -> PlayerInfo -> Handler Table
+    joinTableHandler (HeaderAuth session) id' PlayerInfo { playerInfoName } = do
       tables <- liftIO $ Concurrent.readMVar (tables state)
-      tableRes <- liftIO $ joinTable session id' name tables
+      tableRes <- liftIO $ joinTable session id' playerInfoName tables
 
       either respondError pure tableRes
 

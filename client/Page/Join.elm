@@ -14,7 +14,7 @@ import Url.Builder as Url
 
 
 type alias Model =
-    { userName : String
+    { playerName : String
     , tableError : Maybe (ApiError TableError)
     }
 
@@ -46,11 +46,11 @@ update action navigationKey session msg model =
             ( model, Cmd.none )
 
         UpdateName str ->
-            ( { model | userName = str }, Cmd.none )
+            ( { model | playerName = str }, Cmd.none )
 
         Submit ->
             ( model
-            , action session JoinResponse model.userName
+            , action session JoinResponse model.playerName
             )
 
         JoinResponse res ->
@@ -77,14 +77,14 @@ fieldId =
 
 
 view : Html Msg -> Model -> Html Msg
-view headline { userName, tableError } =
+view headline { playerName, tableError } =
     Component.withTableNotFound tableError <|
         Html.div []
             [ Component.nameForm
                 { onInput = UpdateName
                 , onSubmit = Submit
                 , submitTxt = "Submit"
-                , value = userName
+                , value = playerName
                 , inputId = fieldId
                 , labelTxt = "Choose your name for the table"
                 }

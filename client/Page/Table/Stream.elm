@@ -81,8 +81,8 @@ eventField value toEvent decoder =
 eventDecoder : Decoder Event
 eventDecoder =
     Decode.oneOf
-        [ eventField "UserJoined" PlayerJoin <| Decode.field "player" Data.playerDecoder
-        , eventField "UserStatusUpdate" PlayerStatusUpdate <| Decode.field "player" Data.playerDecoder
+        [ eventField "PlayerJoined" PlayerJoin <| Decode.field "player" Data.playerDecoder
+        , eventField "PlayerStatusUpdate" PlayerStatusUpdate <| Decode.field "player" Data.playerDecoder
         , eventField "SyncTableState" SyncTableState <| Decode.field "table" Data.tableWithGameDecoder
         , eventField "GameStarted" GameStarted <| Decode.field "game" Data.gameDecoder
         , eventField "VoteAccepted" VoteAccepted <| Decode.field "player" Data.playerDecoder

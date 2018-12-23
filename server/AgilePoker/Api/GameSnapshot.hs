@@ -27,7 +27,7 @@ data GameSnapshot
     }
   | LockedGameSnapshot
     { snapshotName :: Text
-    , userVotes    :: [ ( Text, Vote ) ]
+    , playerVotes  :: [ ( Text, Vote ) ]
     , totalPoints  :: Int
     }
   | FinishedGameSnapshot
@@ -88,7 +88,7 @@ snapshot banker players games@(RunningGames _ (RunningGame name votes isLocked))
   if isLocked then
     LockedGameSnapshot
         { snapshotName = name
-        , userVotes    = playersVotes banker players games
+        , playerVotes  = playersVotes banker players games
         , totalPoints  = sumGamePoints games
         }
   else
