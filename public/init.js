@@ -3,9 +3,12 @@
 (function () {
     "use strict";
 
+    var CONFIRMATION_COOKIE = 'cookiesApproved';
+    var SESSION_COOKIE = 'sessionId';
+
     var cookie = {
         read: function (name) {
-            var nameEQ = name + "=";
+            var nameEQ = name + '=';
             var ca = document.cookie.split(';');
             for (var i = 0; i < ca.length; i++) {
                 var c = ca[i];
@@ -30,7 +33,7 @@
                 expires = '';
             }
 
-            document.cookie = name + "=" + value + expires + "; path=/";
+            document.cookie = name + '=' + value + expires + '; path=/';
         },
 
         erase: function (name) {
@@ -40,17 +43,17 @@
 
     var app = Elm.Main.init({
         flags: {
-            sessionId: cookie.read('sessionId') || null,
-            showCookiesNotice: !Boolean(cookie.read('cookiesApproved'))
+            sessionId: cookie.read(SESSION_COOKIE) || null,
+            showCookiesNotice: !Boolean(cookie.read(CONFIRMATION_COOKIE))
         }
     });
 
     app.ports.storeSession.subscribe(function (id) {
-        cookie.write('sessionId', id);
+        cookie.write(SESSION_COOKIE, id);
     });
 
     app.ports.cookiesNoticeConfirmed.subscribe(function () {
-        cookie.write('cookiesApproved', true);
+        cookie.write(CONFIRMATION_COOKIE, true, 1);
     });
 
     app.ports.connect.subscribe(function (tableId) {

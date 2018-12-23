@@ -427,7 +427,7 @@ viewGame model =
                         Html.styled Html.button
                             [ Theme.secondaryBtn ]
                             [ Events.onClick <| Send Stream.FinishRound ]
-                            [ Html.text "finish round" ]
+                            [ Html.text "Finish round" ]
 
                       else
                         Html.text ""
