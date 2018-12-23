@@ -329,27 +329,28 @@ setNameView model =
             , value = name
             , inputId = nameFieldId
             , labelTxt = "Name the task"
+            , above =
+                if Data.isNewGame model.game then
+                    Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "First Ticket" ]
+
+                else
+                    Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "Next Ticket" ]
+            , otherBtns =
+                if Data.isNewGame model.game then
+                    []
+
+                else
+                    [ Html.styled Html.button
+                        [ Theme.secondaryBtn
+                        , Css.marginTop <| Css.px 12
+                        ]
+                        [ Events.onClick FinishGame
+                        , Attrs.type_ "button"
+                        ]
+                        [ Html.text "Finish Game" ]
+                    ]
+            , errorsView = Nothing
             }
-            (if Data.isNewGame model.game then
-                Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "First Ticket" ]
-
-             else
-                Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "Next Ticket" ]
-            )
-            (if Data.isNewGame model.game then
-                []
-
-             else
-                [ Html.styled Html.button
-                    [ Theme.secondaryBtn
-                    , Css.marginTop <| Css.px 12
-                    ]
-                    [ Events.onClick FinishGame
-                    , Attrs.type_ "button"
-                    ]
-                    [ Html.text "Finish Game" ]
-                ]
-            )
 
     else
         -- @TODO: nice view

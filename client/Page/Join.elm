@@ -67,7 +67,11 @@ update action navigationKey session msg model =
 
 viewError : ApiError TableError -> Html msg
 viewError err =
-    Html.div []
+    Html.styled Html.div
+        [ Css.color Theme.values.primaryColor
+        , Css.marginBottom <| Css.px 6
+        ]
+        []
         [ Html.text <| Data.errorMessage err ]
 
 
@@ -87,13 +91,8 @@ view headline { playerName, tableError } =
                 , value = playerName
                 , inputId = fieldId
                 , labelTxt = "Choose your name for the table"
+                , above = headline
+                , otherBtns = []
+                , errorsView = Maybe.map viewError tableError
                 }
-                headline
-                []
-            , case tableError of
-                Just err ->
-                    viewError err
-
-                Nothing ->
-                    Html.text ""
             ]
