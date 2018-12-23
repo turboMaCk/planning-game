@@ -33,6 +33,7 @@ instance Error PlayerError where
   toReadable NameTaken = "Player with this name already exists."
   toReadable NameEmpty = "Name can't be empty."
 
+
 instance Error GameError where
   toType GameFinished   = Forbidden
   toType VotingEndedErr = Forbidden

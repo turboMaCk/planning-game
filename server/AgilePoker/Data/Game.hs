@@ -29,6 +29,7 @@ import           Data.Text               (Text)
 
 import qualified Data.Map.Strict         as Map
 import qualified Data.Text               as Text
+import qualified Data.Set as Set
 
 import           AgilePoker.Data.Id
 import           AgilePoker.Data.Player
@@ -121,6 +122,28 @@ data GameError
   | VotingEndedErr
 
 
+getName :: Text -> Games -> Text
+getName name games
+  | Text.null name =
+      checkName $ "Task-" <> (Text.pack $ show (Set.size gameNames + 1))
+  | otherwise = checkName name
+  where
+    gameNames =
+      case games of
+        RunningGames finished (RunningGame name _ _) ->
+          Set.fromList $ name : (gameName <$> finished)
+
+        FinishedGames finished ->
+          Set.fromList $ gameName <$> finished
+
+    checkName txt =
+      if Set.member txt gameNames then
+        checkName $ txt <> ".1"
+      else
+        txt
+
+
+
 newGame :: Text -> RunningGame
 newGame name =
   RunningGame name Map.empty False
@@ -137,7 +160,7 @@ finishGame vote (RunningGame name votes _) =
 
 startGame :: Text -> Games
 startGame name =
-  RunningGames [] $ newGame name
+  RunningGames [] $ newGame (getName name $ FinishedGames [])
 
 
 addVote :: Id SessionId -> Vote -> Games -> Either GameError Games
@@ -155,9 +178,10 @@ addVote sId vote (RunningGames past (RunningGame name votes isLocked)) =
 
 
 nextRound :: Vote -> Text -> Games -> Either GameError Games
-nextRound _ _ (FinishedGames _)                    = Left GameFinished
-nextRound vote newName (RunningGames past current) =
-  Right $ RunningGames (finishGame vote current : past) $ newGame newName
+nextRound _ _ (FinishedGames _)                          = Left GameFinished
+nextRound vote newName games@(RunningGames past current) =
+  Right $ RunningGames (finishGame vote current : past)
+    $ newGame (getName newName games)
 
 
 completeGame :: Vote -> Games -> Either GameError Games
@@ -207,8 +231,6 @@ gamesPlayerVotes ( bankerId, bankerName ) players' games =
       Map.insert bankerId bankerName players'
 
 
-
--- @TODO: unify API with gamesPlayerVotes?
 playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, Vote ) ]
 playersVotes _ _ (FinishedGames _) = []
 playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
