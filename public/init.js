@@ -40,13 +40,17 @@
 
     var app = Elm.Main.init({
         flags: {
-            sessionId: cookie.read('sessionId') || null
+            sessionId: cookie.read('sessionId') || null,
+            showCookiesNotice: !Boolean(cookie.read('cookiesApproved'))
         }
     });
 
-    // Writing cookie
     app.ports.storeSession.subscribe(function (id) {
         cookie.write('sessionId', id);
+    });
+
+    app.ports.cookiesNoticeConfirmed.subscribe(function () {
+        cookie.write('cookiesApproved', true);
     });
 
     app.ports.connect.subscribe(function (tableId) {
@@ -59,7 +63,6 @@
 
         ws.onmessage = function (evt) {
             var msg = evt.data;
-            console.log("socket", msg);
             app.ports.observe_.send(msg);
         };
 

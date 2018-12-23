@@ -148,6 +148,8 @@ globalStyles =
             ]
         , GCss.each [ GCss.input, GCss.body, GCss.button ]
             [ Css.fontFamilies values.mainFontFamily ]
+        , GCss.button
+            [ Css.cursor Css.pointer ]
         , GCss.a
             [ Css.color values.secondaryColor ]
         , GCss.each [ GCss.p, GCss.input, GCss.label ]

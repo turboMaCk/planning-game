@@ -8,6 +8,7 @@ import Css
 import Data exposing (Session)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
+import Html.Styled.Events as Events
 import Http
 import Page.Join as Join
 import Page.Table as Table
@@ -17,6 +18,9 @@ import Url exposing (Url)
 
 
 port storeSession : String -> Cmd msg
+
+
+port cookiesNoticeConfirmed : () -> Cmd msg
 
 
 
@@ -34,11 +38,13 @@ type alias Model =
     { navigationKey : Key
     , page : Authorize Page Session
     , route : Route
+    , showCookiesNotice : Bool
     }
 
 
 type alias Flags =
     { sessionId : Maybe String
+    , showCookiesNotice : Bool
     }
 
 
@@ -99,10 +105,11 @@ routePage authorizeF route model =
 
 
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
-init { sessionId } url key =
+init { sessionId, showCookiesNotice } url key =
     ( { page = Authorize.init
       , route = Router.route url
       , navigationKey = key
+      , showCookiesNotice = showCookiesNotice
       }
     , Maybe.map (Data.getSession SessionCreated) sessionId
         |> Maybe.withDefault (Data.createSession SessionCreated)
@@ -121,6 +128,7 @@ type Msg
     | HomeMsg Join.Msg
     | TableMsg Table.Msg
     | JoinTableMsg Join.Msg
+    | ConfirmCookiesNotice
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -181,6 +189,11 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        ConfirmCookiesNotice ->
+            ( { model | showCookiesNotice = False }
+            , cookiesNoticeConfirmed ()
+            )
+
 
 
 -- Subscriptions
@@ -201,11 +214,59 @@ subscriptions model =
 -- View
 
 
-withLayout : Html Msg -> List (Html Msg)
-withLayout inner =
-    [ Html.styled Html.div
+viewCookiesNotice : Html Msg
+viewCookiesNotice =
+    Html.styled Html.div
+        [ Css.position Css.fixed
+        , Css.left Css.zero
+        , Css.right Css.zero
+        , Css.top Css.zero
+        , Css.backgroundColor <| Css.hex "f5eeb1"
+        , Css.color <| Css.hex "4f4e20"
+        , Css.padding2 (Css.px 20) Css.zero
+        , Css.zIndex <| Css.int 1
+        , Css.fontSize <| Css.px 14
+        , Css.lineHeight <| Css.px 25
+        ]
+        []
+        [ Html.styled Html.div
+            [ Css.width <| Css.px 1200
+            , Css.margin2 Css.zero Css.auto
+            ]
+            []
+            [ Html.text "This website is using cookies to persist anonymous identifiers of sessions to provide functionality. "
+            , Html.a [ Attrs.href "https://github.com/turboMaCk/COOKIES.md" ] [ Html.text "Learn More" ]
+            , Html.styled Html.button
+                [ Css.marginLeft <| Css.px 12
+                , Css.float Css.right
+                , Css.padding2 (Css.px 3) <| Css.px 12
+                , Css.color <| Css.hex "4f4e20"
+                , Css.border3 (Css.px 0.5) Css.solid <| Css.hex "bab869"
+                , Css.backgroundColor <| Css.hex "ffffff"
+                , Css.borderRadius <| Css.px 2
+                , Css.property "background-image" "linear-gradient(#f3ee98, #d8d76c)"
+                ]
+                [ Events.onClick ConfirmCookiesNotice ]
+                [ Html.text "Agree and close" ]
+            ]
+        ]
+
+
+withLayout : Bool -> Html Msg -> List (Html Msg)
+withLayout showCookiesNotice inner =
+    [ if showCookiesNotice then
+        viewCookiesNotice
+
+      else
+        Html.text ""
+    , Html.styled Html.div
         [ Css.width <| Css.px 1200
         , Css.margin2 Css.zero Css.auto
+        , if showCookiesNotice then
+            Css.marginTop <| Css.px 100
+
+          else
+            Css.marginTop <| Css.px 35
         ]
         []
         [ Theme.logo
@@ -219,6 +280,7 @@ withLayout inner =
             , Css.textAlign Css.center
             , Css.lineHeight <| Css.em 1.5
             , Css.fontSize <| Css.px 14
+            , Css.paddingBottom <| Css.px 12
             ]
             []
             [ Html.p []
@@ -257,7 +319,7 @@ joinTitle txt =
 
 
 document : Model -> Document Msg
-document model =
+document ({ showCookiesNotice } as model) =
     let
         ( title, body ) =
             case model.page of
@@ -265,24 +327,24 @@ document model =
                     case page of
                         Home m ->
                             ( "Agile Poker"
-                            , withLayout <|
+                            , withLayout showCookiesNotice <|
                                 Html.map HomeMsg <|
                                     Join.view (joinTitle "Create Table") m
                             )
 
                         Table m ->
                             ( "Table | Agile Poker"
-                            , withLayout <| Html.map TableMsg <| Table.view m
+                            , withLayout showCookiesNotice <| Html.map TableMsg <| Table.view m
                             )
 
                         JoinTable _ m ->
                             ( "Join | Agile Poker"
-                            , withLayout <| Html.map JoinTableMsg <| Join.view (joinTitle "Join Table") m
+                            , withLayout showCookiesNotice <| Html.map JoinTableMsg <| Join.view (joinTitle "Join Table") m
                             )
 
                         NotFound ->
                             ( "404 | Agile Poker"
-                            , withLayout <| Html.text "404"
+                            , withLayout showCookiesNotice <| Html.text "404"
                             )
 
                 Unauthorized _ ->
