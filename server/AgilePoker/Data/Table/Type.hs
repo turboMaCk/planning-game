@@ -19,7 +19,7 @@ import qualified Data.Map.Strict             as Map
 import           AgilePoker.Api.GameSnapshot (snapshot)
 import           AgilePoker.Data.Game        (GameError (..), Games)
 import           AgilePoker.Data.Id          (Id)
-import           AgilePoker.Data.Player      (Player, Players, PlayerError(..))
+import           AgilePoker.Data.Player      (Player, PlayerError (..), Players)
 import           AgilePoker.Data.Session     (SessionId)
 
 
@@ -55,9 +55,17 @@ type Tables =
 
 data TableError
   = TableNotFound
-  | PlayerError PlayerError
   | PlayerNotFound
+  | PlayerError PlayerError
   | GameError GameError
+  deriving (Eq)
+
+
+instance Show TableError where
+  show TableNotFound   = "TableNotFound"
+  show PlayerNotFound  = "PlayerNotFound"
+  show (PlayerError e) = "PlayerError:" <> show e
+  show (GameError e)   = "GameError:" <> show e
 
 
 emptyTables :: Tables

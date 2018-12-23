@@ -35,6 +35,7 @@ type Sessions =
 
 data SessionError
   = SessionDoesNotExist
+  deriving (Show, Eq)
 
 
 newtype SessionJSON =

@@ -120,6 +120,12 @@ data Games
 data GameError
   = GameFinished
   | VotingEndedErr
+  deriving (Eq)
+
+
+instance Show GameError where
+  show GameFinished   = "GameFinished"
+  show VotingEndedErr = "VotingEnded"
 
 
 getName :: Text -> Games -> Text

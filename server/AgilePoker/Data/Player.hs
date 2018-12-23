@@ -56,6 +56,7 @@ type Players =
 data PlayerError
   = NameTaken
   | NameEmpty
+  deriving (Show, Eq)
 
 
 createPlayer :: Text -> Player

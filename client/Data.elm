@@ -186,9 +186,11 @@ tableWithGameDecoder =
 
 type TableError
     = TableNotFound
-    | NameTaken
-    | NameEmpty
     | PlayerNotFound
+    | PlayerNameTaken
+    | PlayerNameEmpty
+    | GameFinished
+    | GameVotingEnded
 
 
 tableErrorDecoder : Decoder TableError
@@ -196,18 +198,23 @@ tableErrorDecoder =
     let
         fromString str =
             case str of
-                "NotFound" ->
+                "TableNotFound" ->
                     Decode.succeed TableNotFound
 
-                "Conflict" ->
-                    Decode.succeed NameTaken
-
-                "Unprocessable" ->
-                    Decode.succeed NameEmpty
-
-                "Forbidden" ->
-                    -- Can be game error as well
+                "PlayerNotFound" ->
                     Decode.succeed PlayerNotFound
+
+                "PlayerError:NameTaken" ->
+                    Decode.succeed PlayerNameTaken
+
+                "PlayerError:NameEmpty" ->
+                    Decode.succeed PlayerNameEmpty
+
+                "Game:GameFinished" ->
+                    Decode.succeed GameFinished
+
+                "Game:VotingEnded" ->
+                    Decode.succeed GameVotingEnded
 
                 val ->
                     Decode.fail <| "Unknown status " ++ val

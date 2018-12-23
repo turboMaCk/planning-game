@@ -18,6 +18,7 @@ import           Servant                   (ServantErr, err401, err403, err404,
                                             throwError)
 
 import qualified Data.Aeson                as Aeson
+import qualified Data.Text                 as Text
 
 
 data ErrorType
@@ -39,21 +40,23 @@ class Error a where
 
 {-- Just to trick the compiler
 --}
-newtype Wrap a = Wrap { unWrap :: a }
+newtype WrapError a =
+  WrapError { unWrapError :: a }
 
 
-instance Error a => ToJSON (Wrap a) where
-  toJSON (Wrap err) =
+instance (Show a, Error a) => ToJSON (WrapError a) where
+  toJSON (WrapError err) =
     Aeson.object
-      [ "error"   .= toType err
+      [ "status"  .= toType err
+      , "error"   .= toJSON (Text.pack $ show err)
       , "message" .= toReadable err
       ]
 
 
-respondError :: Error a => MonadError ServantErr m => a -> m b
+respondError :: ( Show a, Error a) => MonadError ServantErr m => a -> m b
 respondError res =
   throwError $ err
-    { errBody = Aeson.encode $ toJSON (Wrap res)
+    { errBody = Aeson.encode $ toJSON (WrapError res)
     , errHeaders = [ ( "Content-Type", "application/json;charset=utf-8" ) ]
     }
   where
