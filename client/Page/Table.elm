@@ -63,6 +63,11 @@ type Msg
     | FinishGame
 
 
+allPlayers : Model -> Dict String Player
+allPlayers model =
+    Maybe.unwrap model.players (\b -> Dict.insert b.name b model.players) model.banker
+
+
 focusNameField : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 focusNameField ( model, cmd ) =
     -- @TODO: add check on game state?
@@ -351,14 +356,20 @@ setNameView model =
         Html.text "waiting for first ticket..."
 
 
-viewOverviewTable : { a | playerVotes : List ( String, Dict String Vote ), results : Dict String Vote } -> Html msg
-viewOverviewTable { playerVotes, results } =
+viewOverviewTable : Dict String a -> { b | playerVotes : List ( String, Dict String Vote ), results : Dict String Vote } -> Html msg
+viewOverviewTable players_ { playerVotes, results } =
     let
         toString =
             String.fromInt << Data.voteToInt
 
-        voteCell vote =
-            Html.styled Html.td [ tdStyle ] [] [ Html.text <| toString vote ]
+        voteCell votes name =
+            Html.styled Html.td
+                [ tdStyle ]
+                []
+                [ Html.text <| Maybe.unwrap "?" toString <| Dict.get name votes ]
+
+        players =
+            Dict.keys players_
 
         tdStyle =
             Css.batch
@@ -393,16 +404,11 @@ viewOverviewTable { playerVotes, results } =
                             Dict.get name results
                     ]
                 ]
-                    ++ List.map voteCell (Dict.values votes)
+                    ++ List.map (voteCell votes) players
 
         tBody =
             Html.tbody [] <|
                 List.map viewTr playerVotes
-
-        names =
-            List.head playerVotes
-                |> Maybe.map (Dict.keys << Tuple.second)
-                |> Maybe.withDefault []
     in
     Html.styled Html.table
         [ Css.minWidth <| Css.pct 100
@@ -415,7 +421,7 @@ viewOverviewTable { playerVotes, results } =
                 [ Html.styled Html.th [ thStyle, Css.textAlign Css.left ] [] [ Html.text "Task" ]
                 , Html.styled Html.th [ thStyle ] [] [ Html.text "Agreed" ]
                 ]
-                    ++ List.map (\n -> Html.styled Html.th [ thStyle ] [] [ Html.text n ]) names
+                    ++ List.map (\n -> Html.styled Html.th [ thStyle ] [] [ Html.text n ]) players
             ]
         , tBody
         ]
@@ -440,7 +446,7 @@ viewGame model =
                         viewPlayerVotes playerVotes
 
                 Overview data ->
-                    viewOverviewTable data
+                    viewOverviewTable (allPlayers model) data
     in
     Html.styled Html.div
         [ Css.width <| Css.px 835
