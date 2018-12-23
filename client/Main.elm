@@ -74,7 +74,19 @@ routePage authorizeF route model =
             authorizeF genPage model.page
     in
     case newAuthorized of
-        Authorized ses ( page, cmd ) ->
+        Authorized ses ( page, cmd_ ) ->
+            let
+                cmd =
+                    case model.route of
+                        Router.Table _ ->
+                            Cmd.batch
+                                [ cmd_
+                                , Table.leave ()
+                                ]
+
+                        _ ->
+                            cmd_
+            in
             ( { model
                 | page = Authorized ses page
                 , route = route

@@ -50,7 +50,8 @@
     });
 
     app.ports.connect.subscribe(function (tableId) {
-        var ws = new WebSocket('ws://localhost:3000/tables/' + tableId + '/stream');
+        const host = window.location.host;
+        var ws = new WebSocket('ws://' + host + '/tables/' + tableId + '/stream');
 
         ws.onerror = function () {
             app.ports.streamError.send('can_not_connect');
@@ -63,16 +64,17 @@
         };
 
         ws.onclose = function() {
-            app.ports.streamError.send('connection_closed');
+            // app.ports.streamError.send('connection_closed');
         };
 
         app.ports.emit.subscribe(function (msg) {
             ws.send(msg);
         });
-    });
 
-    // app.ports.disconnect.subscribe(function() {
-    //     console.log('erase');
-    //     cookie.erase('sessionId');
-    // });
+        app.ports.disconnect.subscribe(function() {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.close(1000);
+            }
+        });
+    });
 })();

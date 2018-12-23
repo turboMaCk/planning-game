@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module AgilePoker.Data.Player
@@ -21,6 +22,7 @@ import           Data.Aeson.Types        (ToJSON (..), object, (.=))
 import           Data.IntMap.Strict      (IntMap)
 import           Data.Map.Strict         (Map)
 import           Data.Text               (Text)
+import           Network.WebSockets      (Connection)
 
 import qualified Data.IntMap             as IntMap
 import qualified Data.Map                as Map
@@ -33,7 +35,7 @@ import           AgilePoker.Data.Session
 
 data Player = Player
   { playerName        :: Text
-  , playerConnections :: IntMap WS.Connection
+  , playerConnections :: IntMap Connection
   }
 
 
@@ -82,40 +84,47 @@ addPlayer id' name players =
     Right ( Map.insert id' newPlayer players, newPlayer )
 
 
-addConnectionToPlayer :: WS.Connection -> Player -> (Player, Int)
-addConnectionToPlayer conn player@Player { playerConnections=conns } =
+addConnectionToPlayer :: Connection -> Player -> (Player, Int)
+addConnectionToPlayer conn player@Player { playerConnections } =
   (updatedPlayer, index)
+
   where
-    index = IntMap.size conns
-    updatedPlayer = player { playerConnections = IntMap.insert index conn conns }
+    index =
+      IntMap.size playerConnections
+
+    updatedPlayer =
+      player { playerConnections = IntMap.insert index conn playerConnections }
 
 
 hasConnection :: Player -> Bool
-hasConnection Player { playerConnections=conns } =
-  not $ IntMap.null conns
+hasConnection Player { playerConnections } =
+  not $ IntMap.null playerConnections
 
 
 playerNumberOfConnections :: Player -> Int
-playerNumberOfConnections Player { playerConnections=conns } =
-  IntMap.size conns
+playerNumberOfConnections Player { playerConnections } =
+  IntMap.size playerConnections
 
 
-addPlayerConnection :: Id SessionId -> WS.Connection -> Players -> ( Players, Maybe ( Player, Int ) )
+addPlayerConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( Player, Int ) )
 addPlayerConnection id' conn players =
   case Map.lookup id' players of
     Just player ->
-      let ( updatedPlayer, index ) = addConnectionToPlayer conn player
+      let
+        ( updatedPlayer, index ) =
+          addConnectionToPlayer conn player
       in
       ( Map.insert id' updatedPlayer players
       , Just ( updatedPlayer, index )
       )
+
     Nothing ->
       ( players, Nothing )
 
 
 removeConnectionFromPlayer :: Int -> Player -> Player
-removeConnectionFromPlayer index player@(Player { playerConnections=conns }) =
-      player { playerConnections = IntMap.delete index conns }
+removeConnectionFromPlayer index player@(Player { playerConnections }) =
+      player { playerConnections = IntMap.delete index playerConnections }
 
 
 disconnectPlayer :: Id SessionId -> Int -> Players -> Players
@@ -132,5 +141,5 @@ emptyPlayers = Map.empty
 
 
 allPlayerConnections :: Player -> [ WS.Connection ]
-allPlayerConnections Player { playerConnections=conns } =
-  snd <$> IntMap.toList conns
+allPlayerConnections Player { playerConnections } =
+  snd <$> IntMap.toList playerConnections

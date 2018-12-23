@@ -21,6 +21,7 @@ import           Control.Monad               (forM_, forever, mzero)
 import           Data.ByteString.Lazy        (ByteString)
 import           Data.Maybe                  (fromMaybe, isJust, isNothing)
 import           Data.Text                   (Text)
+import           Network.WebSockets          (Connection)
 
 import qualified Control.Concurrent          as Concurrent
 import qualified Data.Aeson                  as Aeson
@@ -116,13 +117,13 @@ getTablePlayer session tableId tables =
             Map.lookup session $ tablePlayers table
 
 
-allConnections :: Table -> [ WS.Connection ]
+allConnections :: Table -> [ Connection ]
 allConnections Table { tableBanker, tablePlayers } =
   concat $ (allPlayerConnections $ snd tableBanker)
          : (foldr (\p acc -> allPlayerConnections p : acc) [] tablePlayers)
 
 
-assignConnection :: Session -> WS.Connection -> Table -> ( Table, Maybe ( Player, Int ) )
+assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( Player, Int ) )
 assignConnection session conn table@Table { tableBanker, tablePlayers } =
     if fst tableBanker == session then
         let ( updatedBanker, connId ) = addConnectionToPlayer conn $ snd tableBanker
@@ -151,10 +152,11 @@ allTablePlayers table =
 -- WS Handling
 
 
-handleStreamMsg :: Session -> MVar Table -> WS.Connection -> IO ()
+handleStreamMsg :: Session -> MVar Table -> Connection -> IO ()
 handleStreamMsg session state conn = forever $ do
   bs :: ByteString <- WS.receiveData conn
   let decoded :: Maybe Msg = Aeson.decode bs
+
   case decoded of
     -- @TODO: handle unrecosinable msg
     Nothing  -> pure ()
@@ -183,7 +185,7 @@ disconnect state sessionId connId =
       pure updatedTable
 
 
-tableStreamHandler :: MVar Tables -> Session -> Id TableId -> WS.Connection -> IO ()
+tableStreamHandler :: MVar Tables -> Session -> Id TableId -> Connection -> IO ()
 tableStreamHandler state session id' conn = do
   tables <- Concurrent.readMVar state
   let mTable = Map.lookup id' tables
@@ -242,7 +244,7 @@ isBanker session Table { tableBanker=pair } =
 
 
 -- @TODO: refactor
-handleMsg :: WS.Connection -> Session -> Msg -> Table -> IO Table
+handleMsg :: Connection -> Session -> Msg -> Table -> IO Table
 handleMsg conn session (NewGame name) table
   | isBanker session table
   , isNothing (tableGame table) = do

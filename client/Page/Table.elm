@@ -1,4 +1,4 @@
-module Page.Table exposing (Model, Msg, init, subscriptions, update, view)
+module Page.Table exposing (Model, Msg, init, leave, subscriptions, update, view)
 
 import Browser.Dom as Dom
 import Browser.Navigation as Navigation exposing (Key)
@@ -61,6 +61,11 @@ type Msg
     | SetName String
     | NewGame String
     | FinishGame
+
+
+leave : () -> Cmd msg
+leave () =
+    Stream.disconnect ()
 
 
 allPlayers : Model -> Dict String Player
