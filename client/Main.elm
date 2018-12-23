@@ -4,6 +4,7 @@ import Authorize exposing (Authorize(..))
 import Browser exposing (Document, UrlRequest(..))
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
+import Css
 import Data exposing (Session)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
@@ -123,8 +124,8 @@ update msg model =
                     , Navigation.pushUrl model.navigationKey <| Url.toString location
                     )
 
-                External _ ->
-                    ( model, Cmd.none )
+                External url_ ->
+                    ( model, Navigation.load url_ )
 
         UrlChanged url ->
             routePage Authorize.for (Router.route url) model
@@ -196,6 +197,39 @@ withLayout inner =
         ]
         [ Theme.logo
         , inner
+        , Html.styled Html.div [ Css.property "clear" "both" ] [] []
+        , Html.styled Html.footer
+            [ Css.position Css.absolute
+            , Css.bottom Css.zero
+            , Css.left Css.zero
+            , Css.width <| Css.pct 100
+            , Css.textAlign Css.center
+            , Css.lineHeight <| Css.em 1.5
+            , Css.fontSize <| Css.px 14
+            ]
+            []
+            [ Html.p []
+                [ Html.text "This work contains "
+                , Html.strong [] [ Html.text "derivation" ]
+                , Html.text " of "
+                , Html.a [ Attrs.href "https://github.com/redbooth/Scrum-poker-cards" ] [ Html.text "Scrum-poker-cards" ]
+                , Html.text " by "
+                , Html.a [ Attrs.href "https://redbooth.com/" ] [ Html.text "redbooth" ]
+                , Html.text " used under "
+                , Html.a [ Attrs.href "https://creativecommons.org/licenses/by/3.0/" ] [ Html.text "CC BY 3.0" ]
+                , Html.br [] []
+                , Html.text "Agile Poker is Free Software released under "
+                , Html.a [ Attrs.href "https://www.gnu.org/licenses/agpl-3.0.en.html" ] [ Html.text "AGPLv3 license" ]
+                , Html.br [] []
+                , Html.text "Souce code is available on "
+                , Html.a [ Attrs.href "https://github.com/turboMaCk/agile-poker" ] [ Html.text "GitHub" ]
+                ]
+            , Html.p []
+                [ Html.text "Developed & designed by Marek Fajkus"
+                , Html.br [] []
+                , Html.a [ Attrs.href "https://github.com/turboMaCk/agile-poker/issues" ] [ Html.text "Report issue or request feature" ]
+                ]
+            ]
         , Theme.globalStyles
         ]
     ]

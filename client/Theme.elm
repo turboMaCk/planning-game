@@ -114,11 +114,19 @@ pill =
 globalStyles : Html msg
 globalStyles =
     GCss.global
-        [ GCss.each [ GCss.input, GCss.body, GCss.button ]
-            [ Css.fontFamilies values.mainFontFamily ]
+        [ GCss.html
+            [ Css.height <| Css.pct 100 ]
         , GCss.body
-            [ Css.margin2 (Css.px 8) (Css.px 16)
+            [ Css.position Css.relative
+            , Css.minHeight <| Css.pct 100
+            , Css.margin2 Css.zero <| Css.px 16
+            , Css.padding4 (Css.px 6) Css.zero (Css.px 200) Css.zero
+            , Css.boxSizing Css.borderBox
             ]
+        , GCss.each [ GCss.input, GCss.body, GCss.button ]
+            [ Css.fontFamilies values.mainFontFamily ]
+        , GCss.a
+            [ Css.color values.secondaryColor ]
         , GCss.each [ GCss.p, GCss.input, GCss.label ]
             [ Css.fontWeight <| Css.int 200
             , Css.margin2 (Css.px 12) Css.zero
