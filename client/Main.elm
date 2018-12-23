@@ -191,10 +191,11 @@ subscriptions model =
 
 withLayout : Html Msg -> List (Html Msg)
 withLayout inner =
-    [ Html.div
-        [ Attrs.style "max-width" "1200px"
-        , Attrs.style "margin" "0 auto"
+    [ Html.styled Html.div
+        [ Css.width <| Css.px 1200
+        , Css.margin2 Css.zero Css.auto
         ]
+        []
         [ Theme.logo
         , inner
         , Html.styled Html.div [ Css.property "clear" "both" ] [] []
@@ -235,6 +236,14 @@ withLayout inner =
     ]
 
 
+joinTitle : String -> Html msg
+joinTitle txt =
+    Html.styled Html.h2
+        [ Theme.heading ]
+        []
+        [ Html.text txt ]
+
+
 document : Model -> Document Msg
 document model =
     let
@@ -246,13 +255,7 @@ document model =
                             ( "Agile Poker"
                             , withLayout <|
                                 Html.map HomeMsg <|
-                                    Join.view
-                                        (Html.styled Html.h2
-                                            [ Theme.heading ]
-                                            []
-                                            [ Html.text "Create New Table" ]
-                                        )
-                                        m
+                                    Join.view (joinTitle "Create Table") m
                             )
 
                         Table m ->
@@ -262,7 +265,7 @@ document model =
 
                         JoinTable _ m ->
                             ( "Join | Agile Poker"
-                            , withLayout <| Html.map JoinTableMsg <| Join.view (Html.text "") m
+                            , withLayout <| Html.map JoinTableMsg <| Join.view (joinTitle "Join Table") m
                             )
 
                         NotFound ->

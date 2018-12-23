@@ -1,4 +1,14 @@
-module Theme exposing (globalStyles, heading, logo, pill, primaryBtn, secondaryBtn, textField, values)
+module Theme exposing
+    ( globalStyles
+    , heading
+    , highlightedHeading
+    , logo
+    , pill
+    , primaryBtn
+    , secondaryBtn
+    , textField
+    , values
+    )
 
 import Css exposing (Style)
 import Css.Global as GCss
@@ -80,6 +90,19 @@ heading =
         [ Css.margin2 (Css.px 12) Css.zero
         , Css.fontSize <| Css.px 27
         , Css.fontWeight <| Css.int 200
+        ]
+
+
+highlightedHeading : List (Html msg) -> Html msg
+highlightedHeading inner =
+    Html.styled Html.h2 [ heading, Css.marginTop Css.zero ] [] <|
+        [ Html.styled Html.span
+            [ Css.color values.lightColor
+            , Css.backgroundColor values.secondaryColor
+            , Css.fontSize <| Css.px 20
+            ]
+            []
+            inner
         ]
 
 

@@ -247,16 +247,6 @@ viewTable toSide =
         Card.table toSide Vote
 
 
-tableContainer : String -> List (Html msg) -> Html msg
-tableContainer text inner =
-    Html.main_ [] <|
-        Html.styled Html.p
-            [ Css.fontSize <| Css.px 20 ]
-            []
-            [ Html.text text ]
-            :: inner
-
-
 viewVoting : Model -> Html Msg
 viewVoting model =
     let
@@ -272,18 +262,7 @@ viewVoting model =
                 Nothing ->
                     Front
     in
-    tableContainer "Pick your card:"
-        [ viewTable toSide
-        , Html.br [] []
-        , if amIBanker model then
-            Html.styled Html.button
-                [ Theme.secondaryBtn ]
-                [ Events.onClick <| Send Stream.FinishRound ]
-                [ Html.text "finish round" ]
-
-          else
-            Html.text ""
-        ]
+    viewTable toSide
 
 
 viewPlayerVotes : Dict String Vote -> Html Msg
@@ -300,9 +279,7 @@ viewPlayerVotes dict =
             else
                 Back
     in
-    tableContainer "Select agreed estimation:"
-        [ viewTable toSide
-        ]
+    viewTable toSide
 
 
 nameFieldId : String
@@ -325,16 +302,16 @@ setNameView model =
                     "Start"
 
                 else
-                    "Next Ticket"
+                    "Next Task"
             , value = name
             , inputId = nameFieldId
             , labelTxt = "Name the task"
             , above =
                 if Data.isNewGame model.game then
-                    Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "First Ticket" ]
+                    Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "First Task" ]
 
                 else
-                    Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "Next Ticket" ]
+                    Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "Next Task" ]
             , otherBtns =
                 if Data.isNewGame model.game then
                     []
@@ -353,8 +330,7 @@ setNameView model =
             }
 
     else
-        -- @TODO: nice view
-        Html.text "waiting for first ticket..."
+        Html.text ""
 
 
 viewOverviewTable : Dict String a -> { b | playerVotes : List ( String, Dict String Vote ), results : Dict String Vote } -> Html msg
@@ -434,31 +410,57 @@ viewGame model =
         inner =
             case model.game of
                 NotStarted ->
-                    setNameView model
+                    [ Theme.highlightedHeading [ Html.text "Prepare for start!" ]
+                    , setNameView model
+                    ]
 
                 Voting _ ->
-                    viewVoting model
+                    [ Theme.highlightedHeading [ Html.text "Pick your card!" ]
+                    , viewVoting model
+                    , Html.br [] []
+                    , if amIBanker model then
+                        Html.styled Html.button
+                            [ Theme.secondaryBtn ]
+                            [ Events.onClick <| Send Stream.FinishRound ]
+                            [ Html.text "finish round" ]
+
+                      else
+                        Html.text ""
+                    ]
 
                 RoundFinished { playerVotes } ->
                     if amIBanker model && model.myVote /= Nothing then
-                        setNameView model
+                        [ Theme.highlightedHeading [ Html.text "Set next taks OR finish the game!" ]
+                        , setNameView model
+                        ]
 
                     else
-                        viewPlayerVotes playerVotes
+                        [ Theme.highlightedHeading
+                            [ Html.text <|
+                                if amIBanker model then
+                                    "Choose agreed extimation!"
+
+                                else
+                                    "Wait for the next ticket!"
+                            ]
+                        , viewPlayerVotes playerVotes
+                        ]
 
                 Overview data ->
-                    viewOverviewTable (allPlayers model) data
+                    [ Html.styled Html.h2 [ Theme.heading, Css.marginTop Css.zero ] [] [ Html.text "Game results" ]
+                    , viewOverviewTable (allPlayers model) data
+                    ]
     in
     Html.styled Html.div
         [ Css.width <| Css.px 835
         , Css.float Css.left
         ]
         []
-        [ inner ]
+        inner
 
 
-currentGameView : Game -> Html msg
-currentGameView game =
+viewCurrentGame : Game -> Html msg
+viewCurrentGame game =
     let
         headlineStyle =
             Css.batch
@@ -479,20 +481,19 @@ currentGameView game =
                     , Css.marginBottom <| Css.px 6
                     ]
                     []
-                    [ Html.text "Estimating ticket:" ]
-                , Html.text <|
-                    if String.isEmpty name then
-                        "[unnamed]"
-
-                    else
-                        name
+                    [ Html.text "Estimating task:" ]
+                , Html.text name
                 ]
     in
     case game of
         NotStarted ->
-            headline [ Css.fontWeight <| Css.int 200 ]
+            headline
+                [ headlineStyle
+                , Css.fontWeight <| Css.int 200
+                , Css.fontSize <| Css.px 20
+                ]
                 []
-                [ Html.text "Waiting for first ticket" ]
+                [ Html.text "Game hasn't started." ]
 
         Voting { name } ->
             showName name
@@ -501,15 +502,13 @@ currentGameView game =
             showName name
 
         Overview _ ->
-            headline [ Css.fontWeight <| Css.int 200 ]
-                []
-                [ Html.text "Table overview" ]
+            Html.text ""
 
 
-pointsSoFarView : Game -> Html msg
-pointsSoFarView game =
+viewPointsSoFar : Game -> Html msg
+viewPointsSoFar game =
     let
-        showPoints int =
+        showPoints txt int =
             Html.styled Html.h3
                 [ Css.margin Css.zero
                 , Css.fontSize <| Css.px 37
@@ -521,7 +520,7 @@ pointsSoFarView game =
                     , Css.display Css.block
                     ]
                     []
-                    [ Html.text "Points so far:" ]
+                    [ Html.text txt ]
                 , Html.text <| String.fromInt int
                 ]
     in
@@ -530,13 +529,13 @@ pointsSoFarView game =
             Html.text ""
 
         Voting { totalPoints } ->
-            showPoints totalPoints
+            showPoints "Points so far:" totalPoints
 
         RoundFinished { totalPoints } ->
-            showPoints totalPoints
+            showPoints "Points so far:" totalPoints
 
         Overview { totalPoints } ->
-            showPoints totalPoints
+            showPoints "Total points:" totalPoints
 
 
 view : Model -> Html Msg
@@ -572,8 +571,8 @@ view model =
                 , Css.marginLeft <| Css.px 20
                 ]
                 []
-                [ currentGameView model.game
-                , pointsSoFarView model.game
+                [ viewCurrentGame model.game
+                , viewPointsSoFar model.game
                 , Players.view isMe toVote model.banker model.players
                 ]
             ]
