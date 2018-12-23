@@ -19,12 +19,12 @@ import           Control.Exception           (finally)
 import           Control.Monad               (forM_, forever, mzero)
 import           Data.ByteString.Lazy        (ByteString)
 import           Data.Maybe                  (fromMaybe, isJust, isNothing)
-
+import           Data.Text                   (Text)
 
 import qualified Control.Concurrent          as Concurrent
 import qualified Data.Aeson                  as Aeson
 import qualified Data.Map.Strict             as Map
-import qualified Data.Text                   as T
+import qualified Data.Text                   as Text
 import qualified Network.WebSockets          as WS
 
 import           AgilePoker.Data.Game
@@ -40,31 +40,44 @@ import           AgilePoker.Data.Table.Type
 -- Basic Operations
 
 
-createTable :: Session -> T.Text -> Tables -> IO ( Tables, Table )
-createTable id' name tables = do
-  tId <- generateId tables
-  let banker = createPlayer name
-  let newTable = Table tId ( id', banker ) emptyPlayers Nothing
-  mvarTable <- Concurrent.newMVar newTable
-  pure $ ( Map.insert tId mvarTable tables
-         , newTable
-         )
+createTable :: Session -> Text -> Tables -> IO ( Tables, Either TableError Table )
+createTable id' name' tables =
+  let
+    name =
+      Text.strip name'
+  in
+  if Text.null name then
+    pure ( tables,  Left $ PlayerError NameEmpty )
+  else do
+    tId <- generateId tables
+    let banker = createPlayer name
+    let newTable = Table tId ( id', banker ) emptyPlayers Nothing
+    mvarTable <- Concurrent.newMVar newTable
+
+    pure
+        ( Map.insert tId mvarTable tables
+        , Right newTable
+        )
 
 
 -- @TODO: Add check if session is not already present
-joinTable :: Session -> Id TableId -> T.Text -> Tables -> IO ( Either TableError Table )
-joinTable session tableId name tables =
+joinTable :: Session -> Id TableId -> Text -> Tables -> IO ( Either TableError Table )
+joinTable session tableId name' tables =
+  let
+    name =
+      Text.strip name'
+  in
   case Map.lookup tableId tables of
     Just mvar -> do
       table <- Concurrent.readMVar mvar
       if playerName (snd $ tableBanker table) == name then
-        pure $ Left NameTaken
+        pure $ Left $ PlayerError NameTaken
       else
         let
-            mPlayers = addPlayer session name (tablePlayers table)
+            ePlayers = addPlayer session name (tablePlayers table)
         in
-        case mPlayers of
-          Just ( newPlayers, newPlayer ) ->
+        case ePlayers of
+          Right ( newPlayers, newPlayer ) ->
             Concurrent.modifyMVar mvar $ \t -> do
                 let updatedTable = t { tablePlayers = newPlayers }
 
@@ -73,8 +86,8 @@ joinTable session tableId name tables =
 
                 pure ( updatedTable, Right updatedTable )
 
-          Nothing ->
-             pure $ Left NameTaken
+          Left err ->
+             pure $ Left $ PlayerError err
 
     Nothing ->
       pure $ Left TableNotFound

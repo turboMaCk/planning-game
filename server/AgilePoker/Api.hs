@@ -91,9 +91,11 @@ server state = status
       pure . SessionJSON . unHeaderAuth
 
     createTableHandler :: (HeaderAuth Session) -> UserInfo -> Handler Table
-    createTableHandler (HeaderAuth session) UserInfo { userName=name } =
-      liftIO $ Concurrent.modifyMVar (tables state) $
-        createTable session name
+    createTableHandler (HeaderAuth session) UserInfo { userName=name } = do
+      res <- liftIO $ Concurrent.modifyMVar (tables state)
+                $ createTable session name
+
+      either respondError pure res
 
     joinTableHandler :: (HeaderAuth Session) -> Id TableId -> UserInfo -> Handler Table
     joinTableHandler (HeaderAuth session) id' UserInfo { userName=name } = do

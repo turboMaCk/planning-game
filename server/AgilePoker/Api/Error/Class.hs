@@ -14,7 +14,7 @@ import           Data.Aeson.Types          (ToJSON (..), (.=))
 import           Data.Text                 (Text)
 import           GHC.Generics              (Generic)
 import           Servant                   (ServantErr, err401, err403, err404,
-                                            err409, errBody, errHeaders,
+                                            err409, err422, errBody, errHeaders,
                                             throwError)
 
 import qualified Data.Aeson                as Aeson
@@ -25,6 +25,7 @@ data ErrorType
     | Unauthorized
     | Forbidden
     | Conflict
+    | Unprocessable
     deriving (Generic)
 
 
@@ -58,7 +59,8 @@ respondError res =
   where
     err =
         case toType res of
-            NotFound     -> err404
-            Unauthorized -> err401
-            Forbidden    -> err403
-            Conflict     -> err409
+            NotFound      -> err404
+            Unauthorized  -> err401
+            Forbidden     -> err403
+            Conflict      -> err409
+            Unprocessable -> err422

@@ -19,7 +19,7 @@ import qualified Data.Map.Strict             as Map
 import           AgilePoker.Api.GameSnapshot (snapshot)
 import           AgilePoker.Data.Game        (GameError (..), Games)
 import           AgilePoker.Data.Id          (Id)
-import           AgilePoker.Data.Player      (Player, Players)
+import           AgilePoker.Data.Player      (Player, Players, PlayerError(..))
 import           AgilePoker.Data.Session     (SessionId)
 
 
@@ -55,10 +55,11 @@ type Tables =
 
 data TableError
   = TableNotFound
-  | NameTaken
+  | PlayerError PlayerError
   | PlayerNotFound
   | GameError GameError
 
 
 emptyTables :: Tables
-emptyTables = Map.empty
+emptyTables =
+  Map.empty

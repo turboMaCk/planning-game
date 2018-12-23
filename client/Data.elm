@@ -187,6 +187,7 @@ tableWithGameDecoder =
 type TableError
     = TableNotFound
     | NameTaken
+    | NameEmpty
     | PlayerNotFound
 
 
@@ -201,7 +202,11 @@ tableErrorDecoder =
                 "Conflict" ->
                     Decode.succeed NameTaken
 
+                "Unprocessable" ->
+                    Decode.succeed NameEmpty
+
                 "Forbidden" ->
+                    -- Can be game error as well
                     Decode.succeed PlayerNotFound
 
                 val ->

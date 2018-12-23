@@ -3,6 +3,7 @@
 module AgilePoker.Data.Player
   ( Player(..)
   , Players
+  , PlayerError(..)
   , createPlayer
   , addPlayer
   , addPlayerConnection
@@ -23,6 +24,7 @@ import           Data.Text               (Text)
 
 import qualified Data.IntMap             as IntMap
 import qualified Data.Map                as Map
+import qualified Data.Text               as Text
 import qualified Network.WebSockets      as WS
 
 import           AgilePoker.Data.Id      (Id)
@@ -47,7 +49,13 @@ instance ToJSON Player where
         ]
 
 
-type Players = Map (Id SessionId) Player
+type Players =
+  Map (Id SessionId) Player
+
+
+data PlayerError
+  = NameTaken
+  | NameEmpty
 
 
 createPlayer :: Text -> Player
@@ -59,14 +67,18 @@ nameTaken name sessions = not $ Map.null $
   Map.filter ((==) name . playerName) sessions
 
 
-addPlayer :: Session -> Text -> Players -> Maybe ( Players, Player )
+addPlayer :: Session -> Text -> Players -> Either PlayerError ( Players, Player )
 addPlayer id' name players =
-  if nameTaken name players then
-    Nothing
+  if Text.null name then
+    Left NameEmpty
+  else if nameTaken name players then
+    Left NameTaken
   else
-    let newPlayer = createPlayer name
+    let
+      newPlayer =
+        createPlayer name
     in
-    Just $ ( Map.insert id' newPlayer players, newPlayer )
+    Right ( Map.insert id' newPlayer players, newPlayer )
 
 
 addConnectionToPlayer :: WS.Connection -> Player -> (Player, Int)
