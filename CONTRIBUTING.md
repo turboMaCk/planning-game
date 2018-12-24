@@ -7,7 +7,7 @@ compilers required to build the project.
 ## Installation
 
 Please make sure you have nix installed on your system using instractions
-from official website
+from official website.
 
 After clonning this project you need to run `nix-shell` within project directory.
 
