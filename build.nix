@@ -4,8 +4,7 @@ let
       haskellPackages = pkgs.haskellPackages.override {
         overrides = haskellPackagesNew: haskellPackagesOld: rec {
           agilePoker =
-            haskellPackagesNew.callPackage ./default.nix {
-              elm = pkgs.elmPackages.elm;
+            haskellPackagesNew.callPackage ./server.nix {
               libiconv = pkgs.libiconv;
             };
         };
@@ -13,6 +12,19 @@ let
     };
   };
 
-  pkgs = import <nixpkgs> { inherit config; };
+  pkgs =
+    import <nixpkgs> { inherit config; };
+
+  elm =
+    pkgs.elmPackages.elm;
+
+  frontend =
+    pkgs.callPackage ./client.nix {
+      stdenv = pkgs.stdenv;
+      elm = pkgs.elmPackages.elm;
+      server = pkgs.haskellPackages.agilePoker;
+    };
 in
-haskellPackages.agilePoker;
+rec { server = pkgs.haskellPackages.agilePoker;
+      client = frontend;
+    }
