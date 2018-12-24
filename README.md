@@ -6,7 +6,7 @@
 
 ![screenshot](docs/screenshot.png)
 
-Simple "voting poker" implementation build with efficiency
+Simple voting poker implementation build with efficiency
 flexibility and easy deployment in mind.
 Enabling remote teams to effectively identify complexities
 and specification weak points in collaborative way.
