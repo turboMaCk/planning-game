@@ -1,6 +1,6 @@
 <div align="center">
     <h1>Agile Poker</h1>
-    <p>
+    <p>Enabling remote teams to effectively identify complexities and specification weak points in collaborative way.</p>
     <!-- Badges -->
 </div>
 
