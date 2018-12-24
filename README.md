@@ -13,13 +13,13 @@ and specification weak points in collaborative way.
 
 **This project is still considered ALPHA**
 
-### Links
+## Links
 
 - [Cookies Usage](docs/COOKIES.md)
 - [Contribution Guidelines](CONTRIBUTING.md)
 - [Self Hosting](docs/HOSTING.md)
 
-### License
+## License
 
 This work contains **derivation** of [Scrum-poker-cards](https://github.com/redbooth/Scrum-poker-cards)
 by [redbooth](https://redbooth.com/) used under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
