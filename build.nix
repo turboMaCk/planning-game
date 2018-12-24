@@ -15,4 +15,4 @@ let
 
   pkgs = import <nixpkgs> { inherit config; };
 in
-pkgs.haskellPackages.agilePoker
+haskellPackages.agilePoker;
