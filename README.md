@@ -1,14 +1,15 @@
-<div class="center">
+<div align="center">
     <h1>Agile Poker</h1>
+    <p>
     <!-- Badges -->
 </div>
+
+![screenshot](docs/screenshot.png)
 
 Simple "voting poker" implementation build with efficiency
 flexibility and easy deployment in mind.
 Enabling remote teams to effectively identify complexities
 and specification weak points in collaborative way.
-
-![screenshot](docs/screenshot.md)
 
 **This project is still considered ALPHA**
 
