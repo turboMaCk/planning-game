@@ -1,6 +1,6 @@
 dist/
 elm-stuff/
-/result
+/result*
 /serve
 /public/app.js
 dist-newstyle/
