@@ -21,4 +21,4 @@ This is the list of cookies used by the application:
 | cookiesApproved | Boolean    | 1 day      | Persists state of confirmation of cookies usage                     |
 | sessionId       | String     | never      | Stores session id used to match browser to player in scope of table |
 
-Implementation can be reviewed in ![init.js](blob/master/public/init.js)
+Implementation can be reviewed in [init.js](../public/init.js)
