@@ -1,4 +1,4 @@
-{ stdenv, elm }:
+{ stdenv, elm, server }:
 stdenv.mkDerivation {
     name = "agile-poker-client";
     src = ./.;
