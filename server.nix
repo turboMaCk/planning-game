@@ -2,7 +2,7 @@
 , http-types, mtl, random, servant, servant-server
 , servant-websockets, stdenv, text, wai, wai-extra
 , wai-middleware-static, warp, websockets
-, libiconv
+, libiconv, client
 }:
 mkDerivation {
   pname = "agile-poker";
