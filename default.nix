@@ -15,9 +15,6 @@ let
   pkgs =
     import <nixpkgs> { inherit config; };
 
-  elm =
-    pkgs.elmPackages.elm;
-
   frontend =
     pkgs.callPackage ./client.nix {
       stdenv = pkgs.stdenv;

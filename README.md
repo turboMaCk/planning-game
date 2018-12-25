@@ -16,7 +16,7 @@ and specification weak points in collaborative way.
 ## Links
 
 - [Cookies Usage](docs/COOKIES.md)
-- [Contribution Guidelines](CONTRIBUTING.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
 - [Self Hosting](docs/HOSTING.md)
 
 ## License
