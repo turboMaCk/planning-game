@@ -5,6 +5,9 @@
     <a href="https://travis-ci.org/turboMaCk/agile-poker">
         <img src="https://travis-ci.org/turboMaCk/agile-poker.svg?branch=master" alt="build">
     </a>
+    <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">
+        <img src="https://img.shields.io/badge/license-AGPLv3-brightgreen.svg" alt="AGPLv3">
+    <a>
 </div>
 
 ![screenshot](docs/screenshot.png)
