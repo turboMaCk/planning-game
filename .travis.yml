@@ -1,2 +1,1 @@
 language: nix
-script: nix-build -A docker
