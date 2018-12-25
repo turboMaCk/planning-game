@@ -1,4 +1,4 @@
-{ stdenv, elm, server }:
+{ stdenv, elm }:
 
 stdenv.mkDerivation {
   name = "agile-poker-client";
@@ -8,13 +8,12 @@ stdenv.mkDerivation {
 
   buildPhase = ''
     export ELM_HOME=$(pwd)
-    mkdir $out
     elm make client/Main.elm --output=app.js
   '';
 
   installPhase = ''
-    mkdir $out/public
-    cp public/* $out/public/*
+    mkdir $out
+    cp -r public $out
     cp app.js $out/public/
   '';
 }

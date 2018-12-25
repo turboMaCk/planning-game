@@ -5,7 +5,6 @@ let
         pkgs.callPackage ./client.nix {
           stdenv = pkgs.stdenv;
           elm = pkgs.elmPackages.elm;
-          server = pkgs.haskellPackages.agilePoker;
         };
 
       # Build docker container
@@ -16,6 +15,9 @@ let
       docker-container =
         pkgs.dockerTools.buildImage {
           name = "agile-poker";
+          extraCommands = ''
+            cp -r ${client}/public .
+          '';
           config.Cmd = [ "${haskellPackages.agilePoker-mini}/bin/agile-poker" ];
         };
 
@@ -25,7 +27,6 @@ let
             agilePoker =
               haskellPackagesNew.callPackage ./server.nix {
                 libiconv = pkgs.libiconv;
-                client = client;
               };
 
             # statically liked version (used for docker)
@@ -33,7 +34,6 @@ let
               pkgs.haskell.lib.justStaticExecutables
                 (haskellPackagesNew.callPackage ./server.nix {
                   libiconv = pkgs.libiconv;
-                  client = client;
                 });
           };
         };
