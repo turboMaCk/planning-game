@@ -10,4 +10,4 @@ let
                 ];
         };
 in
-(import ./build.nix).server.env // addons
+(import ./default.nix).server.env // addons
