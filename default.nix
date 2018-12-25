@@ -6,6 +6,7 @@ let
           agilePoker =
             haskellPackagesNew.callPackage ./server.nix {
               libiconv = pkgs.libiconv;
+              client = client;
             };
         };
       };
@@ -15,7 +16,7 @@ let
   pkgs =
     import <nixpkgs> { inherit config; };
 
-  frontend =
+  client =
     pkgs.callPackage ./client.nix {
       stdenv = pkgs.stdenv;
       elm = pkgs.elmPackages.elm;
@@ -23,5 +24,5 @@ let
     };
 in
 rec { server = pkgs.haskellPackages.agilePoker;
-      client = frontend;
+      client = client;
     }
