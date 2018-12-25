@@ -3,7 +3,7 @@ let
     packageOverrides = pkgs: rec {
       client =
         pkgs.callPackage ./client.nix {
-          inherit pkgs;
+          stdenv = pkgs.stdenv;
           elm = pkgs.elmPackages.elm;
           server = pkgs.haskellPackages.agilePoker;
         };
@@ -32,8 +32,8 @@ let
             agilePoker-mini =
               pkgs.haskell.lib.justStaticExecutables
                 (haskellPackagesNew.callPackage ./server.nix {
-                      libiconv = pkgs.libiconv;
-                      client = client;
+                  libiconv = pkgs.libiconv;
+                  client = client;
                 });
           };
         };

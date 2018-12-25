@@ -2,6 +2,9 @@
     <h1>Agile Poker</h1>
     <p>Planning tool for remote teams.</p>
     <!-- Badges -->
+    <a href="https://travis-ci.org/turboMaCk/agile-poker">
+        <img src="https://travis-ci.org/turboMaCk/agile-poker.svg?branch=master" alt="build">
+    </a>
 </div>
 
 ![screenshot](docs/screenshot.png)
