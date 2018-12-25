@@ -6,7 +6,6 @@ let
             buildInputs = with pkgs;
                 [ elmPackages.elm
                   haskellPackages.ghcid
-                  haskellPackages.cabal-install
                 ];
         };
 in
