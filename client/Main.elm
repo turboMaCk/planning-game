@@ -4,7 +4,7 @@ import Authorize exposing (Authorize(..))
 import Browser exposing (Document, UrlRequest(..))
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
-import Css
+import Css exposing (Style)
 import Data exposing (Session)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
@@ -214,6 +214,15 @@ subscriptions model =
 -- View
 
 
+container : Style
+container =
+    Css.batch
+        [ Css.width <| Css.px 1100
+        , Css.margin2 Css.zero Css.auto
+        , Css.padding2 Css.zero <| Css.px 16
+        ]
+
+
 viewCookiesNotice : Html Msg
 viewCookiesNotice =
     Html.styled Html.div
@@ -230,9 +239,7 @@ viewCookiesNotice =
         ]
         []
         [ Html.styled Html.div
-            [ Css.width <| Css.px 1200
-            , Css.margin2 Css.zero Css.auto
-            ]
+            [ container ]
             []
             [ Html.text "This website is using cookies to persist anonymous identifiers of sessions to provide functionality. "
             , Html.a [ Attrs.href "https://github.com/turboMaCk/blob/master/docs/COOKIES.md" ] [ Html.text "Learn More" ]
@@ -260,8 +267,7 @@ withLayout showCookiesNotice inner =
       else
         Html.text ""
     , Html.styled Html.div
-        [ Css.width <| Css.px 1200
-        , Css.margin2 Css.zero Css.auto
+        [ container
         , if showCookiesNotice then
             Css.marginTop <| Css.px 100
 
@@ -271,7 +277,6 @@ withLayout showCookiesNotice inner =
         []
         [ Theme.logo
         , inner
-        , Html.styled Html.div [ Css.property "clear" "both" ] [] []
         , Html.styled Html.footer
             [ Css.position Css.absolute
             , Css.bottom Css.zero
