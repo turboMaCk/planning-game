@@ -19,6 +19,12 @@ and specification weak points in collaborative way.
 
 **This project is still considered ALPHA**
 
+## Quick Start
+
+```
+$ docker run -p 3000:3000 --rm -it turbomack/agile-poker
+```
+
 ## Links
 
 - [Cookies Usage](docs/COOKIES.md)
