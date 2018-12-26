@@ -456,12 +456,7 @@ viewGame model =
                     , viewOverviewTable (allPlayers model) data
                     ]
     in
-    Html.styled Html.div
-        [ Css.width <| Css.px 835
-        , Css.float Css.left
-        ]
-        []
-        inner
+    Html.styled Html.div [ Css.width <| Css.px 835 ] [] inner
 
 
 viewCurrentGame : Game -> Html msg
@@ -569,11 +564,14 @@ view model =
                     Hidden
     in
     Component.withTableNotFound model.tableError <|
-        Html.div []
+        Html.styled Html.div
+            [ Css.displayFlex
+            , Css.justifyContent Css.spaceBetween
+            ]
+            []
             [ viewGame model
             , Html.styled Html.aside
-                [ Css.float Css.left
-                , Css.marginLeft <| Css.px 20
+                [ Css.width <| Css.px 250
                 ]
                 []
                 [ viewCurrentGame model.game

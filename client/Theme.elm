@@ -142,7 +142,7 @@ globalStyles =
         , GCss.body
             [ Css.position Css.relative
             , Css.minHeight <| Css.pct 100
-            , Css.margin2 Css.zero <| Css.px 16
+            , Css.margin Css.zero
             , Css.padding4 (Css.px 6) Css.zero (Css.px 200) Css.zero
             , Css.boxSizing Css.borderBox
             ]
