@@ -565,14 +565,13 @@ view model =
     in
     Component.withTableNotFound model.tableError <|
         Html.styled Html.div
-            [ Css.display Css.inlineFlex
+            [ Css.displayFlex
             , Css.justifyContent Css.spaceBetween
             ]
             []
             [ viewGame model
             , Html.styled Html.aside
-                [ Css.flexBasis <| Css.px 250
-                , Css.width <| Css.px 250
+                [ Css.width <| Css.px 250
                 ]
                 []
                 [ viewCurrentGame model.game
