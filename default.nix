@@ -15,9 +15,9 @@ let
       docker-container =
         pkgs.dockerTools.buildImage {
           name = "agile-poker";
-          extraCommands = ''
-            cp -r ${client}/public .
-          '';
+          #extraCommands = ''
+            #cp -r ${client}/public .
+          #'';
           config.Cmd = [ "${haskellPackages.agilePoker-mini}/bin/agile-poker" ];
         };
 
