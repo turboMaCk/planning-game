@@ -242,7 +242,7 @@ viewCookiesNotice =
             [ container ]
             []
             [ Html.text "This website is using cookies to persist anonymous identifiers of sessions to provide functionality. "
-            , Html.a [ Attrs.href "https://github.com/turboMaCk/blob/master/docs/COOKIES.md" ] [ Html.text "Learn More" ]
+            , Html.a [ Attrs.href "https://github.com/turboMaCk/agile-poker/blob/master/docs/COOKIES.md" ] [ Html.text "Learn More" ]
             , Html.styled Html.button
                 [ Css.marginLeft <| Css.px 12
                 , Css.float Css.right
