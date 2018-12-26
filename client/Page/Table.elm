@@ -456,7 +456,7 @@ viewGame model =
                     , viewOverviewTable (allPlayers model) data
                     ]
     in
-    Html.styled Html.div [ Css.flexBasis <| Css.px 835 ] [] inner
+    Html.styled Html.div [ Css.width <| Css.px 835 ] [] inner
 
 
 viewCurrentGame : Game -> Html msg
@@ -571,7 +571,9 @@ view model =
             []
             [ viewGame model
             , Html.styled Html.aside
-                [ Css.flexBasis <| Css.px 250 ]
+                [ Css.flexBasis <| Css.px 250
+                , Css.width <| Css.px 250
+                ]
                 []
                 [ viewCurrentGame model.game
                 , viewPointsSoFar model.game
