@@ -1,12 +1,10 @@
-let
-  pkgs = import <nixpkgs> { };
+{ pkgs ? import <nixpkgs> { } }:
+(pkgs.stdenv.mkDerivation {
+  name = "agile-poker-shell";
+  buildInputs = with pkgs;
+    [ elmPackages.elm
+      haskellPackages.ghcid
+      (import ./default.nix).server
+    ];
+})
 
-  addons =
-    pkgs.mkShell {
-      buildInputs = with pkgs;
-        [ elmPackages.elm
-          haskellPackages.ghcid
-        ];
-    };
-in
-(import ./default.nix).server.env // addons
