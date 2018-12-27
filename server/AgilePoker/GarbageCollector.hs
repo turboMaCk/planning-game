@@ -52,6 +52,7 @@ start t state = do
   putStrLn $ "GC will run every " <> show t <> "th minute."
 
   forever $ do
+    -- convert minutes
     Concurrent.threadDelay (10^6 * 60 * t )
 
     putStrLn "Garbage collectiong...."
