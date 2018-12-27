@@ -150,6 +150,7 @@ update navigationKey msg model =
 
                 Err e ->
                     -- @TODO: handle errors
+                    -- Translate StreamError to ApiError TableError?
                     ( model, Cmd.none )
 
         Send streamMsg ->

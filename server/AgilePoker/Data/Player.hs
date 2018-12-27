@@ -62,12 +62,14 @@ data PlayerError
 
 
 createPlayer :: Text -> Player
-createPlayer n = Player n IntMap.empty
+createPlayer n =
+  Player n IntMap.empty
 
 
 nameTaken :: Text -> Players -> Bool
-nameTaken name sessions = not $ Map.null $
-  Map.filter ((==) name . playerName) sessions
+nameTaken name sessions =
+  not $ Map.null $
+    Map.filter ((==) name . playerName) sessions
 
 
 addPlayer :: Session -> Text -> Players -> Either PlayerError ( Players, Player )

@@ -13,6 +13,7 @@ module AgilePoker.Data.Table
   , joinTable
   , getTablePlayer
   , tableStreamHandler
+  , tableActive
   ) where
 
 import           Control.Concurrent          (MVar)
@@ -27,6 +28,7 @@ import qualified Control.Concurrent          as Concurrent
 import qualified Data.Aeson                  as Aeson
 import qualified Data.Map.Strict             as Map
 import qualified Data.Text                   as Text
+import qualified Data.Time.Clock             as Clock
 import qualified Network.WebSockets          as WS
 
 import           AgilePoker.Data.Game
@@ -50,16 +52,32 @@ createTable id' name' tables =
   in
   if Text.null name then
     pure ( tables,  Left $ PlayerError NameEmpty )
+
   else do
     tId <- generateId tables
+    now <- Clock.getCurrentTime
+
     let banker = createPlayer name
-    let newTable = Table tId ( id', banker ) emptyPlayers Nothing
+    let newTable = Table tId ( id', banker ) emptyPlayers Nothing now
+
     mvarTable <- Concurrent.newMVar newTable
 
     pure
         ( Map.insert tId mvarTable tables
         , Right newTable
         )
+
+
+tableActive :: Table -> Bool
+tableActive Table { tableBanker, tablePlayers } =
+  bankerOnline || anyPlayerOnline
+
+  where
+    bankerOnline =
+      hasConnection $ snd tableBanker
+
+    anyPlayerOnline =
+      not $ Map.null $ Map.filter hasConnection tablePlayers
 
 
 -- @TODO: Add check if session is not already present
@@ -72,8 +90,10 @@ joinTable session tableId name' tables =
   case Map.lookup tableId tables of
     Just mvar -> do
       table <- Concurrent.readMVar mvar
+
       if playerName (snd $ tableBanker table) == name then
         pure $ Left $ PlayerError NameTaken
+
       else
         let
             ePlayers = addPlayer session name (tablePlayers table)
@@ -112,6 +132,7 @@ getTablePlayer session tableId tables =
 
       if fst (tableBanker table) == session then
           pure $ Right $ snd (tableBanker table)
+
       else
           pure $ maybe (Left PlayerNotFound) Right $
             Map.lookup session $ tablePlayers table
@@ -131,6 +152,7 @@ assignConnection session conn table@Table { tableBanker, tablePlayers } =
         ( table { tableBanker = ( session, updatedBanker ) }
         , Just ( updatedBanker, connId )
         )
+
     else
         let ( updatedPlayers, mPair ) = addPlayerConnection session conn tablePlayers
         in
@@ -173,10 +195,12 @@ disconnect state sessionId connId =
 
       if hasConnection player then
         pure ()
+
       else
         broadcast updatedTable $ PlayerStatusUpdate player
 
       pure updatedTable
+
     else do
       let updatedTable = table { tablePlayers = disconnectPlayer sessionId connId (tablePlayers table) }
       let mPlayer = Map.lookup sessionId $ tablePlayers updatedTable
@@ -214,6 +238,7 @@ tableStreamHandler state session id' conn = do
                     if playerNumberOfConnections player == 1 then do
                         table <- Concurrent.readMVar tableState
                         broadcast table $ PlayerStatusUpdate player
+
                     else
                         mzero
 
@@ -252,12 +277,15 @@ handleMsg conn session (NewGame name) table
       let players = tablePlayers table
       broadcast table $ GameStarted (tableBanker table) players games
       pure $ table { tableGame = Just games }
+
   | not $ isBanker session table = do
       -- @TODO: Handle forbidden action
       pure $ table
+
   | otherwise =
       -- @TODO: Handle already started
       pure $ table
+
 handleMsg conn session FinishRound table
   | isBanker session table =
       case tableGame table of
@@ -265,12 +293,15 @@ handleMsg conn session FinishRound table
           let newGames = finishCurrentGame games
           broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) newGames
           pure $ table { tableGame = Just newGames }
+
         Nothing ->
           -- @TODO: handled non started game
           pure table
+
   | otherwise =
     -- @TODO: handle forbidden
     pure table
+
 handleMsg conn session (NextRound vote name) table
   | isBanker session table =
       case tableGame table of
@@ -285,9 +316,11 @@ handleMsg conn session (NextRound vote name) table
         Nothing ->
           -- @TODO: handled non started game
           pure table
+
   | otherwise =
     -- @TODO: handle forbidden
     pure table
+
 handleMsg conn session (Vote vote) table =
   case tableGame table of
     Just game ->
@@ -301,6 +334,7 @@ handleMsg conn session (Vote vote) table =
 
             broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) finishedNewGames
             pure $ table { tableGame = Just finishedNewGames }
+
           else
             pure $ table { tableGame = Just newGames }
 
@@ -311,6 +345,7 @@ handleMsg conn session (Vote vote) table =
     Nothing ->
       -- @TODO: hanlde not started
       pure table
+
 handleMsg conn session (FinishGame vote) table
   | isBanker session table =
     case tableGame table of
@@ -322,9 +357,11 @@ handleMsg conn session (FinishGame vote) table
           Left _ ->
             -- @TODO: handle already canceled
             pure table
+
       Nothing ->
         -- @TODO: handle game wasn't started
         pure table
+
   | otherwise =
       -- @TODO: handle forbidden
       pure table

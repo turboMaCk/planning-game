@@ -5,7 +5,13 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
-module AgilePoker.Api (ServerState, initState, app) where
+
+module AgilePoker.Api
+  ( ServerState
+  , initState
+  , app
+  , tables
+  ) where
 
 import           Control.Concurrent           (MVar)
 import qualified Control.Concurrent           as Concurrent
@@ -25,22 +31,8 @@ import           AgilePoker.Api.Error
 import           AgilePoker.Api.Middleware
 import           AgilePoker.Api.PlayerInfo
 
+import           AgilePoker.State
 import           AgilePoker.Data
-
-
--- State
-
-
-data ServerState = ServerState
-  { sessions :: MVar Sessions
-  , tables   :: MVar Tables
-  }
-
-
-initState :: IO ServerState
-initState = ServerState
-  <$> Concurrent.newMVar emptySessions
-  <*> Concurrent.newMVar emptyTables
 
 
 -- API
