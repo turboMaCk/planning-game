@@ -28,8 +28,8 @@ import qualified Control.Concurrent          as Concurrent
 import qualified Data.Aeson                  as Aeson
 import qualified Data.Map.Strict             as Map
 import qualified Data.Text                   as Text
+import qualified Data.Time.Clock             as Clock
 import qualified Network.WebSockets          as WS
-import qualified Data.Time.Clock as Clock
 
 import           AgilePoker.Data.Game
 import           AgilePoker.Data.Id          (Id, generateId)

@@ -10,22 +10,18 @@ import qualified AgilePoker.Api              as Api
 import qualified AgilePoker.GarbageCollector as GC
 
 
-envStr :: String -> String -> IO String
-envStr name def =
-  fromMaybe def <$> lookupEnv name
-
-
-envInt :: String -> Int -> IO Int
-envInt name def =
+envRead :: Read a => String -> a -> IO a
+envRead name def =
   maybe def read <$> lookupEnv name
 
 
 main :: IO ()
 main = do
   state <- Api.initState
-  gcPeriod <- envInt "GC_EVERY" 30
+  gcPeriod <- envRead "GC_EVERY_MIN" 30
+  gcTableMinLife <- envRead "GC_TABLE_MIN_LIFE_MIN" 120
 
   -- Start garbage collector
-  forkIO $ GC.start state gcPeriod
+  forkIO $ GC.start state gcPeriod gcTableMinLife
 
   Warp.runEnv 3000 $ Api.app state
