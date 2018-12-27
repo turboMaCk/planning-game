@@ -21,11 +21,11 @@ this is not implemented yet.
 Default configuration chan be changed using **ENVIRONMENT VARIABLES**.
 Here is a table of all variables with description.
 
-| Var Name              | Default Value | Description                                                |
-| --------------------- | ------------- | ---------------------------------------------------------- |
-| PORT                  | 3000          | Port to which server binds after start.                    |
-| GC_EVERY_MIN          | 30            | Frequency of Garbage Collection for server state (in mins) |
-| GC_TABLE_MIN_LIFE_MIN | 120           | Minimal life of table from creating (in mins)              |
+| Var Name                | Default Value | Description                                                |
+| ----------------------- | ------------- | ---------------------------------------------------------- |
+| `PORT`                  | `3000`        | Port to which server binds after start.                    |
+| `GC_EVERY_MIN`          | `30`          | Frequency of Garbage Collection for server state (in mins) |
+| `GC_TABLE_MIN_LIFE_MIN` | `120`         | Minimal life of table from creating (in mins)              |
 
 Implementation can be found in [AgilePoker.hs](https://github.com/turboMaCk/agile-poker/blob/master/server/AgilePoker.hs)
 
