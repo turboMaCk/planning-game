@@ -1,4 +1,6 @@
-module AgilePoker.GarbageCollector where
+{-# LANGUAGE NamedFieldPuns      #-}
+
+module AgilePoker.GarbageCollector (start) where
 
 -- This implements process that periodically cleans
 -- old data from ServerState to maitain certain levels
@@ -13,6 +15,7 @@ import qualified Control.Concurrent as Concurrent
 import qualified Data.Map           as Map
 
 import           AgilePoker.Data    (Tables, tableActive)
+import           AgilePoker.State
 
 
 filterMaybes :: Ord k => Map k (Maybe a) -> Map k a
@@ -47,8 +50,8 @@ gcTables state =
     pure $ filterMaybes labeled
 
 
-start :: Int -> MVar Tables -> IO ()
-start t state = do
+start :: ServerState -> Int -> IO ()
+start (ServerState { tables }) t = do
   putStrLn $ "GC will run every " <> show t <> "th minute."
 
   forever $ do
@@ -56,8 +59,8 @@ start t state = do
     Concurrent.threadDelay (10^6 * 60 * t )
 
     putStrLn "Garbage collectiong...."
-    putTables state
+    putTables tables
 
-    gcTables state
+    gcTables tables
 
-    putTables state
+    putTables tables

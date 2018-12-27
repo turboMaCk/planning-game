@@ -1,8 +1,8 @@
 module Main where
 
 import           Control.Concurrent          (forkIO)
+import           Data.Maybe                  (fromMaybe)
 import           System.Environment          (lookupEnv)
-import Data.Maybe (fromMaybe)
 
 import qualified Network.Wai.Handler.Warp    as Warp
 
@@ -26,6 +26,6 @@ main = do
   gcPeriod <- envInt "GC_EVERY" 30
 
   -- Start garbage collector
-  forkIO $ GC.start gcPeriod (Api.tables state)
+  forkIO $ GC.start state gcPeriod
 
   Warp.runEnv 3000 $ Api.app state

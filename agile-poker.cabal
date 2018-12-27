@@ -35,6 +35,7 @@ executable agile-poker
                      , AgilePoker.Data.Table.Msg
                      , AgilePoker.Data.Game
                      , AgilePoker.GarbageCollector
+                     , AgilePoker.State
   hs-source-dirs:      server
   -- other-extensions:
   build-depends:       base >=4.11 && <4.12
