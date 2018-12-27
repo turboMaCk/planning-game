@@ -41,7 +41,6 @@ start t state = do
     Concurrent.threadDelay (10^6 * 60 * t )
 
     putStrLn "Garbage collectiong...."
-
     putTables state
 
     Concurrent.modifyMVar_ state $ \tables -> do
@@ -56,6 +55,3 @@ start t state = do
       pure $ filterMaybes labeled
 
     putTables state
-
-    -- @TODO: do cleaning
-    pure ()
