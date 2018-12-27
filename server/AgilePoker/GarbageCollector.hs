@@ -33,6 +33,20 @@ putTables state = do
   putStrLn $ "Tables ids: " <> show ids
 
 
+gcTables :: MVar Tables -> IO ()
+gcTables state =
+  Concurrent.modifyMVar_ state $ \tables -> do
+    labeled <- forM tables $ \s -> do
+      table <- Concurrent.readMVar s
+
+      if tableActive table then
+        pure $ Just s
+      else
+        pure $ Nothing
+
+    pure $ filterMaybes labeled
+
+
 start :: Int -> MVar Tables -> IO ()
 start t state = do
   putStrLn $ "GC will run every " <> show t <> "th minute."
@@ -43,15 +57,6 @@ start t state = do
     putStrLn "Garbage collectiong...."
     putTables state
 
-    Concurrent.modifyMVar_ state $ \tables -> do
-      labeled <- forM tables $ \s -> do
-        table <- Concurrent.readMVar s
-
-        if tableActive table then
-          pure $ Just s
-        else
-          pure $ Nothing
-
-      pure $ filterMaybes labeled
+    gcTables state
 
     putTables state
