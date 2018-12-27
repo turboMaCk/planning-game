@@ -6,7 +6,6 @@ module AgilePoker.GarbageCollector (start) where
 -- old data from ServerState to maitain certain levels
 -- of space usage.
 
-
 import           Control.Concurrent (MVar)
 import           Control.Monad
 import           Data.Map.Strict    (Map)
@@ -65,9 +64,6 @@ start (ServerState { tables }) frequency tableMinLife = do
     Concurrent.threadDelay (10^6 * 60 * frequency)
 
     putStrLn "Garbage collecting...."
-    putTables tables
 
     now <- Clock.getCurrentTime
     gcTables tables tableMinLife now
-
-    putTables tables
