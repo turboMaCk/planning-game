@@ -21,16 +21,18 @@ import           AgilePoker.Data.Game        (GameError (..), Games)
 import           AgilePoker.Data.Id          (Id)
 import           AgilePoker.Data.Player      (Player, PlayerError (..), Players)
 import           AgilePoker.Data.Session     (SessionId)
+import           Data.Time.Clock             (UTCTime)
 
 
 data TableId
 
 
 data Table = Table
-  { tableId      :: Id TableId
-  , tableBanker  :: ( Id SessionId, Player )
-  , tablePlayers :: Players
-  , tableGame    :: Maybe Games
+  { tableId        :: Id TableId
+  , tableBanker    :: ( Id SessionId, Player )
+  , tablePlayers   :: Players
+  , tableGame      :: Maybe Games
+  , tableCreatedAt :: UTCTime
   }
 
 
