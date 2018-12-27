@@ -29,6 +29,21 @@ Here is a table of all variables with description.
 
 Implementation can be found in [AgilePoker.hs](https://github.com/turboMaCk/agile-poker/blob/master/server/AgilePoker.hs)
 
+### Understanding Garbage Collection
+
+Garbage Collector (GC) in terms of [configuration](#configuration) doesn't mean
+GHC's runtime garbage collection but Garbage Collection for state of a server.
+This application holds all its state in memmory in a way this state is shared
+between all threads handling HTTP requests and Web Socket connections.
+This means state of Sessions and Tables is hold in a data strcuture.
+Garbage Collector is another GHC thread spawn during start of an application
+which periodically cleans data in this shared data structure by following rules:
+
+- If table exists for longer than `GC_TABLE_MIN_LIFE_MIN` it can't be garbage collected
+- If there is (active) Web Socket connection to the table it can't be garbage collected
+- All other tables are removed from state by Garbage Collector
+- Sessions are never GCed at the moment (Every session is ByteString hold in Memmory)
+
 ## Docker
 
 There is [official docker image](https://cloud.docker.com/u/turbomack/repository/docker/turbomack/agile-poker)
