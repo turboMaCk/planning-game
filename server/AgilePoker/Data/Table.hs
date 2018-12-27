@@ -13,6 +13,7 @@ module AgilePoker.Data.Table
   , joinTable
   , getTablePlayer
   , tableStreamHandler
+  , tableActive
   ) where
 
 import           Control.Concurrent          (MVar)
@@ -60,6 +61,18 @@ createTable id' name' tables =
         ( Map.insert tId mvarTable tables
         , Right newTable
         )
+
+
+tableActive :: Table -> Bool
+tableActive Table { tableBanker, tablePlayers } =
+  bankerOnline || anyPlayerOnline
+
+  where
+    bankerOnline =
+      hasConnection $ snd tableBanker
+
+    anyPlayerOnline =
+      not $ Map.null $ Map.filter hasConnection tablePlayers
 
 
 -- @TODO: Add check if session is not already present

@@ -5,7 +5,13 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
-module AgilePoker.Api (ServerState, initState, app) where
+
+module AgilePoker.Api
+  ( ServerState
+  , initState
+  , app
+  , tables
+  ) where
 
 import           Control.Concurrent           (MVar)
 import qualified Control.Concurrent           as Concurrent
