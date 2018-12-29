@@ -56,5 +56,6 @@ executable agile-poker
                      , cookie
                      , mtl
                      , time
+                     , blaze-html
   -- hs-source-dirs:
   default-language:    Haskell2010
