@@ -370,7 +370,7 @@ viewOverviewTable players_ { playerVotes, results } =
         highlighted =
             Css.batch
                 [ tdStyle
-                , Css.fontWeight <| Css.int 600
+                , Css.fontWeight <| Css.int 700
                 ]
 
         viewTr ( name, votes ) =

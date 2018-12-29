@@ -2,7 +2,7 @@
 , http-types, mtl, random, servant, servant-server
 , servant-websockets, stdenv, text, wai, wai-extra
 , wai-middleware-static, warp, websockets
-, libiconv, time
+, libiconv, time, blaze-html
 }:
 mkDerivation {
   pname = "agile-poker";
@@ -13,7 +13,7 @@ mkDerivation {
   executableHaskellDepends = [
     aeson base bytestring containers cookie http-types mtl random
     servant servant-server servant-websockets text wai wai-extra
-    wai-middleware-static warp websockets time
+    wai-middleware-static warp websockets time blaze-html
   ];
   executableSystemDepends = [ libiconv ];
   license = stdenv.lib.licenses.agpl3;

@@ -114,7 +114,7 @@ textField =
         , Css.lineHeight <| Css.px 25
         , Css.fontSize <| Css.px 17
         , Css.outline Css.zero
-        , Css.fontWeight <| Css.int 600
+        , Css.fontWeight <| Css.int 700
         , Css.borderBottom3 (Css.px 3) Css.solid values.secondaryColor
         , Css.backgroundColor <| Css.hex "#d6e5ff"
         ]
@@ -128,7 +128,7 @@ pill =
         , Css.margin2 Css.zero <| Css.px 4
         , Css.padding2 Css.zero <| Css.px 4
         , Css.fontSize <| Css.px 12
-        , Css.fontWeight <| Css.int 600
+        , Css.fontWeight <| Css.int 700
         , Css.color values.lightColor
         , Css.textAlign Css.center
         ]
