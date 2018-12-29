@@ -9,10 +9,11 @@ import           Network.Wai                   (Middleware, Response,
                                                 responseLBS)
 import           Network.Wai.Middleware.Static (addBase, staticPolicy)
 import           Network.Wai.Parse             (parseHttpAccept)
-
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
-import           Text.Blaze.Html5              as Html
-import           Text.Blaze.Html5.Attributes   as Attrs
+import           Text.Blaze.Html5              (Html)
+
+import qualified Text.Blaze.Html5              as Html
+import qualified Text.Blaze.Html5.Attributes   as Attrs
 
 
 indexMiddleware :: Middleware
