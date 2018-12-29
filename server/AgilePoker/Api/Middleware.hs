@@ -21,8 +21,10 @@ indexMiddleware application request respond =
   if fromMaybe False $
      (elem "text/html" . parseHttpAccept) <$>
      lookup "Accept" (requestHeaders request)
+
   then
     respond indexRes
+
   else
     application request respond
 
@@ -30,10 +32,12 @@ indexMiddleware application request respond =
     indexRes :: Response
     indexRes =
       responseLBS status200 headers $ renderHtml index
+
         where
-            headers = [ ( "Content-Type", "text/html" )
-                      , ( "Cache-Control", "public, max-age=86400" )
-                      ]
+            headers =
+              [ ( "Content-Type", "text/html" )
+              , ( "Cache-Control", "public, max-age=86400" )
+              ]
 
 
 publicMiddleware :: Middleware
@@ -51,12 +55,14 @@ index =
   Html.docTypeHtml ! Attrs.lang "en_EN" $ do
     Html.head $ do
       Html.title "Agile Poker"
+
       Html.meta
         ! Attrs.httpEquiv "x-ua-compatible"
         ! Attrs.content "ie=edge"
 
       Html.meta
         ! Attrs.charset "UTF-8"
+
       Html.link
         ! Attrs.href "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700"
         ! Attrs.rel "stylesheet"
@@ -64,5 +70,6 @@ index =
     Html.body $ do
       Html.script ""
         ! Attrs.src "/app.js"
+
       Html.script ""
         ! Attrs.src "/init.js"
