@@ -10,7 +10,7 @@ import           Network.Wai                   (Middleware, Response,
 import           Network.Wai.Middleware.Static (addBase, staticPolicy)
 import           Network.Wai.Parse             (parseHttpAccept)
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
-import           Text.Blaze.Html5              (Html)
+import           Text.Blaze.Html5              (Html, (!))
 
 import qualified Text.Blaze.Html5              as Html
 import qualified Text.Blaze.Html5.Attributes   as Attrs
@@ -48,9 +48,13 @@ staticMiddleware =
 
 index :: Html
 index =
-  docTypeHtml ! lang "en_EN" $ do
+  Html.docTypeHtml ! Attrs.lang "en_EN" $ do
     Html.head $ do
       Html.title "Agile Poker"
+      Html.meta
+        ! Attrs.httpEquiv "x-ua-compatible"
+        ! Attrs.content "ie=edge"
+
       Html.meta
         ! Attrs.charset "UTF-8"
       Html.link
