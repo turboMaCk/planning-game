@@ -1,15 +1,15 @@
 # Contributing to Project
 
-The only officialy supported installation is via Nix package manager.
+The only officially supported installation is via Nix package manager.
 Nix takes care of installing all necessary dependencies including
 compilers required to build the project.
 
 ## Installation
 
-Please make sure you have Nix installed on your system using instractions
+Please make sure you have Nix installed on your system using instructions
 from official website.
 
-After clonning this project you need to run `nix-shell` within project directory.
+After cloning this project you need to run `nix-shell` within project directory.
 
 ```shell
 $ nix-shell
@@ -31,13 +31,13 @@ $ cabal build
 $ cabal run
 ```
 
-**Run GHCi:**
+**Run ghci:**
 
 ```shell
 $ cabal shell
 ```
 
-**Run GHCID**
+**Run ghcid**
 
 ```shell
 $ ghcid
