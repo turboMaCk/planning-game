@@ -38,7 +38,7 @@ executable agile-poker
                      , AgilePoker.State
   hs-source-dirs:      server
   -- other-extensions:
-  build-depends:       base
+  build-depends:       base >=4.11 && <4.12
                      , servant
                      , servant-server
                      , wai
