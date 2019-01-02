@@ -88,7 +88,7 @@ instance FromJSON Vote where
       "3"        -> pure ThreePoints
       "5"        -> pure FivePoints
       "8"        -> pure EightPoints
-      "13"       -> pure ThreePoints
+      "13"       -> pure ThreeteenPoints
       "20"       -> pure TwentyPoints
       "40"       -> pure FortyPoints
       "100"      -> pure HunderedPoints
