@@ -3,4 +3,4 @@ nix: 2.1.3
 
 before_install:
   - nix-channel --add https://nixos.org/channels/nixos-18.09 nixos
-  - nix-channel --update nixos-18.03
+  - nix-channel --update nixos-17.09
