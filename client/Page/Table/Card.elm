@@ -71,6 +71,7 @@ view toSide msg vote =
                 , Css.width <| Css.pct 100
                 , Css.height <| Css.pct 100
                 , Css.borderRadius radius
+                , Css.property "-webkit-backface-visibility" "hidden"
                 , Css.property "backface-visibility" "hidden"
                 , Css.backgroundSize2 Css.auto <| Css.pct 100
                 , Css.backgroundPosition Css.center
@@ -129,7 +130,7 @@ view toSide msg vote =
             , Css.after <|
                 [ cardStyles
                 , Css.backgroundImage <| Css.url <| "/svg/card-cover.svg"
-                , Css.transform <| Css.rotateY <| Css.deg 180
+                , Css.transform <| Css.rotateY <| Css.deg -180
                 ]
             ]
             [ Attrs.class "inner-card" ]
