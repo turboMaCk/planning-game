@@ -25,6 +25,14 @@ and specification weak points in collaborative way.
 $ docker run -p 3000:3000 --rm -it turbomack/agile-poker
 ```
 
+## Known Issues
+
+#### WebSocket connection doesn't work in Firefox
+
+Due to an issue with upstream dependecy Firefox isn't supported at the moment
+see issue [servant-sebsockets#7](https://github.com/moesenle/servant-websockets/issues/7)
+for more informations.
+
 ## Links
 
 - [Cookies Usage](docs/COOKIES.md)
