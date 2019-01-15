@@ -15,18 +15,11 @@ module AgilePoker.Api
 
 import           Control.Concurrent           (MVar)
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
-import           Data.ByteString              (ByteString)
-import           Data.Foldable                (forM_)
-import           Data.Maybe                   (maybe)
 import           Data.Text                    (Text)
-import           Network.Wai                  (Response)
 import           Servant
 import           Servant.API.WebSocket        (WebSocket)
 
 import qualified Control.Concurrent           as Concurrent
-import qualified Data.Text                    as Text
-import qualified Data.Text.Encoding           as Text
-import qualified Data.Text.IO                 as Text
 import qualified Network.WebSockets           as WS
 
 import           AgilePoker.Api.Authorization
