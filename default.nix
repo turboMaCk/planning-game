@@ -41,7 +41,7 @@ let
 in with pkgs;
 rec {
   server = haskellPackages.agilePoker;
-  client = client;
+  client = pkgs.client;
   docker = docker-container;
   shell  = haskellPackages.agilePoker.env // pkgs.client;
 }
