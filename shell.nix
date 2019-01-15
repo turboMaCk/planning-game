@@ -1,1 +1,1 @@
-(import ./default.nix).server.env
+(import ./default.nix).shell

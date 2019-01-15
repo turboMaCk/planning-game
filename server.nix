@@ -2,7 +2,7 @@
 , http-types, mtl, random, servant, servant-server
 , servant-websockets, stdenv, text, wai, wai-extra
 , wai-middleware-static, warp, websockets
-, libiconv, time, blaze-html
+, time, blaze-html
 }:
 mkDerivation {
   pname = "agile-poker";
@@ -15,6 +15,5 @@ mkDerivation {
     servant servant-server servant-websockets text wai wai-extra
     wai-middleware-static warp websockets time blaze-html
   ];
-  executableSystemDepends = [ libiconv ];
   license = stdenv.lib.licenses.agpl3;
 }

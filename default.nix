@@ -25,16 +25,12 @@ let
         pkgs.haskellPackages.override {
           overrides = haskellPackagesNew: haskellPackagesOld: rec {
             agilePoker =
-              haskellPackagesNew.callPackage ./server.nix {
-                libiconv = pkgs.libiconv;
-              };
+              haskellPackagesNew.callPackage ./server.nix {};
 
             # statically liked version (used for docker)
             agilePoker-mini =
               pkgs.haskell.lib.justStaticExecutables
-                (haskellPackagesNew.callPackage ./server.nix {
-                  libiconv = pkgs.libiconv;
-                });
+              (haskellPackagesNew.callPackage ./server.nix {});
           };
         };
     };
@@ -42,9 +38,10 @@ let
 
   pkgs =
     import <nixpkgs> { inherit config; };
-in
+in with pkgs;
 rec {
-  server = pkgs.haskellPackages.agilePoker;
-  client = pkgs.client;
-  docker = pkgs.docker-container;
+  server = haskellPackages.agilePoker;
+  client = client;
+  docker = docker-container;
+  shell  = haskellPackages.agilePoker.env // pkgs.client;
 }
