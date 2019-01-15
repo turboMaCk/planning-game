@@ -14,31 +14,34 @@ module AgilePoker.Api
   ) where
 
 import           Control.Concurrent           (MVar)
-import qualified Control.Concurrent           as Concurrent
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Data.ByteString              (ByteString)
+import           Data.Foldable                (forM_)
 import           Data.Maybe                   (maybe)
-import qualified Data.Text                    as T
-import qualified Data.Text.Encoding           as TE
-import qualified Data.Text.IO                 as T
+import           Data.Text                    (Text)
 import           Network.Wai                  (Response)
-import qualified Network.WebSockets           as WS
 import           Servant
 import           Servant.API.WebSocket        (WebSocket)
+
+import qualified Control.Concurrent           as Concurrent
+import qualified Data.Text                    as Text
+import qualified Data.Text.Encoding           as Text
+import qualified Data.Text.IO                 as Text
+import qualified Network.WebSockets           as WS
 
 import           AgilePoker.Api.Authorization
 import           AgilePoker.Api.Error
 import           AgilePoker.Api.Middleware
 import           AgilePoker.Api.PlayerInfo
 
-import           AgilePoker.State
 import           AgilePoker.Data
+import           AgilePoker.State
 
 
 -- API
 
 
-type Api = "status"                                :> Get  '[JSON] T.Text
+type Api = "status"                                :> Get  '[JSON] Text
       :<|> "session"                               :> Post '[JSON] SessionJSON
       :<|> "session" :> AuthProtect "header"       :> Get  '[JSON] SessionJSON
       :<|> "tables"  :> AuthProtect "header"       :> ReqBody '[JSON] PlayerInfo      :> Post '[JSON] Table
@@ -71,7 +74,7 @@ server state = status
            :<|> streamTableHandler
 
   where
-    status :: Handler T.Text
+    status :: Handler Text
     status = pure "OK"
 
     createSession :: Handler SessionJSON
