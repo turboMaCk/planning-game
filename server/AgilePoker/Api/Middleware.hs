@@ -15,20 +15,25 @@ import           Text.Blaze.Html5              (Html, (!))
 import qualified Text.Blaze.Html5              as Html
 import qualified Text.Blaze.Html5.Attributes   as Attrs
 
+import Control.Monad.IO.Class
+import qualified Network.Wai as Wai
+
 
 indexMiddleware :: Middleware
-indexMiddleware application request respond =
-  if fromMaybe False $
-     (elem "text/html" . parseHttpAccept) <$>
-     lookup "Accept" (requestHeaders request)
-
-  then
+indexMiddleware application request respond
+  | respondWithIndex =
     respond indexRes
-
-  else
+  | otherwise =
     application request respond
 
   where
+    respondWithIndex :: Bool
+    respondWithIndex
+      | "Upgrade" `lookup` (requestHeaders request) == Just "websocket" = False
+      | otherwise =
+        fromMaybe False $ (elem "text/html" . parseHttpAccept) <$>
+        "Accept" `lookup ` (requestHeaders request)
+
     indexRes :: Response
     indexRes =
       responseLBS status200 headers $ renderHtml index

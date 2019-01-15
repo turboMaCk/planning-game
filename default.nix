@@ -18,7 +18,7 @@ let
           extraCommands = ''
             ln -s ${haskellPackages.agilePoker-mini}/bin/agile-poker ./agile-poker
           '';
-          config.Cmd = [ "${haskellPackages.agilePoker-mini}/bin/agile-poker" "+RTS" "-ki8K" "-qg" ];
+          config.Cmd = [ "${haskellPackages.agilePoker-mini}/bin/agile-poker" "-qg" ];
         };
 
       haskellPackages =
