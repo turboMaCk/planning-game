@@ -2,10 +2,7 @@ let
   config = {
     packageOverrides = pkgs: rec {
       client =
-        pkgs.callPackage ./client.nix {
-          stdenv = pkgs.stdenv;
-          elm = pkgs.elmPackages.elm;
-        };
+        import ./client.nix;
 
       # Build docker container
       # Using staticaly liked version
@@ -38,10 +35,11 @@ let
 
   pkgs =
     import <nixpkgs> { inherit config; };
-in with pkgs;
-rec {
-  server = haskellPackages.agilePoker;
-  client = pkgs.client;
-  docker = docker-container;
-  shell  = haskellPackages.agilePoker.env // pkgs.client;
-}
+in
+  with pkgs;
+  rec {
+    server = haskellPackages.agilePoker;
+    client = pkgs.client;
+    docker = docker-container;
+    shell  = haskellPackages.agilePoker.env;
+  }

@@ -5,3 +5,4 @@ elm-stuff/
 /public/app.js
 dist-newstyle/
 Dockerfile
+versions.dat
