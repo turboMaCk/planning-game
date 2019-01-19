@@ -58,18 +58,38 @@ into your existing container orchestration tool.
 
 ## NixOS
 
-Currently builder for client is impure as it uses `elm` to fetch dependencies from
-packages.elm-lang.org. Because of this `nix-build --attr client` doesn't work on
-NixOS. It should be possible to simply build this package for NixOS but
-one must follow those steps:
+Server runtime depends of presence of `public` dictionary.
+Public dictionary can be build by building the `client` attribute.
 
-- start nix-shell with elm `nix-shell --attr client --pure default.nix`
-- build client using `./build-client.sh`
-- escape nix-shell `C-d` or `exit`
-- build server using `nix-build --attr server`
-- make sure `public` directory is available for result of server build!
+```
+$ nix-build --attr client --out-link www
+$ nix-build --attr server
+$ export PATH=$(readlink -f result)/bin:$PATH
+$ cd www
+$ agile-poker
+```
+
+Alternatively you can build docker image using nix dockerTools
+and run it as usual.
+
+```
+$ nix-build --attr docker
+$ docker load -i result
+```
 
 **Contributions improving Nix builds are welcomed**
+
+## Developement
+
+Prefered way of hacking on this app is using [nix package manager](https://nixos.org/nix/).
+
+with Nix installed on your machine you can simply enter shell
+
+```
+$ nix-shell
+$ ./build-client.sh # builds client
+$ cabal build # build server
+```
 
 ## Performance Tweaks
 
