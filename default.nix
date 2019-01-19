@@ -42,5 +42,5 @@ in
     server = haskellPackages.agilePoker;
     client = client;
     docker = docker-container;
-    shell  = haskellPackages.agilePoker.env // client; # @TODO: add elm
+    shell  = haskellPackages.agilePoker.env // client;
   }
