@@ -27,9 +27,10 @@ let
         elmfile = module: "${srcdir}/${builtins.replaceStrings ["."] ["/"] module}.elm";
       in ''
         mkdir -p $out/share/doc
+        cp -r public $out/public
         ${lib.concatStrings (map (module: ''
           echo "compiling ${elmfile module}"
-          elm make ${elmfile module} --output $out/${module}.html --docs $out/share/doc/${module}.json
+          elm make ${elmfile module} --output $out/public/app.js --docs $out/share/doc/${module}.json --optimize
         '') targets)}
       '';
     };
@@ -40,4 +41,3 @@ in mkDerivation {
   targets = ["Main"];
   srcdir = "./client";
 }
-

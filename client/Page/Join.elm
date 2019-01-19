@@ -62,7 +62,7 @@ update action navigationKey session msg model =
                     )
 
                 Err err ->
-                    ( { model | tableError = Just <| Debug.log "Err" err }, Cmd.none )
+                    ( { model | tableError = Just err }, Cmd.none )
 
 
 viewError : ApiError TableError -> Html msg
