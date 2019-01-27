@@ -46,10 +46,10 @@ logo =
                     , Css.transform <| Css.rotate <| Css.deg 8
                     ]
                     []
-                    [ Html.text "A" ]
-                , Html.text "gile "
+                    [ Html.text "P" ]
+                , Html.text "lanning "
                 ]
-            , Html.text "Poker"
+            , Html.text "Game"
             ]
         ]
 
