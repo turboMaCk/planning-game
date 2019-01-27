@@ -59,7 +59,7 @@ index :: Html
 index =
   Html.docTypeHtml ! Attrs.lang "en_EN" $ do
     Html.head $ do
-      Html.title "Agile Poker"
+      Html.title "Planning Game"
 
       Html.meta
         ! Attrs.httpEquiv "x-ua-compatible"
