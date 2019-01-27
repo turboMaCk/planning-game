@@ -1,8 +1,8 @@
 <div align="center">
-    <h1>Agile Poker</h1>
+    <h1>Planning Game</h1>
     <p>Planning tool for remote teams.</p>
     <!-- Badges -->
-    <a href="https://travis-ci.org/turboMaCk/agile-poker">
+    <a href="https://travis-ci.org/turboMaCk/planning-game">
         <img src="https://travis-ci.org/turboMaCk/agile-poker.svg?branch=master" alt="build">
     </a>
     <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">
@@ -12,7 +12,7 @@
 
 ![screenshot](docs/screenshot.png)
 
-Simple voting poker implementation build with efficiency
+Simple voting poker implementation build with efficiency,
 flexibility and easy deployment in mind.
 Enabling remote teams to effectively identify complexities
 and specification weak points in collaborative way.
