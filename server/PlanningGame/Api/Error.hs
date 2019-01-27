@@ -1,16 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Api.Error
-  ( module AgilePoker.Api.Error.Class
+module PlanningGame.Api.Error
+  ( module PlanningGame.Api.Error.Class
   ) where
 
-import           AgilePoker.Api.Authorization.Type (AuthorizationError (..))
-import           AgilePoker.Api.Error.Class        (Error (..), ErrorType (..),
-                                                    respondError)
-import           AgilePoker.Data                   (GameError (..),
-                                                    PlayerError (..),
-                                                    SessionError (..),
-                                                    TableError (..))
+import           PlanningGame.Api.Authorization.Type (AuthorizationError (..))
+import           PlanningGame.Api.Error.Class        (Error (..),
+                                                      ErrorType (..),
+                                                      respondError)
+import           PlanningGame.Data                   (GameError (..),
+                                                      PlayerError (..),
+                                                      SessionError (..),
+                                                      TableError (..))
 
 
 instance Error AuthorizationError where

@@ -5,7 +5,7 @@
 , time, blaze-html, ...
 }:
 mkDerivation {
-  pname = "agile-poker";
+  pname = "planning-game";
   version = "0.1.0.0";
   src = ./.;
   isLibrary = false;

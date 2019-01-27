@@ -242,7 +242,7 @@ viewCookiesNotice =
             [ container ]
             []
             [ Html.text "This website is using cookies to persist anonymous identifiers of sessions to provide functionality. "
-            , Html.a [ Attrs.href "https://github.com/turboMaCk/agile-poker/blob/master/docs/COOKIES.md" ] [ Html.text "Learn More" ]
+            , Html.a [ Attrs.href "https://github.com/turboMaCk/planning-game/blob/master/docs/COOKIES.md" ] [ Html.text "Learn More" ]
             , Html.styled Html.button
                 [ Css.marginLeft <| Css.px 12
                 , Css.float Css.right
@@ -298,16 +298,16 @@ withLayout showCookiesNotice inner =
                 , Html.text " used under "
                 , Html.a [ Attrs.href "https://creativecommons.org/licenses/by/3.0/" ] [ Html.text "CC BY 3.0" ]
                 , Html.br [] []
-                , Html.text "Agile Poker is Free Software released under "
+                , Html.text "Planning Game is Free Software released under "
                 , Html.a [ Attrs.href "https://www.gnu.org/licenses/agpl-3.0.en.html" ] [ Html.text "AGPLv3 license" ]
                 , Html.br [] []
                 , Html.text "Souce code is available on "
-                , Html.a [ Attrs.href "https://github.com/turboMaCk/agile-poker" ] [ Html.text "GitHub" ]
+                , Html.a [ Attrs.href "https://github.com/turboMaCk/planning-game" ] [ Html.text "GitHub" ]
                 ]
             , Html.p []
                 [ Html.text "Developed & designed by Marek Fajkus"
                 , Html.br [] []
-                , Html.a [ Attrs.href "https://github.com/turboMaCk/agile-poker/issues" ] [ Html.text "Report issue or request feature" ]
+                , Html.a [ Attrs.href "https://github.com/turboMaCk/planning-game/issues" ] [ Html.text "Report issue or request feature" ]
                 ]
             ]
         , Theme.globalStyles
@@ -331,30 +331,30 @@ document ({ showCookiesNotice } as model) =
                 Authorized _ page ->
                     case page of
                         Home m ->
-                            ( "Agile Poker"
+                            ( "Planning Game"
                             , withLayout showCookiesNotice <|
                                 Html.map HomeMsg <|
                                     Join.view (joinTitle "Create Table") m
                             )
 
                         Table m ->
-                            ( "Table | Agile Poker"
+                            ( "Table | Planning Game"
                             , withLayout showCookiesNotice <| Html.map TableMsg <| Table.view m
                             )
 
                         JoinTable _ m ->
-                            ( "Join | Agile Poker"
+                            ( "Join | Planning Game"
                             , withLayout showCookiesNotice <| Html.map JoinTableMsg <| Join.view (joinTitle "Join Table") m
                             )
 
                         NotFound ->
-                            ( "404 | Agile Poker"
+                            ( "404 | Planning Game"
                             , withLayout showCookiesNotice <| Html.text "404"
                             )
 
                 Unauthorized _ ->
                     -- @TODO: error handling?
-                    ( "Authorizing | Agile Poker"
+                    ( "Authorizing | Planning Game"
                     , []
                     )
     in

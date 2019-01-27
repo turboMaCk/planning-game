@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Api.Middleware (staticMiddleware) where
+module PlanningGame.Api.Middleware (staticMiddleware) where
 
 import           Data.Maybe                    (fromMaybe)
 import           Network.HTTP.Types            (status200)
@@ -59,7 +59,7 @@ index :: Html
 index =
   Html.docTypeHtml ! Attrs.lang "en_EN" $ do
     Html.head $ do
-      Html.title "Agile Poker"
+      Html.title "Planning Game"
 
       Html.meta
         ! Attrs.httpEquiv "x-ua-compatible"

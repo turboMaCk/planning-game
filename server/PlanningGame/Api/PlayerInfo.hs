@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Api.PlayerInfo (PlayerInfo(..)) where
+module PlanningGame.Api.PlayerInfo (PlayerInfo(..)) where
 
 import           Control.Monad    (mzero)
 import           Data.Aeson       (FromJSON (..), (.:))

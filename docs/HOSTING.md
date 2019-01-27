@@ -27,7 +27,7 @@ Here is a table of all variables with description.
 | `GC_EVERY_MIN`          | `30`          | Frequency of Garbage Collection for server state (in mins) |
 | `GC_TABLE_MIN_LIFE_MIN` | `120`         | Minimal life of table from creating (in mins)              |
 
-Implementation can be found in [AgilePoker.hs](https://github.com/turboMaCk/agile-poker/blob/master/server/AgilePoker.hs)
+Implementation can be found in [PlanningGame.hs](https://github.com/turboMaCk/planning-game/blob/master/server/PlanningGame.hs)
 
 ### Understanding Garbage Collection
 
@@ -46,11 +46,11 @@ which periodically cleans data in this shared data structure by following rules:
 
 ## Docker
 
-There is [official docker image](https://cloud.docker.com/u/turbomack/repository/docker/turbomack/agile-poker)
+There is [official docker image](https://cloud.docker.com/u/turbomack/repository/docker/turbomack/planning-game)
 publish on docker hub.
 
 ```
-$ docker pull turbomack/agile-poker
+$ docker pull turbomack/planning-game
 ```
 
 It should be very simple to plug this docker container
@@ -66,7 +66,7 @@ $ nix-build --attr client --out-link www
 $ nix-build --attr server
 $ export PATH=$(readlink -f result)/bin:$PATH
 $ cd www
-$ agile-poker
+$ planning-game
 ```
 
 Alternatively you can build docker image using nix dockerTools
@@ -96,7 +96,7 @@ $ cabal build # build server
 TL;DR One can try to pass those flags to squeeze some extra runtime performance.
 
 ```
-$ agile-poker +RTS -ki8K -qg
+$ planning-game +RTS -ki8K -qg
 ```
 
 *Changing default GHC memory might lead to improvement in space usage*.

@@ -1,6 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
-module AgilePoker.GarbageCollector (start) where
+module PlanningGame.GarbageCollector (start) where
 
 -- This implements process that periodically cleans
 -- old data from ServerState to maitain certain levels
@@ -15,8 +15,8 @@ import qualified Control.Concurrent as Concurrent
 import qualified Data.Map           as Map
 import qualified Data.Time.Clock    as Clock
 
-import           AgilePoker.Data    (Tables, tableActive, tableCreatedAt)
-import           AgilePoker.State
+import           PlanningGame.Data    (Tables, tableActive, tableCreatedAt)
+import           PlanningGame.State
 
 
 filterMaybes :: Ord k => Map k (Maybe a) -> Map k a

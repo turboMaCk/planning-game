@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module AgilePoker.Data.Id
+module PlanningGame.Data.Id
   ( Id(..)
   , generateId
   ) where

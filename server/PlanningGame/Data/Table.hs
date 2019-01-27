@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module AgilePoker.Data.Table
+module PlanningGame.Data.Table
   ( Table(..)
   , Tables
   , TableId
@@ -31,14 +31,14 @@ import qualified Data.Text                   as Text
 import qualified Data.Time.Clock             as Clock
 import qualified Network.WebSockets          as WS
 
-import           AgilePoker.Data.Game
-import           AgilePoker.Data.Id          (Id, generateId)
-import           AgilePoker.Data.Player
-import           AgilePoker.Data.Session
-import           AgilePoker.Data.Table.Msg
+import           PlanningGame.Data.Game
+import           PlanningGame.Data.Id          (Id, generateId)
+import           PlanningGame.Data.Player
+import           PlanningGame.Data.Session
+import           PlanningGame.Data.Table.Msg
 
-import           AgilePoker.Data.Table.Event
-import           AgilePoker.Data.Table.Type
+import           PlanningGame.Data.Table.Event
+import           PlanningGame.Data.Table.Type
 
 
 -- Basic Operations

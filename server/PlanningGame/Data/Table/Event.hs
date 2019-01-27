@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Data.Table.Event
+module PlanningGame.Data.Table.Event
   ( Event(..)
   , encodeEvent
   ) where
@@ -12,13 +12,13 @@ import qualified Data.ByteString.Lazy        as LazyByteString
 import qualified Data.Aeson                  as Aeson
 import qualified Data.Text                   as Text
 
-import           AgilePoker.Api.GameSnapshot (snapshot)
-import           AgilePoker.Data.Game        (Games)
-import           AgilePoker.Data.Id          (Id)
-import           AgilePoker.Data.Player      (Player, Players)
-import           AgilePoker.Data.Session     (SessionId)
+import           PlanningGame.Api.GameSnapshot (snapshot)
+import           PlanningGame.Data.Game        (Games)
+import           PlanningGame.Data.Id          (Id)
+import           PlanningGame.Data.Player      (Player, Players)
+import           PlanningGame.Data.Session     (SessionId)
 
-import           AgilePoker.Data.Table.Type  (Table)
+import           PlanningGame.Data.Table.Type  (Table)
 
 
 data Event

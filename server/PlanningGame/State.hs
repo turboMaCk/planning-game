@@ -1,11 +1,11 @@
-module AgilePoker.State (ServerState(..), initState) where
+module PlanningGame.State (ServerState(..), initState) where
 
 
 import           Control.Concurrent  (MVar)
 
 import qualified Control.Concurrent as Concurrent
 
-import           AgilePoker.Data    (Sessions, Tables, emptySessions,
+import           PlanningGame.Data    (Sessions, Tables, emptySessions,
                                      emptyTables)
 
 
