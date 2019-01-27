@@ -40,7 +40,7 @@ in
   with pkgs;
   {
     server = haskellPackages.planningGame;
-    server-mini = haskellPackages.panningGame-mini;
+    server-mini = haskellPackages.planningGame-mini;
     client = client;
     docker = docker-container;
     shell  = client // haskellPackages.planningGame.env;
