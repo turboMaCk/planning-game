@@ -43,7 +43,8 @@ logo =
                     [ Css.display Css.inlineBlock
                     , Css.backgroundColor values.primaryColor
                     , Css.color values.lightColor
-                    , Css.transform <| Css.rotate <| Css.deg 8
+                    , Css.transform <| Css.rotate <| Css.deg 6
+                    , Css.margin2 Css.zero <| Css.px 1
                     ]
                     []
                     [ Html.text "P" ]
