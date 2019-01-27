@@ -16,26 +16,26 @@ extra-source-files:  CHANGELOG.md
 cabal-version:       >=1.10
 
 executable planning-game
-  main-is:             AgilePoker.hs
-  other-modules:       AgilePoker.Api
-                     , AgilePoker.Api.Authorization
-                     , AgilePoker.Api.Authorization.Type
-                     , AgilePoker.Api.Error
-                     , AgilePoker.Api.Error.Class
-                     , AgilePoker.Api.Middleware
-                     , AgilePoker.Api.PlayerInfo
-                     , AgilePoker.Api.GameSnapshot
-                     , AgilePoker.Data
-                     , AgilePoker.Data.Id
-                     , AgilePoker.Data.Player
-                     , AgilePoker.Data.Session
-                     , AgilePoker.Data.Table
-                     , AgilePoker.Data.Table.Type
-                     , AgilePoker.Data.Table.Event
-                     , AgilePoker.Data.Table.Msg
-                     , AgilePoker.Data.Game
-                     , AgilePoker.GarbageCollector
-                     , AgilePoker.State
+  main-is:             PlanningGame.hs
+  other-modules:       PlanningGame.Api
+                     , PlanningGame.Api.Authorization
+                     , PlanningGame.Api.Authorization.Type
+                     , PlanningGame.Api.Error
+                     , PlanningGame.Api.Error.Class
+                     , PlanningGame.Api.Middleware
+                     , PlanningGame.Api.PlayerInfo
+                     , PlanningGame.Api.GameSnapshot
+                     , PlanningGame.Data
+                     , PlanningGame.Data.Id
+                     , PlanningGame.Data.Player
+                     , PlanningGame.Data.Session
+                     , PlanningGame.Data.Table
+                     , PlanningGame.Data.Table.Type
+                     , PlanningGame.Data.Table.Event
+                     , PlanningGame.Data.Table.Msg
+                     , PlanningGame.Data.Game
+                     , PlanningGame.GarbageCollector
+                     , PlanningGame.State
   hs-source-dirs:      server
   -- other-extensions:
   build-depends:       base
