@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Api.Middleware (staticMiddleware) where
+module PlanningGame.Api.Middleware (staticMiddleware) where
 
 import           Data.Maybe                    (fromMaybe)
 import           Network.HTTP.Types            (status200)

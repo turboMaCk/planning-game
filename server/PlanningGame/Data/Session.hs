@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module AgilePoker.Data.Session
+module PlanningGame.Data.Session
   ( Session(..)
   , SessionId
   , Sessions
@@ -19,7 +19,7 @@ import           Data.Set           (Set)
 
 import qualified Data.Set           as Set
 
-import           AgilePoker.Data.Id (Id, generateId)
+import           PlanningGame.Data.Id (Id, generateId)
 
 
 data SessionId

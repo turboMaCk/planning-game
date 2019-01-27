@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Data.Table.Type
+module PlanningGame.Data.Table.Type
   ( TableId
   , Table(..)
   , Tables
@@ -16,11 +16,11 @@ import           Data.Map                    (Map)
 
 import qualified Data.Map.Strict             as Map
 
-import           AgilePoker.Api.GameSnapshot (snapshot)
-import           AgilePoker.Data.Game        (GameError (..), Games)
-import           AgilePoker.Data.Id          (Id)
-import           AgilePoker.Data.Player      (Player, PlayerError (..), Players)
-import           AgilePoker.Data.Session     (SessionId)
+import           PlanningGame.Api.GameSnapshot (snapshot)
+import           PlanningGame.Data.Game        (GameError (..), Games)
+import           PlanningGame.Data.Id          (Id)
+import           PlanningGame.Data.Player      (Player, PlayerError (..), Players)
+import           PlanningGame.Data.Session     (SessionId)
 import           Data.Time.Clock             (UTCTime)
 
 

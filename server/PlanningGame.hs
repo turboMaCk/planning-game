@@ -6,8 +6,8 @@ import           System.Environment          (lookupEnv)
 
 import qualified Network.Wai.Handler.Warp    as Warp
 
-import qualified AgilePoker.Api              as Api
-import qualified AgilePoker.GarbageCollector as GC
+import qualified PlanningGame.Api              as Api
+import qualified PlanningGame.GarbageCollector as GC
 
 
 envRead :: Read a => String -> a -> IO a

@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies      #-}
 
-module AgilePoker.Api.Authorization
+module PlanningGame.Api.Authorization
   ( HeaderAuth(..)
   , CookieAuth(..)
   , SessionHeaderAuth
@@ -28,10 +28,10 @@ import qualified Control.Concurrent                as Concurrent
 import qualified Data.ByteString                   as ByteString
 import qualified Web.Cookie                        as Cookie
 
-import           AgilePoker.Api.Authorization.Type (AuthorizationError (..))
-import           AgilePoker.Api.Error              (respondError)
-import           AgilePoker.Data.Id                (Id (..))
-import           AgilePoker.Data.Session           (Session, SessionId,
+import           PlanningGame.Api.Authorization.Type (AuthorizationError (..))
+import           PlanningGame.Api.Error              (respondError)
+import           PlanningGame.Data.Id                (Id (..))
+import           PlanningGame.Data.Session           (Session, SessionId,
                                                     Sessions, getSession)
 
 

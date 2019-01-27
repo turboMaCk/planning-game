@@ -1,4 +1,4 @@
-module AgilePoker.Api.Authorization.Type where
+module PlanningGame.Api.Authorization.Type where
 
 
 data AuthorizationError

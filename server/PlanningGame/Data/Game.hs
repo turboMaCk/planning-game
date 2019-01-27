@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Data.Game
+module PlanningGame.Data.Game
   ( Vote(..)
   , GameError(..)
   , RunningGame(..)
@@ -31,9 +31,9 @@ import qualified Data.Map.Strict         as Map
 import qualified Data.Text               as Text
 import qualified Data.Set as Set
 
-import           AgilePoker.Data.Id
-import           AgilePoker.Data.Player
-import           AgilePoker.Data.Session
+import           PlanningGame.Data.Id
+import           PlanningGame.Data.Player
+import           PlanningGame.Data.Session
 
 
 data Vote

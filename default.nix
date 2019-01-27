@@ -11,22 +11,22 @@ let
       #    - Statically linked build container: 12M
       docker-container =
         pkgs.dockerTools.buildImage {
-          name = "agile-poker";
+          name = "planning-game";
           extraCommands = ''
-            ln -s ${haskellPackages.agilePoker-mini}/bin/agile-poker ./agile-poker
+            ln -s ${haskellPackages.planningGame-mini}/bin/planning-game ./planning-game
             cp -r ${client}/public ./public
           '';
-          config.Cmd = [ "${haskellPackages.agilePoker-mini}/bin/agile-poker" "-qg" ];
+          config.Cmd = [ "${haskellPackages.planningGame-mini}/bin/planning-game" "-qg" ];
         };
 
       haskellPackages =
         pkgs.haskellPackages.override {
           overrides = haskellPackagesNew: haskellPackagesOld: rec {
-            agilePoker =
+            planningGame =
               haskellPackagesNew.callPackage ./server.nix {};
 
             # statically liked version (used for docker)
-            agilePoker-mini =
+            planningGame-mini =
               pkgs.haskell.lib.justStaticExecutables
               (haskellPackagesNew.callPackage ./server.nix {});
           };
@@ -39,8 +39,9 @@ let
 in
   with pkgs;
   {
-    server = haskellPackages.agilePoker;
+    server = haskellPackages.planningGame;
+    server-mini = haskellPackages.panningGame-mini;
     client = client;
     docker = docker-container;
-    shell  = haskellPackages.agilePoker.env // client;
+    shell  = client // haskellPackages.planningGame.env;
   }

@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeOperators       #-}
 
 
-module AgilePoker.Api
+module PlanningGame.Api
   ( ServerState
   , initState
   , app
@@ -22,13 +22,13 @@ import           Servant.API.WebSocket        (WebSocket)
 import qualified Control.Concurrent           as Concurrent
 import qualified Network.WebSockets           as WS
 
-import           AgilePoker.Api.Authorization
-import           AgilePoker.Api.Error
-import           AgilePoker.Api.Middleware
-import           AgilePoker.Api.PlayerInfo
+import           PlanningGame.Api.Authorization
+import           PlanningGame.Api.Error
+import           PlanningGame.Api.Middleware
+import           PlanningGame.Api.PlayerInfo
 
-import           AgilePoker.Data
-import           AgilePoker.State
+import           PlanningGame.Data
+import           PlanningGame.State
 
 
 -- API

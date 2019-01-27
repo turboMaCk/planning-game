@@ -1,7 +1,7 @@
 {-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Data.Player
+module PlanningGame.Data.Player
   ( Player(..)
   , Players
   , PlayerError(..)
@@ -29,8 +29,8 @@ import qualified Data.Map                as Map
 import qualified Data.Text               as Text
 import qualified Network.WebSockets      as WS
 
-import           AgilePoker.Data.Id      (Id)
-import           AgilePoker.Data.Session
+import           PlanningGame.Data.Id      (Id)
+import           PlanningGame.Data.Session
 
 
 data Player = Player

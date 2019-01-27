@@ -27,7 +27,7 @@ Here is a table of all variables with description.
 | `GC_EVERY_MIN`          | `30`          | Frequency of Garbage Collection for server state (in mins) |
 | `GC_TABLE_MIN_LIFE_MIN` | `120`         | Minimal life of table from creating (in mins)              |
 
-Implementation can be found in [AgilePoker.hs](https://github.com/turboMaCk/planning-game/blob/master/server/AgilePoker.hs)
+Implementation can be found in [PlanningGame.hs](https://github.com/turboMaCk/planning-game/blob/master/server/PlanningGame.hs)
 
 ### Understanding Garbage Collection
 

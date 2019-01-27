@@ -3,7 +3,7 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Api.Error.Class
+module PlanningGame.Api.Error.Class
   ( Error(..)
   , ErrorType(..)
   , respondError

@@ -1,16 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AgilePoker.Api.GameSnapshot
+module PlanningGame.Api.GameSnapshot
   ( snapshot
   ) where
 
 import           Data.Aeson.Types        (ToJSON (..), Value (..), object, (.=))
 import           Data.Text               (Text)
 
-import           AgilePoker.Data.Game
-import           AgilePoker.Data.Id      (Id)
-import           AgilePoker.Data.Player
-import           AgilePoker.Data.Session (SessionId)
+import           PlanningGame.Data.Game
+import           PlanningGame.Data.Id      (Id)
+import           PlanningGame.Data.Player
+import           PlanningGame.Data.Session (SessionId)
 
 {--
 This can't be just and ToJSON instance of `Game` type
