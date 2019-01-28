@@ -336,7 +336,22 @@ setNameView model =
             }
 
     else
-        Html.text ""
+        Html.styled Html.div
+            [ Css.displayFlex
+            , Css.height <| Css.px 400
+            , Css.maxHeight <| Css.pct 100
+            , Css.justifyContent Css.center
+            , Css.alignItems Css.center
+            ]
+            []
+            [ Html.styled Html.span
+                [ Theme.highlight
+                , Theme.shaking 5
+                , Css.fontSize <| Css.px 40
+                ]
+                []
+                [ Html.text "Wait till game starts..." ]
+            ]
 
 
 viewOverviewTable : Dict String a -> { b | playerVotes : List ( String, Dict String Vote ), results : Dict String Vote } -> Html msg
@@ -416,12 +431,24 @@ viewGame model =
         inner =
             case model.game of
                 NotStarted ->
-                    [ Theme.highlightedHeading [ Html.text "Prepare for start!" ]
+                    let
+                        ( shake, text ) =
+                            if amIBanker model then
+                                ( True, "Start the game when ready..." )
+
+                            else
+                                ( False, "Prepare for start!" )
+                    in
+                    [ Theme.highlightedHeading shake [ Html.text text ]
                     , setNameView model
                     ]
 
                 Voting _ ->
-                    [ Theme.highlightedHeading [ Html.text "Pick your card!" ]
+                    let
+                        shake =
+                            model.myVote == Nothing
+                    in
+                    [ Theme.highlightedHeading shake [ Html.text "Pick your card!" ]
                     , viewVoting model
                     , Html.br [] []
                     , if amIBanker model then
@@ -436,19 +463,20 @@ viewGame model =
 
                 RoundFinished { playerVotes } ->
                     if amIBanker model && model.myVote /= Nothing then
-                        [ Theme.highlightedHeading [ Html.text "Set next taks OR finish the game!" ]
+                        -- Banker definitng new ticket
+                        [ Theme.highlightedHeading False [ Html.text "Set next taks OR finish the game!" ]
                         , setNameView model
                         ]
 
-                    else
-                        [ Theme.highlightedHeading
-                            [ Html.text <|
-                                if amIBanker model then
-                                    "Choose agreed extimation!"
+                    else if amIBanker model then
+                        -- Banker chossing agreed estimation
+                        [ Theme.highlightedHeading True [ Html.text "Choose agreed extimation!" ]
+                        , viewPlayerVotes playerVotes
+                        ]
 
-                                else
-                                    "Wait for the next ticket!"
-                            ]
+                    else
+                        --Player waiting for banker
+                        [ Theme.highlightedHeading False [ Html.text "Wait for the next ticket!" ]
                         , viewPlayerVotes playerVotes
                         ]
 

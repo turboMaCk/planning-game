@@ -1,16 +1,19 @@
 module Theme exposing
     ( globalStyles
     , heading
+    , highlight
     , highlightedHeading
     , logo
     , pill
     , primaryBtn
     , secondaryBtn
+    , shaking
     , textField
     , values
     )
 
 import Css exposing (Style)
+import Css.Animations as Animations
 import Css.Global as GCss
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
@@ -94,12 +97,33 @@ heading =
         ]
 
 
-highlightedHeading : List (Html msg) -> Html msg
-highlightedHeading inner =
-    Html.styled Html.h2 [ heading, Css.marginTop Css.zero ] [] <|
+highlight : Style
+highlight =
+    Css.batch
+        [ Css.color values.lightColor
+        , Css.backgroundColor values.secondaryColor
+        ]
+
+
+highlightedHeading : Bool -> List (Html msg) -> Html msg
+highlightedHeading shake inner =
+    Html.styled Html.h2
+        (if shake then
+            [ shaking 0
+            , heading
+            , Css.display Css.inlineBlock
+            , Css.marginTop Css.zero
+            ]
+
+         else
+            [ heading
+            , Css.marginTop Css.zero
+            ]
+        )
+        []
+    <|
         [ Html.styled Html.span
-            [ Css.color values.lightColor
-            , Css.backgroundColor values.secondaryColor
+            [ highlight
             , Css.fontSize <| Css.px 20
             ]
             []
@@ -157,4 +181,32 @@ globalStyles =
             [ Css.fontWeight <| Css.int 200
             , Css.margin2 (Css.px 12) Css.zero
             ]
+        ]
+
+
+shaking : Float -> Style
+shaking rot =
+    let
+        rotate =
+            List.singleton
+                << Animations.transform
+                << List.singleton
+                << Css.rotate
+                << Css.deg
+
+        keyframes =
+            Animations.keyframes
+                [ ( 0, rotate rot )
+                , ( 90, rotate rot )
+                , ( 92, rotate <| rot + 3 )
+                , ( 94, rotate <| rot - 3 )
+                , ( 96, rotate <| rot + 3 )
+                , ( 98, rotate <| rot - 3 )
+                , ( 100, rotate rot )
+                ]
+    in
+    Css.batch
+        [ Css.animationName keyframes
+        , Css.animationDuration <| Css.ms 5000
+        , Css.property "animation-iteration-count" "infinite"
         ]
