@@ -10,6 +10,7 @@ port module Page.Table.Stream exposing
 
 import Data exposing (Game, Player, Table, Vote)
 import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Extra as Decode
 import Json.Encode as Encode exposing (Value)
 
 
@@ -53,10 +54,10 @@ streamErrorDecoder str =
 type Event
     = PlayerJoin Player
     | PlayerStatusUpdate Player
-    | SyncTableState ( Table, Game )
+    | SyncTableState ( Table, Game ) String
     | GameStarted Game
     | VoteAccepted Player
-    | VotingEnded Game
+    | VotingEnded Game String
     | GameEnded Game
 
 
@@ -80,13 +81,23 @@ eventField value toEvent decoder =
 
 eventDecoder : Decoder Event
 eventDecoder =
+    let
+        nextGameName =
+            Decode.field "nextGameName" Decode.string
+    in
     Decode.oneOf
         [ eventField "PlayerJoined" PlayerJoin <| Decode.field "player" Data.playerDecoder
         , eventField "PlayerStatusUpdate" PlayerStatusUpdate <| Decode.field "player" Data.playerDecoder
-        , eventField "SyncTableState" SyncTableState <| Decode.field "table" Data.tableWithGameDecoder
+        , Decode.succeed SyncTableState
+            |> Decode.andMap (Decode.field "table" Data.tableWithGameDecoder)
+            |> Decode.andMap nextGameName
+            |> eventField "SyncTableState" identity
         , eventField "GameStarted" GameStarted <| Decode.field "game" Data.gameDecoder
         , eventField "VoteAccepted" VoteAccepted <| Decode.field "player" Data.playerDecoder
-        , eventField "VotingEnded" VotingEnded <| Decode.field "game" Data.gameDecoder
+        , Decode.succeed VotingEnded
+            |> Decode.andMap (Decode.field "game" Data.gameDecoder)
+            |> Decode.andMap nextGameName
+            |> eventField "VotingEnded" identity
         , eventField "GameEnded" GameEnded <| Decode.field "game" Data.gameDecoder
         ]
 

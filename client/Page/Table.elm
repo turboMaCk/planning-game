@@ -216,7 +216,7 @@ handleEvent event model =
             , Cmd.none
             )
 
-        SyncTableState ( table, game ) ->
+        SyncTableState ( table, game ) _ ->
             ( { model
                 | tableId = table.id
                 , banker = Just table.banker
@@ -235,7 +235,7 @@ handleEvent event model =
         VoteAccepted player ->
             ( playerVoted player model, Cmd.none )
 
-        VotingEnded game ->
+        VotingEnded game _ ->
             ( { model | game = game, myVote = Nothing }, Cmd.none )
 
         GameEnded game ->
