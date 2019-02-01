@@ -17,7 +17,7 @@ import           Data.Map                    (Map)
 import qualified Data.Map.Strict             as Map
 
 import           PlanningGame.Api.GameSnapshot (snapshot)
-import           PlanningGame.Data.Game        (GameError (..), Games, autoNextName)
+import           PlanningGame.Data.Game        (GameError (..), Games)
 import           PlanningGame.Data.Id          (Id)
 import           PlanningGame.Data.Player      (Player, PlayerError (..), Players)
 import           PlanningGame.Data.Session     (SessionId)
@@ -39,11 +39,10 @@ data Table = Table
 instance ToJSON Table where
   toJSON table =
     object
-        [ "id"           .= tableId table
-        , "banker"       .= snd (tableBanker table)
-        , "players"      .= fmap snd (Map.toList $ tablePlayers table)
-        , "nextGameName" .= maybe "Task-1" autoNextName (tableGame table)
-        , "game"         .=
+        [ "id"      .= tableId table
+        , "banker"  .= snd (tableBanker table)
+        , "players" .= fmap snd (Map.toList $ tablePlayers table)
+        , "game"    .=
           case tableGame table of
             Just game ->
               toJSON $ snapshot (tableBanker table) (tablePlayers table) game
