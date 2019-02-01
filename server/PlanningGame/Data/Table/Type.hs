@@ -39,15 +39,16 @@ data Table = Table
 instance ToJSON Table where
   toJSON table =
     object
-        [ "id" .= tableId table
-        , "banker" .= snd (tableBanker table)
+        [ "id"      .= tableId table
+        , "banker"  .= snd (tableBanker table)
         , "players" .= fmap snd (Map.toList $ tablePlayers table)
-        , "game" .= case tableGame table of
-                      Just game ->
-                        toJSON $ snapshot (tableBanker table) (tablePlayers table) game
+        , "game"    .=
+          case tableGame table of
+            Just game ->
+              toJSON $ snapshot (tableBanker table) (tablePlayers table) game
 
-                      Nothing ->
-                        Null
+            Nothing ->
+              Null
         ]
 
 

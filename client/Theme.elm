@@ -142,6 +142,10 @@ textField =
         , Css.fontWeight <| Css.int 700
         , Css.borderBottom3 (Css.px 3) Css.solid values.secondaryColor
         , Css.backgroundColor <| Css.hex "#d6e5ff"
+        , Css.pseudoElement "placeholder"
+            [ Css.color values.darkColor
+            , Css.fontWeight <| Css.int 400
+            ]
         ]
 
 

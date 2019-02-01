@@ -13,12 +13,12 @@ import qualified Data.Aeson                  as Aeson
 import qualified Data.Text                   as Text
 
 import           PlanningGame.Api.GameSnapshot (snapshot)
-import           PlanningGame.Data.Game        (Games)
+import           PlanningGame.Data.Game        (Games, autoNextName)
 import           PlanningGame.Data.Id          (Id)
 import           PlanningGame.Data.Player      (Player, Players)
 import           PlanningGame.Data.Session     (SessionId)
 
-import           PlanningGame.Data.Table.Type  (Table)
+import           PlanningGame.Data.Table.Type  (Table, tableGame)
 
 
 data Event
@@ -44,8 +44,9 @@ instance ToJSON Event where
         ]
   toJSON (SyncTableState table) =
     object
-        [ "event" .= Text.pack "SyncTableState"
-        , "table" .= table
+        [ "event"        .= Text.pack "SyncTableState"
+        , "table"        .= table
+        , "nextGameName" .= maybe "Task-1" autoNextName (tableGame table)
         ]
   toJSON (GameStarted dealer players games) =
     object
@@ -59,8 +60,9 @@ instance ToJSON Event where
         ]
   toJSON (VotingEnded dealer players games) =
     object
-        [ "event" .= Text.pack "VotingEnded"
-        , "game"  .= snapshot dealer players games
+        [ "event"        .= Text.pack "VotingEnded"
+        , "game"         .= snapshot dealer players games
+        , "nextGameName" .= autoNextName games
         ]
   toJSON (GameEnded dealer players games) =
     object

@@ -31,12 +31,13 @@ nameForm :
     , value : String
     , inputId : String
     , labelTxt : String
+    , placeHolder : String
     , above : Html msg
     , otherBtns : List (Html msg)
     , errorsView : Maybe (Html msg)
     }
     -> Html msg
-nameForm { onInput, onSubmit, submitTxt, value, inputId, labelTxt, above, otherBtns, errorsView } =
+nameForm { onInput, onSubmit, submitTxt, value, inputId, labelTxt, placeHolder, above, otherBtns, errorsView } =
     Html.styled Html.form
         [ Css.width <| Css.px 300
         , Css.margin2 (Css.px 150) Css.auto
@@ -50,6 +51,7 @@ nameForm { onInput, onSubmit, submitTxt, value, inputId, labelTxt, above, otherB
             [ Events.onInput onInput
             , Attrs.id inputId
             , Attrs.value value
+            , Attrs.placeholder placeHolder
             ]
             []
          , Maybe.withDefault (Html.text "") errorsView

@@ -4,8 +4,9 @@ module PlanningGame.Api.GameSnapshot
   ( snapshot
   ) where
 
-import           Data.Aeson.Types        (ToJSON (..), Value (..), object, (.=))
-import           Data.Text               (Text)
+import           Data.Aeson.Types          (ToJSON (..), Value (..), object,
+                                            (.=))
+import           Data.Text                 (Text)
 
 import           PlanningGame.Data.Game
 import           PlanningGame.Data.Id      (Id)
@@ -51,17 +52,17 @@ pointsPair = fmap toVal
 instance ToJSON GameSnapshot where
   toJSON (RunningGameSnapshot name votes points) =
     object
-      [ "name"        .= name
-      , "maskedVotes" .= votes
-      , "points"      .= points
-      , "status"      .= String "Running"
+      [ "name"         .= name
+      , "maskedVotes"  .= votes
+      , "points"       .= points
+      , "status"       .= String "Running"
       ]
   toJSON (LockedGameSnapshot name votes points) =
     object
-      [ "name"        .= name
-      , "playerVotes" .= pointsPair votes
-      , "points"      .= points
-      , "status"      .= String "Locked"
+      [ "name"         .= name
+      , "playerVotes"  .= pointsPair votes
+      , "points"       .= points
+      , "status"       .= String "Locked"
       ]
   toJSON (FinishedGameSnapshot points votes playerVotes) =
     object
@@ -69,7 +70,9 @@ instance ToJSON GameSnapshot where
       , "playerVotes" .=
         fmap
           (\(task, xs) ->
-             object ["name" .= task, "playerVotes" .= pointsPair xs])
+             object [ "name" .= task
+                    , "playerVotes" .= pointsPair xs
+                    ])
           playerVotes
       , "points" .= points
       , "status" .= String "Finished"
