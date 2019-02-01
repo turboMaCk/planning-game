@@ -34,6 +34,7 @@ type alias Model =
     , myVote : Maybe Vote
     , game : Game
     , gameName : Maybe String
+    , nextGameName : String
     }
 
 
@@ -47,6 +48,7 @@ init token id =
       , myVote = Nothing
       , game = NotStarted
       , gameName = Just ""
+      , nextGameName = "Task-1"
       }
     , Data.getMe token id Me
     )
@@ -216,10 +218,11 @@ handleEvent event model =
             , Cmd.none
             )
 
-        SyncTableState ( table, game ) _ ->
+        SyncTableState ( table, game ) nextGameName ->
             ( { model
                 | tableId = table.id
                 , banker = Just table.banker
+                , nextGameName = nextGameName
                 , players =
                     List.map (\player -> ( player.name, player )) table.players
                         |> Dict.fromList
@@ -235,8 +238,14 @@ handleEvent event model =
         VoteAccepted player ->
             ( playerVoted player model, Cmd.none )
 
-        VotingEnded game _ ->
-            ( { model | game = game, myVote = Nothing }, Cmd.none )
+        VotingEnded game nextGameName ->
+            ( { model
+                | game = game
+                , myVote = Nothing
+                , nextGameName = nextGameName
+              }
+            , Cmd.none
+            )
 
         GameEnded game ->
             ( { model | game = game }, Cmd.none )
@@ -312,6 +321,7 @@ setNameView model =
             , value = name
             , inputId = nameFieldId
             , labelTxt = "Name the task"
+            , placeHolder = model.nextGameName
             , above =
                 if Data.isNewGame model.game then
                     Html.styled Html.h2 [ Theme.heading ] [] [ Html.text "First Task" ]

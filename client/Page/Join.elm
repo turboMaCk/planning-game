@@ -91,6 +91,7 @@ view headline { playerName, tableError } =
                 , value = playerName
                 , inputId = fieldId
                 , labelTxt = "Choose your name for the table"
+                , placeHolder = ""
                 , above = headline
                 , otherBtns = []
                 , errorsView = Maybe.map viewError tableError
