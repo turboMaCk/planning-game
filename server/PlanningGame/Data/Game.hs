@@ -11,6 +11,7 @@ module PlanningGame.Data.Game
   , startGame
   , addVote
   , nextRound
+  , autoNextName
   , completeGame
   , sumGamePoints
   , gamesVotes
@@ -133,6 +134,7 @@ getName name games
   | Text.null name =
       checkName $ "Task-" <> (Text.pack $ show (Set.size gameNames + 1))
   | otherwise = checkName name
+
   where
     gameNames =
       case games of
@@ -148,6 +150,10 @@ getName name games
       else
         txt
 
+
+autoNextName :: Games -> Text
+autoNextName =
+  getName ""
 
 
 newGame :: Text -> RunningGame
