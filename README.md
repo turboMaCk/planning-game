@@ -8,6 +8,7 @@
     <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">
         <img src="https://img.shields.io/badge/license-AGPLv3-brightgreen.svg" alt="AGPLv3">
     <a>
+    <p><a href="https://planning-game.com">planning-game.com</a></p>
 </div>
 
 ![screenshot](docs/screenshot.png)
@@ -17,11 +18,13 @@ flexibility and easy deployment in mind.
 Enabling remote teams to effectively identify complexities
 and specification weak points in collaborative way.
 
-**This project is still considered ALPHA**
-
 ## Quick Start
 
-```
+Use free hosted service at [planning-game.com](https://planning-game.com)
+
+Run locally:
+
+```shell
 $ docker run -p 3000:3000 --rm -it turbomack/planning-game
 ```
 

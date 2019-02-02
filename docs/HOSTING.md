@@ -77,7 +77,9 @@ $ nix-build --attr docker
 $ docker load -i result
 ```
 
-**Contributions improving Nix builds are welcomed**
+Or use [nixops](https://github.com/NixOS/nixops) to deploy this project
+as a service (This is what official [planning-game.com](https://planning-game.com)
+service is using for deploynment).
 
 ## Developement
 
