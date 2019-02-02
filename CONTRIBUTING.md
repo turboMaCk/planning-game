@@ -37,12 +37,6 @@ $ cabal run
 $ cabal shell
 ```
 
-**Run ghcid**
-
-```shell
-$ ghcid
-```
-
 **Build front-end**
 
 ```shell

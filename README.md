@@ -1,6 +1,7 @@
 <div align="center">
     <h1>Planning Game</h1>
     <p>Planning tool for remote teams.</p>
+    <p><a href="https://planning-game.com">planning-game.com</a></p>
     <!-- Badges -->
     <a href="https://travis-ci.org/turboMaCk/planning-game">
         <img src="https://travis-ci.org/turboMaCk/planning-game.svg?branch=master" alt="build">
@@ -17,11 +18,13 @@ flexibility and easy deployment in mind.
 Enabling remote teams to effectively identify complexities
 and specification weak points in collaborative way.
 
-**This project is still considered ALPHA**
-
 ## Quick Start
 
-```
+Use free hosted service at [planning-game.com](https://planning-game.com)
+
+Run locally:
+
+```shell
 $ docker run -p 3000:3000 --rm -it turbomack/planning-game
 ```
 
