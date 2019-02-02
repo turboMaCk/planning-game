@@ -9,14 +9,16 @@ import           Network.Wai                   (Middleware, Response,
                                                 responseLBS)
 import           Network.Wai.Middleware.Static (addBase, staticPolicy)
 import           Network.Wai.Parse             (parseHttpAccept)
+import           Text.Blaze                    (AttributeValue)
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import           Text.Blaze.Html5              (Html, (!))
 
+import qualified Text.Blaze                    as Blaze
 import qualified Text.Blaze.Html5              as Html
 import qualified Text.Blaze.Html5.Attributes   as Attrs
 
-import Control.Monad.IO.Class
-import qualified Network.Wai as Wai
+import           Control.Monad.IO.Class
+import qualified Network.Wai                   as Wai
 
 
 indexMiddleware :: Middleware
@@ -68,6 +70,32 @@ index =
       Html.meta
         ! Attrs.charset "UTF-8"
 
+      Html.meta
+        ! Attrs.name "description"
+        ! Attrs.content description
+
+      Html.meta
+        ! Attrs.name "keywords"
+        ! Attrs.content "planning,game,voting,poker,agile,scrum,free"
+
+      Html.meta
+        ! Blaze.customAttribute "property" "og:title"
+        ! Attrs.content title
+
+      Html.meta
+        ! Blaze.customAttribute "property" "og:description"
+        ! Attrs.content description
+
+      Html.meta
+        ! Blaze.customAttribute "property" "og:image"
+        ! Attrs.type_ "image/png"
+        ! Attrs.href "/favicon.png"
+
+      Html.link
+        ! Attrs.rel "icon"
+        ! Attrs.href "/favicon.png"
+        ! Attrs.type_ "image/png"
+
       Html.link
         ! Attrs.href "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700"
         ! Attrs.rel "stylesheet"
@@ -78,3 +106,8 @@ index =
 
       Html.script ""
         ! Attrs.src "/init.js"
+
+  where
+    title, description :: AttributeValue
+    description = "Planning tool for remote teams."
+    title       = "Planning Game"
