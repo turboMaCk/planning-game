@@ -2,7 +2,7 @@
 , http-types, mtl, random, servant, servant-server
 , servant-websockets, stdenv, text, wai, wai-extra
 , wai-middleware-static, warp, websockets
-, time, blaze-html, ...
+, time, blaze-html, blaze-markup, ...
 }:
 mkDerivation {
   pname = "planning-game";
@@ -13,7 +13,7 @@ mkDerivation {
   executableHaskellDepends = [
     aeson base bytestring containers cookie http-types mtl random
     servant servant-server servant-websockets text wai wai-extra
-    wai-middleware-static warp websockets time blaze-html
+    wai-middleware-static warp websockets time blaze-html blaze-markup
   ];
   license = stdenv.lib.licenses.agpl3;
 }
