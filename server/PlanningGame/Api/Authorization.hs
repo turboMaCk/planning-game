@@ -29,9 +29,11 @@ import qualified Web.Cookie                        as Cookie
 import           PlanningGame.Api.Error              (Error (..), ErrorType(..))
 import           PlanningGame.Data.Id                (Id (..))
 import           PlanningGame.Data.Session           (Session, SessionId,
-                                                    Sessions, getSession)
+                                                    Sessions)
 
+import qualified PlanningGame.Data.Session as Session
 import qualified PlanningGame.Api.Error as Error
+
 
 data AuthorizationError
   = SessionNotFound
@@ -51,7 +53,7 @@ lookupSession :: MVar Sessions -> Id SessionId -> Handler Session
 lookupSession state' sId = do
   state <- liftIO $ Concurrent.readMVar state'
 
-  case getSession sId state of
+  case Session.get sId state of
     Just session -> pure session
     Nothing      -> Error.respond SessionNotFound
 

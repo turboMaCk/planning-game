@@ -31,6 +31,7 @@ import           PlanningGame.State
 import qualified PlanningGame.Api.Middleware as Middleware
 import qualified PlanningGame.Api.Error as Error
 import qualified PlanningGame.Data.Table as Table
+import qualified PlanningGame.Data.Session as Session
 
 
 -- API
@@ -62,7 +63,7 @@ genContext state =
 server :: ServerState -> Server Api
 server state = status
            :<|> createSession
-           :<|> getSession'
+           :<|> getSession
            :<|> createTableHandler
            :<|> joinTableHandler
            :<|> meHandler
@@ -75,10 +76,10 @@ server state = status
     createSession :: Handler SessionJSON
     createSession =
       pure . SessionJSON =<<
-        (liftIO $ Concurrent.modifyMVar (sessions state) addSession)
+        (liftIO $ Concurrent.modifyMVar (sessions state) Session.add)
 
-    getSession' :: (HeaderAuth Session) -> Handler SessionJSON
-    getSession' =
+    getSession :: (HeaderAuth Session) -> Handler SessionJSON
+    getSession =
       pure . SessionJSON . unHeaderAuth
 
     createTableHandler :: (HeaderAuth Session) -> PlayerInfo -> Handler Table

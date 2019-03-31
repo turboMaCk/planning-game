@@ -31,7 +31,9 @@ import qualified Network.WebSockets      as WS
 
 import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id    (Id)
-import           PlanningGame.Data.Session
+import           PlanningGame.Data.Session (Session, SessionId)
+
+import qualified PlanningGame.Data.Session as Session
 
 
 data Player = Player

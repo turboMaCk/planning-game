@@ -42,7 +42,7 @@ import           PlanningGame.Api.Error        (Error (..), ErrorType (..))
 import           PlanningGame.Data.Game        (Games, GameError)
 import           PlanningGame.Data.Id          (Id, generateId)
 import           PlanningGame.Data.Player      (Players, Player, PlayerError (..))
-import           PlanningGame.Data.Session
+import           PlanningGame.Data.Session     (Session, SessionId)
 
 import           PlanningGame.Data.Table.Msg
 
