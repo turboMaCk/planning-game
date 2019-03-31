@@ -12,24 +12,27 @@ module PlanningGame.Api.Authorization
   , authCookieHandler
   ) where
 
-import           Control.Concurrent                (MVar)
-import           Control.Monad.IO.Class            (liftIO)
-import           Data.ByteString                   (ByteString)
-import           Network.Wai                       (Request)
-import           Servant                           (AuthProtect, Handler)
-import           Servant.Server.Experimental.Auth  (AuthHandler, AuthServerData,
-                                                    mkAuthHandler)
+import           Control.Concurrent               (MVar)
+import           Control.Monad.IO.Class           (liftIO)
+import           Data.ByteString                  (ByteString)
+import           Network.Wai                      (Request)
+import           Servant                          (AuthProtect, Handler)
+import           Servant.Server.Experimental.Auth (AuthHandler, AuthServerData,
+                                                   mkAuthHandler)
 
 
-import qualified Network.Wai as Wai
-import qualified Control.Concurrent                as Concurrent
-import qualified Data.ByteString                   as ByteString
-import qualified Web.Cookie                        as Cookie
+import qualified Control.Concurrent               as Concurrent
+import qualified Data.ByteString                  as ByteString
+import qualified Network.Wai                      as Wai
+import qualified Web.Cookie                       as Cookie
 
-import           PlanningGame.Api.Error              (Error (..), ErrorType(..), respondError)
-import           PlanningGame.Data.Id                (Id (..))
-import           PlanningGame.Data.Session           (Session, SessionId,
-                                                    Sessions, getSession)
+import           PlanningGame.Api.Error           (Error (..), ErrorType (..))
+import           PlanningGame.Data.Id             (Id (..))
+import           PlanningGame.Data.Session        (Session, SessionId, Sessions)
+
+import qualified PlanningGame.Api.Error           as Error
+import qualified PlanningGame.Data.Session        as Session
+
 
 data AuthorizationError
   = SessionNotFound
@@ -49,9 +52,9 @@ lookupSession :: MVar Sessions -> Id SessionId -> Handler Session
 lookupSession state' sId = do
   state <- liftIO $ Concurrent.readMVar state'
 
-  case getSession sId state of
+  case Session.get sId state of
     Just session -> pure session
-    Nothing      -> respondError SessionNotFound
+    Nothing      -> Error.respond SessionNotFound
 
 
 maybeToEither :: a -> Maybe b -> Either a b
@@ -61,7 +64,7 @@ maybeToEither e =
 
 handler :: (Request -> Maybe (Id SessionId)) -> (Session -> a) -> MVar Sessions -> Request -> Handler a
 handler getSessionId construct state req =
-    either respondError (\id' -> construct <$> lookupSession state id') $
+    either Error.respond (\id' -> construct <$> lookupSession state id') $
         maybeToEither SessionIdMissing $ getSessionId req
 
 

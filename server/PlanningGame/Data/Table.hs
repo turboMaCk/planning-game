@@ -8,43 +8,47 @@ module PlanningGame.Data.Table
   , TableId
   , Event
   , TableError(..)
-  , emptyTables
-  , createTable
-  , joinTable
-  , getTablePlayer
-  , tableStreamHandler
-  , tableActive
+  , empty
+  , create
+  , join
+  , getPlayer
+  , streamHandler
+  , isActive
   ) where
 
-import           Control.Concurrent          (MVar)
-import           Control.Exception           (finally)
-import           Control.Monad               (forM_, forever, mzero)
-import           Data.Maybe                  (fromMaybe, isNothing)
-import           Data.Text                   (Text)
-import           Network.WebSockets          (Connection)
-import           Data.Aeson.Types            (ToJSON (..), Value (..), object,
-                                              (.=))
-import           Data.Map                    (Map)
-import           Data.Time.Clock             (UTCTime)
-import           Data.ByteString             (ByteString)
+import           Control.Concurrent            (MVar)
+import           Control.Exception             (finally)
+import           Control.Monad                 (forM_, forever, mzero)
+import           Data.Aeson.Types              (ToJSON (..), Value (..), object,
+                                                (.=))
+import           Data.ByteString               (ByteString)
+import           Data.Map                      (Map)
+import           Data.Maybe                    (fromMaybe, isNothing)
+import           Data.Text                     (Text)
+import           Data.Time.Clock               (UTCTime)
+import           Network.WebSockets            (Connection)
 
-import qualified Control.Concurrent          as Concurrent
-import qualified Data.ByteString.Lazy        as LazyByteString
-import qualified Data.Aeson                  as Aeson
-import qualified Data.Map.Strict             as Map
-import qualified Data.Text                   as Text
-import qualified Data.Time.Clock             as Clock
-import qualified Network.WebSockets          as WS
+import qualified Control.Concurrent            as Concurrent
+import qualified Data.Aeson                    as Aeson
+import qualified Data.ByteString.Lazy          as LazyByteString
+import qualified Data.Map.Strict               as Map
+import qualified Data.Text                     as Text
+import qualified Data.Time.Clock               as Clock
+import qualified Network.WebSockets            as WS
 
-import           PlanningGame.Api.GameSnapshot (snapshot)
 import           PlanningGame.Api.Error        (Error (..), ErrorType (..))
+import           PlanningGame.Api.GameSnapshot (snapshot)
 
-import           PlanningGame.Data.Game
+import           PlanningGame.Data.Game        (GameError, Games)
 import           PlanningGame.Data.Id          (Id, generateId)
-import           PlanningGame.Data.Player
-import           PlanningGame.Data.Session
+import           PlanningGame.Data.Player      (Player, PlayerError (..),
+                                                Players)
+import           PlanningGame.Data.Session     (Session, SessionId)
 
-import           PlanningGame.Data.Table.Msg
+import           PlanningGame.Data.Table.Msg   (Msg (..))
+
+import qualified PlanningGame.Data.Game        as Game
+import qualified PlanningGame.Data.Player      as Player
 
 
 -- Types
@@ -54,11 +58,11 @@ data TableId
 
 
 data Table = Table
-  { tableId        :: Id TableId
-  , tableBanker    :: ( Id SessionId, Player )
-  , tablePlayers   :: Players
-  , tableGame      :: Maybe Games
-  , tableCreatedAt :: UTCTime
+  { tableId   :: Id TableId
+  , banker    :: ( Id SessionId, Player )
+  , players   :: Players
+  , game      :: Maybe Games
+  , createdAt :: UTCTime
   }
 
 
@@ -66,12 +70,12 @@ instance ToJSON Table where
   toJSON table =
     object
         [ "id"      .= tableId table
-        , "banker"  .= snd (tableBanker table)
-        , "players" .= fmap snd (Map.toList $ tablePlayers table)
+        , "banker"  .= snd (banker table)
+        , "players" .= fmap snd (Map.toList $ players table)
         , "game"    .=
-          case tableGame table of
+          case game table of
             Just game ->
-              toJSON $ snapshot (tableBanker table) (tablePlayers table) game
+              toJSON $ snapshot (banker table) (players table) game
 
             Nothing ->
               Null
@@ -109,8 +113,8 @@ instance Error TableError where
   toReadable (PlayerError e) = toReadable e
 
 
-emptyTables :: Tables
-emptyTables =
+empty :: Tables
+empty =
   Map.empty
 
 
@@ -142,7 +146,7 @@ instance ToJSON Event where
     object
         [ "event"        .= Text.pack "SyncTableState"
         , "table"        .= table
-        , "nextGameName" .= maybe "Task-1" autoNextName (tableGame table)
+        , "nextGameName" .= maybe "Task-1" Game.autoNextName (game table)
         ]
   toJSON (GameStarted dealer players games) =
     object
@@ -158,7 +162,7 @@ instance ToJSON Event where
     object
         [ "event"        .= Text.pack "VotingEnded"
         , "game"         .= snapshot dealer players games
-        , "nextGameName" .= autoNextName games
+        , "nextGameName" .= Game.autoNextName games
         ]
   toJSON (GameEnded dealer players games) =
     object
@@ -175,8 +179,8 @@ encodeEvent =
 -- Basic Operations
 
 
-createTable :: Session -> Text -> Tables -> IO ( Tables, Either TableError Table )
-createTable id' name' tables =
+create :: Session -> Text -> Tables -> IO ( Tables, Either TableError Table )
+create id' name' tables =
   let
     name =
       Text.strip name'
@@ -188,8 +192,8 @@ createTable id' name' tables =
     tId <- generateId tables
     now <- Clock.getCurrentTime
 
-    let banker = createPlayer name
-    let newTable = Table tId ( id', banker ) emptyPlayers Nothing now
+    let banker' = Player.create name
+    let newTable = Table tId ( id', banker' ) Player.empty Nothing now
 
     mvarTable <- Concurrent.newMVar newTable
 
@@ -199,21 +203,21 @@ createTable id' name' tables =
         )
 
 
-tableActive :: Table -> Bool
-tableActive Table { tableBanker, tablePlayers } =
+isActive :: Table -> Bool
+isActive Table { banker, players } =
   bankerOnline || anyPlayerOnline
 
   where
     bankerOnline =
-      hasConnection $ snd tableBanker
+      Player.hasConnection $ snd banker
 
     anyPlayerOnline =
-      not $ Map.null $ Map.filter hasConnection tablePlayers
+      not $ Map.null $ Map.filter Player.hasConnection players
 
 
 -- @TODO: Add check if session is not already present
-joinTable :: Session -> Id TableId -> Text -> Tables -> IO ( Either TableError Table )
-joinTable session tableId name' tables =
+join :: Session -> Id TableId -> Text -> Tables -> IO ( Either TableError Table )
+join session tableId name' tables =
   let
     name =
       Text.strip name'
@@ -222,17 +226,17 @@ joinTable session tableId name' tables =
     Just mvar -> do
       table <- Concurrent.readMVar mvar
 
-      if playerName (snd $ tableBanker table) == name then
+      if Player.name (snd $ banker table) == name then
         pure $ Left $ PlayerError NameTaken
 
       else
         let
-            ePlayers = addPlayer session name (tablePlayers table)
+            ePlayers = Player.add session name (players table)
         in
         case ePlayers of
           Right ( newPlayers, newPlayer ) ->
             Concurrent.modifyMVar mvar $ \t -> do
-                let updatedTable = t { tablePlayers = newPlayers }
+                let updatedTable = t { players = newPlayers }
 
                 -- Broadcast to connections
                 broadcast t $ PlayerJoined newPlayer
@@ -246,8 +250,8 @@ joinTable session tableId name' tables =
       pure $ Left TableNotFound
 
 
-getTablePlayer :: Session -> Id TableId -> Tables -> IO (Either TableError Player)
-getTablePlayer session tableId tables =
+getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError Player)
+getPlayer session tableId tables =
   fromMaybe (pure $ Left TableNotFound) $ getPlayer' <$>
     Map.lookup tableId tables
 
@@ -256,45 +260,47 @@ getTablePlayer session tableId tables =
     getPlayer' mvar = do
       table <- Concurrent.readMVar mvar
 
-      if fst (tableBanker table) == session then
-          pure $ Right $ snd (tableBanker table)
+      if fst (banker table) == session then
+          pure $ Right $ snd (banker table)
 
       else
           pure $ maybe (Left PlayerNotFound) Right $
-            Map.lookup session $ tablePlayers table
+            Map.lookup session $ players table
 
 
 allConnections :: Table -> [ Connection ]
-allConnections Table { tableBanker, tablePlayers } =
-  concat $ (allPlayerConnections $ snd tableBanker)
-         : (foldr (\p acc -> allPlayerConnections p : acc) [] tablePlayers)
+allConnections Table { banker, players } =
+  concat $ (Player.allConnections $ snd banker)
+         : (foldr (\p acc -> Player.allConnections p : acc) [] players)
 
 
 assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( Player, Int ) )
-assignConnection session conn table@Table { tableBanker, tablePlayers } =
-    if fst tableBanker == session then
-        let ( updatedBanker, connId ) = addConnectionToPlayer conn $ snd tableBanker
+assignConnection session conn table@Table { banker, players } =
+    if fst banker == session then
+        let ( updatedBanker, connId ) = Player.addConnectionTo conn $ snd banker
         in
-        ( table { tableBanker = ( session, updatedBanker ) }
+        ( table { banker = ( session, updatedBanker ) }
         , Just ( updatedBanker, connId )
         )
 
     else
-        let ( updatedPlayers, mPair ) = addPlayerConnection session conn tablePlayers
+        let
+          ( updatedPlayers, mPair ) =
+            Player.addConnection session conn players
         in
         case mPair of
             Nothing   -> ( table, Nothing )
-            Just pair -> ( table { tablePlayers = updatedPlayers }
+            Just pair -> ( table { players = updatedPlayers }
                            , Just pair
                            )
 
 
 allTablePlayers :: Table -> Players
 allTablePlayers table =
-  Map.insert bankerId banker $ tablePlayers table
+  Map.insert bankerId banker' $ players table
 
   where
-    (bankerId, banker) = tableBanker table
+    (bankerId, banker') = banker table
 
 
 -- WS Handling
@@ -314,12 +320,12 @@ handleStreamMsg session state conn = forever $ do
 
 disconnect :: MVar Table -> Id SessionId -> Int -> IO ()
 disconnect state sessionId connId =
-  Concurrent.modifyMVar_ state $ \table@Table { tableBanker=banker } ->
-    if fst banker == sessionId then do
-      let updatedTable = table { tableBanker = ( fst banker , removeConnectionFromPlayer connId $ snd banker ) }
-      let player = snd $ tableBanker updatedTable
+  Concurrent.modifyMVar_ state $ \table@Table { banker=banker' } ->
+    if fst banker' == sessionId then do
+      let updatedTable = table { banker = ( fst banker' , Player.removeConnectionFrom connId $ snd banker' ) }
+      let player = snd $ banker updatedTable
 
-      if hasConnection player then
+      if Player.hasConnection player then
         pure ()
 
       else
@@ -328,15 +334,15 @@ disconnect state sessionId connId =
       pure updatedTable
 
     else do
-      let updatedTable = table { tablePlayers = disconnectPlayer sessionId connId (tablePlayers table) }
-      let mPlayer = Map.lookup sessionId $ tablePlayers updatedTable
+      let updatedTable = table { players = Player.disconnect sessionId connId (players table) }
+      let mPlayer = Map.lookup sessionId $ players updatedTable
 
       maybe mzero (broadcast updatedTable . PlayerStatusUpdate) mPlayer
       pure updatedTable
 
 
-tableStreamHandler :: MVar Tables -> Session -> Id TableId -> Connection -> IO ()
-tableStreamHandler state session id' conn = do
+streamHandler :: MVar Tables -> Session -> Id TableId -> Connection -> IO ()
+streamHandler state session id' conn = do
   tables <- Concurrent.readMVar state
   let mTable = Map.lookup id' tables
 
@@ -361,7 +367,7 @@ tableStreamHandler state session id' conn = do
                     WS.forkPingThread conn 30
 
                     -- 3.3 Broadcast join event
-                    if playerNumberOfConnections player == 1 then do
+                    if Player.numberOfConnections player == 1 then do
                         table' <- Concurrent.readMVar tableState
                         broadcast table' $ PlayerStatusUpdate player
 
@@ -387,7 +393,7 @@ broadcast table event = do
 
 
 isBanker :: Session -> Table -> Bool
-isBanker session Table { tableBanker=pair } =
+isBanker session Table { banker=pair } =
   session == fst pair
 
 
@@ -398,11 +404,11 @@ isBanker session Table { tableBanker=pair } =
 handleMsg :: Connection -> Session -> Msg -> Table -> IO Table
 handleMsg _ session (NewGame name) table
   | isBanker session table
-  , isNothing (tableGame table) = do
-      let game = startGame name
-      let players = tablePlayers table
-      broadcast table $ GameStarted (tableBanker table) players game
-      pure $ table { tableGame = Just game }
+  , isNothing (game table) = do
+      let game = Game.start name
+      let players' = players table
+      broadcast table $ GameStarted (banker table) players' game
+      pure $ table { game = Just game }
 
   | not $ isBanker session table = do
       -- @TODO: Handle forbidden action
@@ -414,11 +420,11 @@ handleMsg _ session (NewGame name) table
 
 handleMsg _ session FinishRound table
   | isBanker session table =
-      case tableGame table of
+      case game table of
         Just games -> do
-          let newGames = finishCurrentGame games
-          broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) newGames
-          pure $ table { tableGame = Just newGames }
+          let newGames = Game.finishCurrent games
+          broadcast table $ VotingEnded (banker table) (players table) newGames
+          pure $ table { game = Just newGames }
 
         Nothing ->
           -- @TODO: handled non started game
@@ -430,15 +436,15 @@ handleMsg _ session FinishRound table
 
 handleMsg _ session (NextRound vote name) table
   | isBanker session table =
-      case tableGame table of
+      case game table of
         Just games -> do
-          case nextRound vote name games of
+          case Game.nextRound vote name games of
             Left _ ->
               -- @TODO: missing err handling
               pure table
             Right newGames -> do
-              broadcast table $ GameStarted (tableBanker table) (tablePlayers table) newGames
-              pure $ table { tableGame = Just newGames }
+              broadcast table $ GameStarted (banker table) (players table) newGames
+              pure $ table { game = Just newGames }
         Nothing ->
           -- @TODO: handled non started game
           pure table
@@ -448,21 +454,21 @@ handleMsg _ session (NextRound vote name) table
     pure table
 
 handleMsg _ session (Vote vote) table =
-  case tableGame table of
+  case game table of
     Just game ->
-      case addVote session vote game of
+      case Game.addVote session vote game of
         Right newGames -> do
-          maybe (pure ()) (broadcast table . VoteAccepted) $ getPlayer session $ allTablePlayers table
+          maybe (pure ()) (broadcast table . VoteAccepted) $ Player.get session $ allTablePlayers table
 
           -- Auto end game when all voted
-          if allVoted (allTablePlayers table) newGames then do
-            let finishedNewGames = finishCurrentGame newGames
+          if Game.allVoted (allTablePlayers table) newGames then do
+            let finishedNewGames = Game.finishCurrent newGames
 
-            broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) finishedNewGames
-            pure $ table { tableGame = Just finishedNewGames }
+            broadcast table $ VotingEnded (banker table) (players table) finishedNewGames
+            pure $ table { game = Just finishedNewGames }
 
           else
-            pure $ table { tableGame = Just newGames }
+            pure $ table { game = Just newGames }
 
         -- @TODO: can't vote error
         Left _ ->
@@ -474,12 +480,12 @@ handleMsg _ session (Vote vote) table =
 
 handleMsg _ session (FinishGame vote) table
   | isBanker session table =
-    case tableGame table of
+    case game table of
       Just games -> do
-        case completeGame vote games of
+        case Game.complete vote games of
           Right newGames -> do
-            broadcast table $ GameEnded (tableBanker table) (tablePlayers table) newGames
-            pure $ table { tableGame = Just newGames }
+            broadcast table $ GameEnded (banker table) (players table) newGames
+            pure $ table { game = Just newGames }
 
           Left _ ->
             -- @TODO: handle already canceled
@@ -495,12 +501,12 @@ handleMsg _ session (FinishGame vote) table
 
 handleMsg _ session RestartRound table
   | isBanker session table =
-    case tableGame table of
+    case game table of
       Just g -> do
-        let game = restartCurrentGame g
-        let players = tablePlayers table
-        broadcast table $ GameStarted (tableBanker table) players game
-        pure $ table { tableGame = Just game }
+        let game = Game.restartCurrent g
+        let players' = players table
+        broadcast table $ GameStarted (banker table) players' game
+        pure $ table { game = Just game }
 
       Nothing ->
         -- @TODO: handle err

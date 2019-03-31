@@ -3,10 +3,10 @@
 
 module PlanningGame.Data.Table.Msg (Msg(..)) where
 
-import           Control.Monad        (mzero)
-import           Data.Aeson.Types     (FromJSON (..), (.:))
-import           Data.Aeson.Types     (Value (..))
-import           Data.Text            (Text)
+import           Control.Monad          (mzero)
+import           Data.Aeson.Types       (FromJSON (..), (.:))
+import           Data.Aeson.Types       (Value (..))
+import           Data.Text              (Text)
 
 import           PlanningGame.Data.Game (Vote)
 

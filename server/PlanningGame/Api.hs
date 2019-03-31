@@ -8,27 +8,30 @@
 
 module PlanningGame.Api
   ( ServerState
-  , initState
+  , State.init
   , app
-  , tables
   ) where
 
-import           Control.Concurrent           (MVar)
-import           Control.Monad.IO.Class       (MonadIO, liftIO)
-import           Data.Text                    (Text)
+import           Control.Concurrent             (MVar)
+import           Control.Monad.IO.Class         (MonadIO, liftIO)
+import           Data.Text                      (Text)
 import           Servant
-import           Servant.API.WebSocket        (WebSocket)
+import           Servant.API.WebSocket          (WebSocket)
 
-import qualified Control.Concurrent           as Concurrent
-import qualified Network.WebSockets           as WS
+import qualified Control.Concurrent             as Concurrent
+import qualified Network.WebSockets             as WS
 
 import           PlanningGame.Api.Authorization
-import           PlanningGame.Api.Error
-import           PlanningGame.Api.Middleware
 import           PlanningGame.Api.PlayerInfo
 
 import           PlanningGame.Data
-import           PlanningGame.State
+import           PlanningGame.State             (ServerState)
+
+import qualified PlanningGame.Api.Error         as Error
+import qualified PlanningGame.Api.Middleware    as Middleware
+import qualified PlanningGame.Data.Session      as Session
+import qualified PlanningGame.Data.Table        as Table
+import qualified PlanningGame.State             as State
 
 
 -- API
@@ -60,7 +63,7 @@ genContext state =
 server :: ServerState -> Server Api
 server state = status
            :<|> createSession
-           :<|> getSession'
+           :<|> getSession
            :<|> createTableHandler
            :<|> joinTableHandler
            :<|> meHandler
@@ -73,39 +76,39 @@ server state = status
     createSession :: Handler SessionJSON
     createSession =
       pure . SessionJSON =<<
-        (liftIO $ Concurrent.modifyMVar (sessions state) addSession)
+        (liftIO $ Concurrent.modifyMVar (State.sessions state) Session.add)
 
-    getSession' :: (HeaderAuth Session) -> Handler SessionJSON
-    getSession' =
+    getSession :: (HeaderAuth Session) -> Handler SessionJSON
+    getSession =
       pure . SessionJSON . unHeaderAuth
 
     createTableHandler :: (HeaderAuth Session) -> PlayerInfo -> Handler Table
-    createTableHandler (HeaderAuth session) PlayerInfo { playerInfoName } = do
-      res <- liftIO $ Concurrent.modifyMVar (tables state)
-                $ createTable session playerInfoName
+    createTableHandler (HeaderAuth session) PlayerInfo { name } = do
+      res <- liftIO $ Concurrent.modifyMVar (State.tables state)
+                $ Table.create session name
 
-      either respondError pure res
+      either Error.respond pure res
 
     joinTableHandler :: (HeaderAuth Session) -> Id TableId -> PlayerInfo -> Handler Table
-    joinTableHandler (HeaderAuth session) id' PlayerInfo { playerInfoName } = do
-      tables <- liftIO $ Concurrent.readMVar (tables state)
-      tableRes <- liftIO $ joinTable session id' playerInfoName tables
+    joinTableHandler (HeaderAuth session) id' PlayerInfo { name } = do
+      tables <- liftIO $ Concurrent.readMVar (State.tables state)
+      tableRes <- liftIO $ Table.join session id' name tables
 
-      either respondError pure tableRes
+      either Error.respond pure tableRes
 
     meHandler :: (HeaderAuth Session) -> Id TableId -> Handler Player
     meHandler (HeaderAuth session) tableId = do
-      ts <- liftIO $ Concurrent.readMVar (tables state)
-      playerRes <- liftIO $ getTablePlayer session tableId ts
+      ts <- liftIO $ Concurrent.readMVar (State.tables state)
+      playerRes <- liftIO $ Table.getPlayer session tableId ts
 
-      either respondError pure playerRes
+      either Error.respond pure playerRes
 
     streamTableHandler :: MonadIO m => (CookieAuth Session) -> Id TableId -> WS.Connection -> m ()
     streamTableHandler (CookieAuth session) id' conn =
-      liftIO $ tableStreamHandler (tables state) session id' conn
+      liftIO $ Table.streamHandler (State.tables state) session id' conn
 
 
 app :: ServerState -> Application
-app state = staticMiddleware $
-    serveWithContext api (genContext $ sessions state) $
+app state = Middleware.static $
+    serveWithContext api (genContext $ State.sessions state) $
     server state

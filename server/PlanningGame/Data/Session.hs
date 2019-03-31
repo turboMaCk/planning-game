@@ -8,19 +8,19 @@ module PlanningGame.Data.Session
   , Sessions
   , SessionError(..)
   , SessionJSON(..)
-  , emptySessions
-  , addSession
-  , getSession
-  , removeSession
+  , empty
+  , add
+  , get
+  , remove
   ) where
 
-import           Data.Aeson.Types   (ToJSON (..), object, (.=))
-import           Data.Set           (Set)
+import           Data.Aeson.Types       (ToJSON (..), object, (.=))
+import           Data.Set               (Set)
 
-import qualified Data.Set           as Set
+import qualified Data.Set               as Set
 
-import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
-import           PlanningGame.Data.Id    (Id, generateId)
+import           PlanningGame.Api.Error (Error (..), ErrorType (..))
+import           PlanningGame.Data.Id   (Id, generateId)
 
 
 data SessionId
@@ -55,22 +55,22 @@ instance ToJSON SessionJSON where
         ]
 
 
-addSession :: Sessions -> IO ( Sessions, Id SessionId )
-addSession sessions = do
+add :: Sessions -> IO ( Sessions, Id SessionId )
+add sessions = do
     newId <- generateId sessions
     pure $ ( Set.insert newId sessions, newId )
 
 
-emptySessions :: Sessions
-emptySessions = Set.empty
+empty :: Sessions
+empty = Set.empty
 
 
-removeSession :: Id SessionId -> Sessions -> Sessions
-removeSession = Set.delete
+remove :: Id SessionId -> Sessions -> Sessions
+remove = Set.delete
 
 
-getSession :: Session -> Sessions -> Maybe Session
-getSession session sessions =
+get :: Session -> Sessions -> Maybe Session
+get session sessions =
   if Set.member session sessions then
     Just session
   else
