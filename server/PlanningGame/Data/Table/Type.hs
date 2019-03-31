@@ -11,11 +11,12 @@ module PlanningGame.Data.Table.Type
 import           Control.Concurrent          (MVar)
 import           Data.Aeson.Types            (ToJSON (..), Value (..), object,
                                               (.=))
-import           Data.ByteString             (ByteString)
 import           Data.Map                    (Map)
 
 import qualified Data.Map.Strict             as Map
 
+import           PlanningGame.Api.Error.Class        (Error (..),
+                                                      ErrorType (..))
 import           PlanningGame.Api.GameSnapshot (snapshot)
 import           PlanningGame.Data.Game        (GameError (..), Games)
 import           PlanningGame.Data.Id          (Id)
@@ -69,6 +70,18 @@ instance Show TableError where
   show PlayerNotFound  = "PlayerNotFound"
   show (PlayerError e) = "PlayerError:" <> show e
   show (GameError e)   = "GameError:" <> show e
+
+
+instance Error TableError where
+  toType TableNotFound   = NotFound
+  toType PlayerNotFound  = Forbidden
+  toType (GameError e)   = toType e
+  toType (PlayerError e) = toType e
+
+  toReadable TableNotFound   = "Table doesn't exist."
+  toReadable PlayerNotFound  = "You're not a player on this table."
+  toReadable (GameError e)   = toReadable e
+  toReadable (PlayerError e) = toReadable e
 
 
 emptyTables :: Tables

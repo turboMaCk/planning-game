@@ -8,7 +8,7 @@ import           Data.Aeson.Types     (FromJSON (..), (.:))
 import           Data.Aeson.Types     (Value (..))
 import           Data.Text            (Text)
 
-import           PlanningGame.Data.Game (Games (..), Vote)
+import           PlanningGame.Data.Game (Vote)
 
 
 data Msg

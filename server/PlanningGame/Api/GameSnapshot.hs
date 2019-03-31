@@ -87,7 +87,7 @@ snapshot banker players games@(FinishedGames _) =
     , snapshotGameVotes = gamesVotes games
     , playerGameVotes   = gamesPlayerVotes banker players games
     }
-snapshot banker players games@(RunningGames _ (RunningGame name votes isLocked)) =
+snapshot banker players games@(RunningGames _ (RunningGame name _ isLocked)) =
   if isLocked then
     LockedGameSnapshot
         { snapshotName = name

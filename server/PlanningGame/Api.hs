@@ -60,7 +60,7 @@ genContext state =
 server :: ServerState -> Server Api
 server state = status
            :<|> createSession
-           :<|> getSession
+           :<|> getSession'
            :<|> createTableHandler
            :<|> joinTableHandler
            :<|> meHandler
@@ -75,8 +75,8 @@ server state = status
       pure . SessionJSON =<<
         (liftIO $ Concurrent.modifyMVar (sessions state) addSession)
 
-    getSession :: (HeaderAuth Session) -> Handler SessionJSON
-    getSession =
+    getSession' :: (HeaderAuth Session) -> Handler SessionJSON
+    getSession' =
       pure . SessionJSON . unHeaderAuth
 
     createTableHandler :: (HeaderAuth Session) -> PlayerInfo -> Handler Table

@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module PlanningGame.Data.Session
-  ( Session(..)
+  ( Session
   , SessionId
   , Sessions
   , SessionError(..)
@@ -19,6 +19,8 @@ import           Data.Set           (Set)
 
 import qualified Data.Set           as Set
 
+import           PlanningGame.Api.Error.Class        (Error (..),
+                                                      ErrorType (..))
 import           PlanningGame.Data.Id (Id, generateId)
 
 
@@ -38,14 +40,19 @@ data SessionError
   deriving (Show, Eq)
 
 
+instance Error SessionError where
+  toType SessionDoesNotExist     = NotFound
+  toReadable SessionDoesNotExist = "Session doesn't exist."
+
+
 newtype SessionJSON =
   SessionJSON { unSessionJSON :: Session }
 
 
 instance ToJSON SessionJSON where
-  toJSON id =
+  toJSON id' =
     object
-        [ "id" .= unSessionJSON id
+        [ "id" .= unSessionJSON id'
         ]
 
 

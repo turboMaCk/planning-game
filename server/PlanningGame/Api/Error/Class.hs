@@ -41,7 +41,7 @@ class Error a where
 {-- Just to trick the compiler
 --}
 newtype WrapError a =
-  WrapError { unWrapError :: a }
+  WrapError a
 
 
 instance (Show a, Error a) => ToJSON (WrapError a) where

@@ -29,6 +29,8 @@ import qualified Data.Map                as Map
 import qualified Data.Text               as Text
 import qualified Network.WebSockets      as WS
 
+import           PlanningGame.Api.Error.Class        (Error (..),
+                                                      ErrorType (..))
 import           PlanningGame.Data.Id      (Id)
 import           PlanningGame.Data.Session
 
@@ -59,6 +61,14 @@ data PlayerError
   = NameTaken
   | NameEmpty
   deriving (Show, Eq)
+
+
+instance Error PlayerError where
+  toType NameTaken = Conflict
+  toType NameEmpty = Unprocessable
+
+  toReadable NameTaken = "Player with this name already exists."
+  toReadable NameEmpty = "Name can't be empty."
 
 
 createPlayer :: Text -> Player

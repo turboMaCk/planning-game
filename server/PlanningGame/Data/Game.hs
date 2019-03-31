@@ -33,6 +33,8 @@ import qualified Data.Map.Strict         as Map
 import qualified Data.Text               as Text
 import qualified Data.Set as Set
 
+import           PlanningGame.Api.Error.Class        (Error (..),
+                                                      ErrorType (..))
 import           PlanningGame.Data.Id
 import           PlanningGame.Data.Player
 import           PlanningGame.Data.Session
@@ -128,6 +130,14 @@ data GameError
 instance Show GameError where
   show GameFinished   = "GameFinished"
   show VotingEndedErr = "VotingEnded"
+
+
+instance Error GameError where
+  toType GameFinished   = Forbidden
+  toType VotingEndedErr = Forbidden
+
+  toReadable GameFinished   = "Game is already finished."
+  toReadable VotingEndedErr = "Votting is already closed."
 
 
 getName :: Text -> Games -> Text
