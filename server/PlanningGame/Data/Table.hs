@@ -44,9 +44,9 @@ import           PlanningGame.Data.Id          (Id, generateId)
 import           PlanningGame.Data.Player      (Players, Player, PlayerError (..))
 import           PlanningGame.Data.Session     (Session, SessionId)
 
-import           PlanningGame.Data.Table.Msg
+import           PlanningGame.Data.Table.Msg   (Msg (..))
 
-import qualified PlanningGame.Data.Player as Player
+import qualified PlanningGame.Data.Player    as Player
 import qualified PlanningGame.Data.Game      as Game
 
 

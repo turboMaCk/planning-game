@@ -11,7 +11,7 @@ import           Data.Text                 (Text)
 import           PlanningGame.Data.Id      (Id)
 import           PlanningGame.Data.Game    (RunningGame (..),
                                             Vote (..), Games(..))
-import           PlanningGame.Data.Player
+import           PlanningGame.Data.Player  (Players, Player)
 import           PlanningGame.Data.Session (SessionId)
 
 import qualified PlanningGame.Data.Game as Game
