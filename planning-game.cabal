@@ -19,7 +19,6 @@ executable planning-game
   main-is:             PlanningGame.hs
   other-modules:       PlanningGame.Api
                      , PlanningGame.Api.Authorization
-                     , PlanningGame.Api.Authorization.Type
                      , PlanningGame.Api.Error
                      , PlanningGame.Api.Middleware
                      , PlanningGame.Api.PlayerInfo
@@ -29,8 +28,6 @@ executable planning-game
                      , PlanningGame.Data.Player
                      , PlanningGame.Data.Session
                      , PlanningGame.Data.Table
-                     , PlanningGame.Data.Table.Type
-                     , PlanningGame.Data.Table.Event
                      , PlanningGame.Data.Table.Msg
                      , PlanningGame.Data.Game
                      , PlanningGame.GarbageCollector
