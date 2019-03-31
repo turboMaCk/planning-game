@@ -264,7 +264,7 @@ gamesPlayerVotes ( bankerId, bankerName ) players' games =
 playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, Vote ) ]
 playersVotes _ _ (FinishedGames _) = []
 playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
-  mapMaybe (\(id_, vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id_ allPlayers)
+  mapMaybe (\(id', vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id' allPlayers)
     $ Map.toList votes
 
   where
