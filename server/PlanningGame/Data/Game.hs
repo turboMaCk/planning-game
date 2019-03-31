@@ -36,7 +36,7 @@ import qualified Data.Set as Set
 
 import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id
-import           PlanningGame.Data.Player hiding (name)
+import           PlanningGame.Data.Player (Players, Player)
 import           PlanningGame.Data.Session
 
 import qualified PlanningGame.Data.Player as Player
