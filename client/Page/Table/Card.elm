@@ -4,7 +4,7 @@ import Css
 import Css.Global as GCss
 import Css.Transitions as Transitions
 import Data exposing (Vote(..))
-import Html.Styled as Html exposing (Attribute, Html)
+import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
 

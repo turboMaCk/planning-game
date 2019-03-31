@@ -106,7 +106,7 @@ expectJson toMsg errorDecoder decoder =
                         Ok value ->
                             Err <| KnownErr value
 
-                        Err err ->
+                        Err _ ->
                             Err <| HttpErr <| Http.BadStatus metadata.statusCode
 
                 Http.GoodStatus_ _ body ->

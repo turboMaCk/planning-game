@@ -14,7 +14,7 @@ init =
 
 
 by : b -> (b -> c) -> Authorize a b -> Authorize c b
-by b f auth =
+by b f _ =
     Authorized b <| f b
 
 

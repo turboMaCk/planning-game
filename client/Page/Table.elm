@@ -5,17 +5,16 @@ import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Component
 import Css
-import Data exposing (ApiError, Game(..), Player, Table, TableError(..), Vote(..))
+import Data exposing (ApiError, Game(..), Player, TableError(..), Vote(..))
 import Dict exposing (Dict)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
-import Http
 import Maybe.Extra as Maybe
 import Page.Table.Card as Card exposing (Side(..))
 import Page.Table.Players as Players exposing (PlayerVote(..))
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
-import Set exposing (Set)
+import Set
 import Set.Any as AnySet
 import Task
 import Theme
@@ -151,7 +150,7 @@ update navigationKey msg model =
                 Ok e ->
                     handleEvent e model
 
-                Err e ->
+                Err _ ->
                     -- @TODO: handle errors
                     -- Translate StreamError to ApiError TableError?
                     ( model, Cmd.none )
@@ -256,7 +255,7 @@ handleEvent event model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Stream.observe Event
 
 
