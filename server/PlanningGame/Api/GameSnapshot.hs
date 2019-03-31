@@ -8,10 +8,13 @@ import           Data.Aeson.Types          (ToJSON (..), Value (..), object,
                                             (.=))
 import           Data.Text                 (Text)
 
-import           PlanningGame.Data.Game
 import           PlanningGame.Data.Id      (Id)
+import           PlanningGame.Data.Game    (RunningGame (..),
+                                            Vote (..), Games(..))
 import           PlanningGame.Data.Player
 import           PlanningGame.Data.Session (SessionId)
+
+import qualified PlanningGame.Data.Game as Game
 
 {--
 This can't be just and ToJSON instance of `Game` type
@@ -71,7 +74,7 @@ instance ToJSON GameSnapshot where
         fmap
           (\(task, xs) ->
              object [ "name" .= task
-                    , "playerVotes" .= pointsPair xs
+                    , "Game.playerVotes" .= pointsPair xs
                     ])
           pVotes
       , "points" .= points
@@ -83,20 +86,20 @@ instance ToJSON GameSnapshot where
 snapshot :: ( Id SessionId, Player ) -> Players -> Games -> GameSnapshot
 snapshot banker players games@(FinishedGames _) =
   FinishedGameSnapshot
-    { totalPoints       = sumGamePoints games
-    , snapshotGameVotes = gamesVotes games
-    , playerGameVotes   = gamesPlayerVotes banker players games
+    { totalPoints       = Game.sumPoints games
+    , snapshotGameVotes = Game.allVotes games
+    , playerGameVotes   = Game.playerVotes banker players games
     }
 snapshot banker players games@(RunningGames _ (RunningGame name _ isLocked)) =
   if isLocked then
     LockedGameSnapshot
         { snapshotName = name
-        , playerVotes  = playersVotes banker players games
-        , totalPoints  = sumGamePoints games
+        , playerVotes  = Game.playersVotes banker players games
+        , totalPoints  = Game.sumPoints games
         }
   else
     RunningGameSnapshot
         { snapshotName  = name
-        , snapshotVotes = fst <$> playersVotes banker players games
-        , totalPoints   = sumGamePoints games
+        , snapshotVotes = fst <$> Game.playersVotes banker players games
+        , totalPoints   = Game.sumPoints games
         }

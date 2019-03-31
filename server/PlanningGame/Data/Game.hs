@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NamedFieldPuns      #-}
 
 module PlanningGame.Data.Game
   ( Vote(..)
@@ -7,19 +8,19 @@ module PlanningGame.Data.Game
   , RunningGame(..)
   , FinishedGame
   , Games(..)
-  , gamesPlayerVotes
-  , startGame
+  , playerVotes
+  , start
   , addVote
   , nextRound
   , autoNextName
-  , completeGame
-  , sumGamePoints
-  , gamesVotes
+  , complete
+  , sumPoints
+  , allVotes
   , playersVotes
   , isFinished
-  , finishCurrentGame
+  , finishCurrent
   , allVoted
-  , restartCurrentGame
+  , restartCurrent
   ) where
 
 import           Control.Monad           (mzero)
@@ -107,9 +108,9 @@ data RunningGame =
 
 data FinishedGame =
   FinishedGame
-    { gameVotes   :: Map (Id SessionId) Vote
+    { votes       :: Map (Id SessionId) Vote
     , winningVote :: Vote
-    , gameName    :: Text
+    , name        :: Text
     }
 
 
@@ -140,19 +141,19 @@ instance Error GameError where
 
 
 getName :: Text -> Games -> Text
-getName name games
-  | Text.null name =
+getName name' games
+  | Text.null name' =
       checkName $ "Task-" <> (Text.pack $ show (Set.size gameNames + 1))
-  | otherwise = checkName name
+  | otherwise = checkName name'
 
   where
     gameNames =
       case games of
         RunningGames finished (RunningGame n _ _) ->
-          Set.fromList $ n : (gameName <$> finished)
+          Set.fromList $ n : (name <$> finished)
 
         FinishedGames finished ->
-          Set.fromList $ gameName <$> finished
+          Set.fromList $ name <$> finished
 
     checkName txt =
       if Set.member txt gameNames then
@@ -171,17 +172,17 @@ newGame name =
   RunningGame name Map.empty False
 
 
-finishGame :: Vote -> RunningGame -> FinishedGame
-finishGame vote (RunningGame name votes _) =
+finish :: Vote -> RunningGame -> FinishedGame
+finish vote (RunningGame name votes _) =
   FinishedGame
-    { gameName = name
-    , gameVotes = votes
+    { name = name
+    , votes = votes
     , winningVote = vote
     }
 
 
-startGame :: Text -> Games
-startGame name =
+start :: Text -> Games
+start name =
   RunningGames [] $ newGame (getName name $ FinishedGames [])
 
 
@@ -202,27 +203,27 @@ addVote sId vote (RunningGames past (RunningGame name votes isLocked)) =
 nextRound :: Vote -> Text -> Games -> Either GameError Games
 nextRound _ _ (FinishedGames _)                          = Left GameFinished
 nextRound vote newName games@(RunningGames past current) =
-  Right $ RunningGames (finishGame vote current : past)
+  Right $ RunningGames (finish vote current : past)
     $ newGame (getName newName games)
 
 
-completeGame :: Vote -> Games -> Either GameError Games
-completeGame _ (FinishedGames _)              = Left GameFinished
-completeGame vote (RunningGames past current) =
-  Right $ FinishedGames (finishGame vote current : past)
+complete :: Vote -> Games -> Either GameError Games
+complete _ (FinishedGames _)              = Left GameFinished
+complete vote (RunningGames past current) =
+  Right $ FinishedGames (finish vote current : past)
 
 
 -- @TODO: fails silently on finished games
-finishCurrentGame :: Games -> Games
-finishCurrentGame (FinishedGames past) = FinishedGames past
-finishCurrentGame (RunningGames past (RunningGame name votes _)) =
+finishCurrent :: Games -> Games
+finishCurrent (FinishedGames past) = FinishedGames past
+finishCurrent (RunningGames past (RunningGame name votes _)) =
   RunningGames past $ RunningGame name votes True
 
 
 -- @TODO: fails silently on finished games
-restartCurrentGame :: Games -> Games
-restartCurrentGame (FinishedGames past) = FinishedGames past
-restartCurrentGame (RunningGames past (RunningGame name _ _)) =
+restartCurrent :: Games -> Games
+restartCurrent (FinishedGames past) = FinishedGames past
+restartCurrent (RunningGames past (RunningGame name _ _)) =
   RunningGames past $ RunningGame name Map.empty False
 
 
@@ -236,25 +237,27 @@ finishedGames (RunningGames finished _) = finished
 finishedGames (FinishedGames finished)  = finished
 
 
-sumGamePoints :: Games -> Int
-sumGamePoints games =
+sumPoints :: Games -> Int
+sumPoints games =
   sum $ (voteToInt . winningVote) <$> finishedGames games
 
 
-gamesVotes :: Games -> [ ( Text, Vote ) ]
-gamesVotes games =
-  reverse $ (\g -> ( gameName g, winningVote g )) <$> finishedGames games
+allVotes :: Games -> [ ( Text, Vote ) ]
+allVotes games =
+  reverse $ (\(FinishedGame { name, winningVote }) -> ( name, winningVote ))
+  <$> finishedGames games
 
 
-gamesPlayerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, [ ( Text, Vote ) ] ) ]
-gamesPlayerVotes ( bankerId, bankerName ) players' games =
-  reverse $ (\g -> ( gameName g, playerVotes g )) <$> finishedGames games
+playerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, [ ( Text, Vote ) ] ) ]
+playerVotes ( bankerId, bankerName ) players' games =
+  reverse $ (\game@(FinishedGame { name }) -> ( name, playerVotes' game ))
+  <$> finishedGames games
 
   where
-    playerVotes :: FinishedGame -> [ ( Text, Vote ) ]
-    playerVotes game =
+    playerVotes' :: FinishedGame -> [ ( Text, Vote ) ]
+    playerVotes' game =
       -- @TODO: Better errr handling
-      fmap (\(sId, vote) -> (maybe "" playerName $ Map.lookup sId players, vote)) $ Map.toList $ gameVotes game
+      fmap (\(sId, vote) -> (maybe "" playerName $ Map.lookup sId players, vote)) $ Map.toList $ votes game
 
     players =
       Map.insert bankerId bankerName players'

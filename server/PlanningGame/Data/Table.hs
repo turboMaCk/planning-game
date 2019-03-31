@@ -39,12 +39,14 @@ import qualified Network.WebSockets          as WS
 import           PlanningGame.Api.GameSnapshot (snapshot)
 import           PlanningGame.Api.Error        (Error (..), ErrorType (..))
 
-import           PlanningGame.Data.Game
+import           PlanningGame.Data.Game        (Games, GameError)
 import           PlanningGame.Data.Id          (Id, generateId)
 import           PlanningGame.Data.Player
 import           PlanningGame.Data.Session
 
 import           PlanningGame.Data.Table.Msg
+
+import qualified PlanningGame.Data.Game      as Game
 
 
 -- Types
@@ -142,7 +144,7 @@ instance ToJSON Event where
     object
         [ "event"        .= Text.pack "SyncTableState"
         , "table"        .= table
-        , "nextGameName" .= maybe "Task-1" autoNextName (tableGame table)
+        , "nextGameName" .= maybe "Task-1" Game.autoNextName (tableGame table)
         ]
   toJSON (GameStarted dealer players games) =
     object
@@ -158,7 +160,7 @@ instance ToJSON Event where
     object
         [ "event"        .= Text.pack "VotingEnded"
         , "game"         .= snapshot dealer players games
-        , "nextGameName" .= autoNextName games
+        , "nextGameName" .= Game.autoNextName games
         ]
   toJSON (GameEnded dealer players games) =
     object
@@ -399,7 +401,7 @@ handleMsg :: Connection -> Session -> Msg -> Table -> IO Table
 handleMsg _ session (NewGame name) table
   | isBanker session table
   , isNothing (tableGame table) = do
-      let game = startGame name
+      let game = Game.start name
       let players = tablePlayers table
       broadcast table $ GameStarted (tableBanker table) players game
       pure $ table { tableGame = Just game }
@@ -416,7 +418,7 @@ handleMsg _ session FinishRound table
   | isBanker session table =
       case tableGame table of
         Just games -> do
-          let newGames = finishCurrentGame games
+          let newGames = Game.finishCurrent games
           broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) newGames
           pure $ table { tableGame = Just newGames }
 
@@ -432,7 +434,7 @@ handleMsg _ session (NextRound vote name) table
   | isBanker session table =
       case tableGame table of
         Just games -> do
-          case nextRound vote name games of
+          case Game.nextRound vote name games of
             Left _ ->
               -- @TODO: missing err handling
               pure table
@@ -450,13 +452,13 @@ handleMsg _ session (NextRound vote name) table
 handleMsg _ session (Vote vote) table =
   case tableGame table of
     Just game ->
-      case addVote session vote game of
+      case Game.addVote session vote game of
         Right newGames -> do
           maybe (pure ()) (broadcast table . VoteAccepted) $ getPlayer session $ allTablePlayers table
 
           -- Auto end game when all voted
-          if allVoted (allTablePlayers table) newGames then do
-            let finishedNewGames = finishCurrentGame newGames
+          if Game.allVoted (allTablePlayers table) newGames then do
+            let finishedNewGames = Game.finishCurrent newGames
 
             broadcast table $ VotingEnded (tableBanker table) (tablePlayers table) finishedNewGames
             pure $ table { tableGame = Just finishedNewGames }
@@ -476,7 +478,7 @@ handleMsg _ session (FinishGame vote) table
   | isBanker session table =
     case tableGame table of
       Just games -> do
-        case completeGame vote games of
+        case Game.complete vote games of
           Right newGames -> do
             broadcast table $ GameEnded (tableBanker table) (tablePlayers table) newGames
             pure $ table { tableGame = Just newGames }
@@ -497,7 +499,7 @@ handleMsg _ session RestartRound table
   | isBanker session table =
     case tableGame table of
       Just g -> do
-        let game = restartCurrentGame g
+        let game = Game.restartCurrent g
         let players = tablePlayers table
         broadcast table $ GameStarted (tableBanker table) players game
         pure $ table { tableGame = Just game }
