@@ -15,8 +15,10 @@ import qualified Control.Concurrent as Concurrent
 import qualified Data.Map           as Map
 import qualified Data.Time.Clock    as Clock
 
-import           PlanningGame.Data    (Tables, tableActive, tableCreatedAt)
+import           PlanningGame.Data.Table    (Tables)
 import           PlanningGame.State
+
+import qualified PlanningGame.Data.Table as Table
 
 
 filterMaybes :: Ord k => Map k (Maybe a) -> Map k a
@@ -36,9 +38,9 @@ gcTables state minDeltaMin now =
       table <- Concurrent.readMVar s
 
       let nominalDiffTime =
-            Clock.diffUTCTime now $ tableCreatedAt table
+            Clock.diffUTCTime now $ Table.createdAt table
 
-      if (nominalDiffTime < fromInteger (60 * minDeltaMin)) || tableActive table then
+      if (nominalDiffTime < fromInteger (60 * minDeltaMin)) || Table.isActive table then
         pure $ Just s
 
       else

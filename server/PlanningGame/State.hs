@@ -5,8 +5,8 @@ import           Control.Concurrent  (MVar)
 
 import qualified Control.Concurrent as Concurrent
 
-import           PlanningGame.Data    (Sessions, Tables, emptySessions,
-                                     emptyTables)
+import           PlanningGame.Data    (Sessions, Tables, emptySessions)
+import qualified PlanningGame.Data.Table as Table
 
 
 data ServerState = ServerState
@@ -18,4 +18,4 @@ data ServerState = ServerState
 initState :: IO ServerState
 initState = ServerState
   <$> Concurrent.newMVar emptySessions
-  <*> Concurrent.newMVar emptyTables
+  <*> Concurrent.newMVar Table.empty
