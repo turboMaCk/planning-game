@@ -6,8 +6,6 @@ import Component
 import Css
 import Data exposing (ApiError, Session, Table, TableError(..))
 import Html.Styled as Html exposing (Html)
-import Html.Styled.Attributes as Attrs
-import Http
 import Task
 import Theme
 import Url.Builder as Url

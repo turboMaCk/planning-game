@@ -121,8 +121,7 @@ init { sessionId, showCookiesNotice } url key =
 
 
 type Msg
-    = NoOp
-    | RouteTo UrlRequest
+    = RouteTo UrlRequest
     | UrlChanged Url
     | SessionCreated (Result Http.Error Session)
     | HomeMsg Join.Msg
@@ -134,9 +133,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         RouteTo url ->
             case url of
                 Internal location ->
@@ -156,7 +152,7 @@ update msg model =
                     routePage (Authorize.by session) model.route model
                         |> Cmd.add (storeSession session.id)
 
-                Err session ->
+                Err _ ->
                     ( model, Data.createSession SessionCreated )
 
         HomeMsg sMsg ->
@@ -202,7 +198,7 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.page of
-        Authorized session (Table m) ->
+        Authorized _ (Table m) ->
             Table.subscriptions m
                 |> Sub.map TableMsg
 
