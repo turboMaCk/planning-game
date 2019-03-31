@@ -74,7 +74,7 @@ instance ToJSON GameSnapshot where
         fmap
           (\(task, xs) ->
              object [ "name" .= task
-                    , "Game.playerVotes" .= pointsPair xs
+                    , "playerVotes" .= pointsPair xs
                     ])
           pVotes
       , "points" .= points
