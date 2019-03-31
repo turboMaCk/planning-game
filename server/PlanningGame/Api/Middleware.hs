@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module PlanningGame.Api.Middleware (staticMiddleware) where
+module PlanningGame.Api.Middleware (static) where
 
 import           Data.Maybe                    (fromMaybe)
 import           Network.HTTP.Types            (status200)
@@ -18,8 +18,8 @@ import qualified Text.Blaze.Html5              as Html
 import qualified Text.Blaze.Html5.Attributes   as Attrs
 
 
-indexMiddleware :: Middleware
-indexMiddleware application request respond
+index :: Middleware
+index application request respond
   | respondWithIndex =
     respond indexRes
   | otherwise =
@@ -35,7 +35,7 @@ indexMiddleware application request respond
 
     indexRes :: Response
     indexRes =
-      responseLBS status200 headers $ renderHtml index
+      responseLBS status200 headers $ renderHtml indexView
 
         where
             headers =
@@ -44,18 +44,18 @@ indexMiddleware application request respond
               ]
 
 
-publicMiddleware :: Middleware
-publicMiddleware =
+public :: Middleware
+public =
   staticPolicy $ addBase "public"
 
 
-staticMiddleware :: Middleware
-staticMiddleware =
-  publicMiddleware . indexMiddleware
+static :: Middleware
+static =
+  public . index
 
 
-index :: Html
-index =
+indexView :: Html
+indexView =
   Html.docTypeHtml ! Attrs.lang "en_EN" $ do
     Html.head $ do
       Html.title "Planning Game"

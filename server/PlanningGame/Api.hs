@@ -23,12 +23,12 @@ import qualified Control.Concurrent           as Concurrent
 import qualified Network.WebSockets           as WS
 
 import           PlanningGame.Api.Authorization
-import           PlanningGame.Api.Middleware
 import           PlanningGame.Api.PlayerInfo
 
 import           PlanningGame.Data
 import           PlanningGame.State
 
+import qualified PlanningGame.Api.Middleware as Middleware
 import qualified PlanningGame.Api.Error as Error
 
 
@@ -107,6 +107,6 @@ server state = status
 
 
 app :: ServerState -> Application
-app state = staticMiddleware $
+app state = Middleware.static $
     serveWithContext api (genContext $ sessions state) $
     server state
