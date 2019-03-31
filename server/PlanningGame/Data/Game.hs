@@ -33,6 +33,7 @@ import qualified Data.Map.Strict         as Map
 import qualified Data.Text               as Text
 import qualified Data.Set as Set
 
+import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id
 import           PlanningGame.Data.Player
 import           PlanningGame.Data.Session
@@ -128,6 +129,14 @@ data GameError
 instance Show GameError where
   show GameFinished   = "GameFinished"
   show VotingEndedErr = "VotingEnded"
+
+
+instance Error GameError where
+  toType GameFinished   = Forbidden
+  toType VotingEndedErr = Forbidden
+
+  toReadable GameFinished   = "Game is already finished."
+  toReadable VotingEndedErr = "Votting is already closed."
 
 
 getName :: Text -> Games -> Text
@@ -254,7 +263,7 @@ gamesPlayerVotes ( bankerId, bankerName ) players' games =
 playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, Vote ) ]
 playersVotes _ _ (FinishedGames _) = []
 playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
-  mapMaybe (\(id_, vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id_ allPlayers)
+  mapMaybe (\(id', vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id' allPlayers)
     $ Map.toList votes
 
   where

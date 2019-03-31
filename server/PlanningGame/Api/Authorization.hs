@@ -16,9 +16,7 @@ import           Control.Concurrent                (MVar)
 import           Control.Monad.IO.Class            (liftIO)
 import           Data.ByteString                   (ByteString)
 import           Network.Wai                       (Request)
-import           Servant                           (AuthProtect, Handler,
-                                                    err401, err403, errBody,
-                                                    throwError)
+import           Servant                           (AuthProtect, Handler)
 import           Servant.Server.Experimental.Auth  (AuthHandler, AuthServerData,
                                                     mkAuthHandler)
 

@@ -20,21 +20,13 @@ import           PlanningGame.State
 
 
 filterMaybes :: Ord k => Map k (Maybe a) -> Map k a
-filterMaybes map =
-  Map.foldrWithKey filter Map.empty map
+filterMaybes map' =
+  Map.foldrWithKey filter' Map.empty map'
 
   where
-    filter :: Ord k => k -> Maybe a -> Map k a -> Map k a
-    filter _ Nothing acc  = acc
-    filter k (Just a) acc = Map.insert k a acc
-
-
-putTables :: MVar Tables -> IO ()
-putTables state = do
-  ts <- Concurrent.readMVar state
-  let ids = fst <$> Map.toList ts
-
-  putStrLn $ "Tables ids: " <> show ids
+    filter' :: Ord k => k -> Maybe a -> Map k a -> Map k a
+    filter' _ Nothing acc  = acc
+    filter' k (Just a) acc = Map.insert k a acc
 
 
 gcTables :: MVar Tables -> Integer -> UTCTime -> IO ()
@@ -61,7 +53,7 @@ start (ServerState { tables }) frequency tableMinLife = do
 
   forever $ do
     -- convert minutes
-    Concurrent.threadDelay (10^6 * 60 * frequency)
+    Concurrent.threadDelay (10^(6 :: Int) * 60 * frequency)
 
     putStrLn "Garbage collecting...."
 

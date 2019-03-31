@@ -21,7 +21,6 @@ executable planning-game
                      , PlanningGame.Api.Authorization
                      , PlanningGame.Api.Authorization.Type
                      , PlanningGame.Api.Error
-                     , PlanningGame.Api.Error.Class
                      , PlanningGame.Api.Middleware
                      , PlanningGame.Api.PlayerInfo
                      , PlanningGame.Api.GameSnapshot

@@ -1,7 +1,6 @@
 module Main where
 
 import           Control.Concurrent          (forkIO)
-import           Data.Maybe                  (fromMaybe)
 import           System.Environment          (lookupEnv)
 
 import qualified Network.Wai.Handler.Warp    as Warp
@@ -22,6 +21,6 @@ main = do
   gcTableMinLife <- envRead "GC_TABLE_MIN_LIFE_MIN" 120
 
   -- Start garbage collector
-  forkIO $ GC.start state gcPeriod gcTableMinLife
+  _ <- forkIO $ GC.start state gcPeriod gcTableMinLife
 
   Warp.runEnv 3000 $ Api.app state

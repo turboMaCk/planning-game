@@ -20,7 +20,7 @@ import           Control.Concurrent          (MVar)
 import           Control.Exception           (finally)
 import           Control.Monad               (forM_, forever, mzero)
 import           Data.ByteString.Lazy        (ByteString)
-import           Data.Maybe                  (fromMaybe, isJust, isNothing)
+import           Data.Maybe                  (fromMaybe, isNothing)
 import           Data.Text                   (Text)
 import           Network.WebSockets          (Connection)
 
@@ -114,11 +114,6 @@ joinTable session tableId name' tables =
     Nothing ->
       pure $ Left TableNotFound
 
-  where
-    updateTables :: Table -> Players -> IO ( Tables, Maybe Table )
-    updateTables table players =
-       undefined
-
 
 getTablePlayer :: Session -> Id TableId -> Tables -> IO (Either TableError Player)
 getTablePlayer session tableId tables =
@@ -188,7 +183,7 @@ handleStreamMsg session state conn = forever $ do
 
 disconnect :: MVar Table -> Id SessionId -> Int -> IO ()
 disconnect state sessionId connId =
-  Concurrent.modifyMVar_ state $ \table@Table { tableBanker=banker, tablePlayers=players } ->
+  Concurrent.modifyMVar_ state $ \table@Table { tableBanker=banker } ->
     if fst banker == sessionId then do
       let updatedTable = table { tableBanker = ( fst banker , removeConnectionFromPlayer connId $ snd banker ) }
       let player = snd $ tableBanker updatedTable
@@ -236,8 +231,8 @@ tableStreamHandler state session id' conn = do
 
                     -- 3.3 Broadcast join event
                     if playerNumberOfConnections player == 1 then do
-                        table <- Concurrent.readMVar tableState
-                        broadcast table $ PlayerStatusUpdate player
+                        table' <- Concurrent.readMVar tableState
+                        broadcast table' $ PlayerStatusUpdate player
 
                     else
                         mzero
@@ -270,7 +265,7 @@ isBanker session Table { tableBanker=pair } =
 
 -- @TODO: refactor
 handleMsg :: Connection -> Session -> Msg -> Table -> IO Table
-handleMsg conn session (NewGame name) table
+handleMsg _ session (NewGame name) table
   | isBanker session table
   , isNothing (tableGame table) = do
       let game = startGame name
@@ -286,7 +281,7 @@ handleMsg conn session (NewGame name) table
       -- @TODO: Handle already started
       pure $ table
 
-handleMsg conn session FinishRound table
+handleMsg _ session FinishRound table
   | isBanker session table =
       case tableGame table of
         Just games -> do
@@ -302,12 +297,12 @@ handleMsg conn session FinishRound table
     -- @TODO: handle forbidden
     pure table
 
-handleMsg conn session (NextRound vote name) table
+handleMsg _ session (NextRound vote name) table
   | isBanker session table =
       case tableGame table of
         Just games -> do
           case nextRound vote name games of
-            Left err ->
+            Left _ ->
               -- @TODO: missing err handling
               pure table
             Right newGames -> do
@@ -321,7 +316,7 @@ handleMsg conn session (NextRound vote name) table
     -- @TODO: handle forbidden
     pure table
 
-handleMsg conn session (Vote vote) table =
+handleMsg _ session (Vote vote) table =
   case tableGame table of
     Just game ->
       case addVote session vote game of
@@ -346,7 +341,7 @@ handleMsg conn session (Vote vote) table =
       -- @TODO: hanlde not started
       pure table
 
-handleMsg conn session (FinishGame vote) table
+handleMsg _ session (FinishGame vote) table
   | isBanker session table =
     case tableGame table of
       Just games -> do
@@ -367,7 +362,7 @@ handleMsg conn session (FinishGame vote) table
       -- @TODO: handle forbidden
       pure table
 
-handleMsg conn session RestartRound table
+handleMsg _ session RestartRound table
   | isBanker session table =
     case tableGame table of
       Just g -> do

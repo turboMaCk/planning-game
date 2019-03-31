@@ -1,55 +1,70 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE ExplicitForAll    #-}
+{-# LANGUAGE FlexibleContexts  #-}
 
 module PlanningGame.Api.Error
-  ( module PlanningGame.Api.Error.Class
+ (Error (..),
+  ErrorType (..),
+  respondError
   ) where
 
-import           PlanningGame.Api.Authorization.Type (AuthorizationError (..))
-import           PlanningGame.Api.Error.Class        (Error (..),
-                                                      ErrorType (..),
-                                                      respondError)
-import           PlanningGame.Data                   (GameError (..),
-                                                      PlayerError (..),
-                                                      SessionError (..),
-                                                      TableError (..))
+
+import           Control.Monad.Error.Class (MonadError)
+import           Data.Aeson.Types          (ToJSON (..), (.=))
+import           Data.Text                 (Text)
+import           GHC.Generics              (Generic)
+import           Servant                   (ServantErr, err401, err403, err404,
+                                            err409, err422, errBody, errHeaders,
+                                            throwError)
+
+import qualified Data.Aeson                as Aeson
+import qualified Data.Text                 as Text
 
 
-instance Error AuthorizationError where
-  toType SessionNotFound  = Forbidden
-  toType SessionIdMissing = Unauthorized
-
-  toReadable SessionNotFound  = "Session expired."
-  toReadable SessionIdMissing = "Session required."
-
-
-instance Error SessionError where
-  toType SessionDoesNotExist     = NotFound
-  toReadable SessionDoesNotExist = "Session doesn't exist."
+data ErrorType
+    = NotFound
+    | Unauthorized
+    | Forbidden
+    | Conflict
+    | Unprocessable
+    deriving (Generic)
 
 
-instance Error PlayerError where
-  toType NameTaken = Conflict
-  toType NameEmpty = Unprocessable
-
-  toReadable NameTaken = "Player with this name already exists."
-  toReadable NameEmpty = "Name can't be empty."
+instance ToJSON ErrorType
 
 
-instance Error GameError where
-  toType GameFinished   = Forbidden
-  toType VotingEndedErr = Forbidden
-
-  toReadable GameFinished   = "Game is already finished."
-  toReadable VotingEndedErr = "Votting is already closed."
+class Error a where
+  toType     :: a -> ErrorType
+  toReadable :: a -> Text
 
 
-instance Error TableError where
-  toType TableNotFound   = NotFound
-  toType PlayerNotFound  = Forbidden
-  toType (GameError e)   = toType e
-  toType (PlayerError e) = toType e
+{-- Just to trick the compiler
+--}
+newtype WrapError a =
+  WrapError a
 
-  toReadable TableNotFound   = "Table doesn't exist."
-  toReadable PlayerNotFound  = "You're not a player on this table."
-  toReadable (GameError e)   = toReadable e
-  toReadable (PlayerError e) = toReadable e
+
+instance (Show a, Error a) => ToJSON (WrapError a) where
+  toJSON (WrapError err) =
+    Aeson.object
+      [ "status"  .= toType err
+      , "error"   .= toJSON (Text.pack $ show err)
+      , "message" .= toReadable err
+      ]
+
+
+respondError :: ( Show a, Error a) => MonadError ServantErr m => a -> m b
+respondError res =
+  throwError $ err
+    { errBody = Aeson.encode $ toJSON (WrapError res)
+    , errHeaders = [ ( "Content-Type", "application/json;charset=utf-8" ) ]
+    }
+  where
+    err =
+        case toType res of
+            NotFound      -> err404
+            Unauthorized  -> err401
+            Forbidden     -> err403
+            Conflict      -> err409
+            Unprocessable -> err422
