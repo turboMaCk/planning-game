@@ -19,7 +19,6 @@ executable planning-game
   main-is:             PlanningGame.hs
   other-modules:       PlanningGame.Api
                      , PlanningGame.Api.Authorization
-                     , PlanningGame.Api.Authorization.Type
                      , PlanningGame.Api.Error
                      , PlanningGame.Api.Middleware
                      , PlanningGame.Api.PlayerInfo

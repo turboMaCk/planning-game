@@ -26,11 +26,23 @@ import qualified Control.Concurrent                as Concurrent
 import qualified Data.ByteString                   as ByteString
 import qualified Web.Cookie                        as Cookie
 
-import           PlanningGame.Api.Authorization.Type (AuthorizationError (..))
-import           PlanningGame.Api.Error              (respondError)
+import           PlanningGame.Api.Error              (Error (..), ErrorType(..), respondError)
 import           PlanningGame.Data.Id                (Id (..))
 import           PlanningGame.Data.Session           (Session, SessionId,
                                                     Sessions, getSession)
+
+data AuthorizationError
+  = SessionNotFound
+  | SessionIdMissing
+  deriving (Show, Eq)
+
+
+instance Error AuthorizationError where
+  toType SessionNotFound  = Forbidden
+  toType SessionIdMissing = Unauthorized
+
+  toReadable SessionNotFound  = "Session expired."
+  toReadable SessionIdMissing = "Session required."
 
 
 lookupSession :: MVar Sessions -> Id SessionId -> Handler Session
