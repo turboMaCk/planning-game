@@ -63,6 +63,7 @@ type Msg
     | SetName String
     | NewGame String
     | FinishGame
+    | ClearMyVote
 
 
 leave : () -> Cmd msg
@@ -199,6 +200,9 @@ update navigationKey msg model =
 
                 Nothing ->
                     ( model, Cmd.none )
+
+        ClearMyVote ->
+            ( { model | myVote = Nothing }, Cmd.none )
 
 
 
@@ -337,6 +341,12 @@ setNameView model =
                         [ Theme.secondaryBtn
                         , Css.marginTop <| Css.px 12
                         ]
+                        [ Events.onClick ClearMyVote ]
+                        [ Html.text "Back" ]
+                    , Html.styled Html.button
+                        [ Theme.secondaryBtn
+                        , Css.marginTop <| Css.px 12
+                        ]
                         [ Events.onClick FinishGame
                         , Attrs.type_ "button"
                         ]
@@ -465,7 +475,7 @@ viewGame model =
                         Html.styled Html.button
                             [ Theme.secondaryBtn ]
                             [ Events.onClick <| Send Stream.FinishRound ]
-                            [ Html.text "Finish round" ]
+                            [ Html.text "Finish Round" ]
 
                       else
                         Html.text ""
@@ -482,6 +492,11 @@ viewGame model =
                         -- Banker chossing agreed estimation
                         [ Theme.highlightedHeading True [ Html.text "Choose agreed extimation!" ]
                         , viewPlayerVotes playerVotes
+                        , Html.br [] []
+                        , Html.styled Html.button
+                            [ Theme.secondaryBtn ]
+                            [ Events.onClick <| Send Stream.Restart ]
+                            [ Html.text "Restart Round" ]
                         ]
 
                     else

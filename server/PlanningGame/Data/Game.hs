@@ -19,11 +19,12 @@ module PlanningGame.Data.Game
   , isFinished
   , finishCurrentGame
   , allVoted
+  , restartCurrentGame
   ) where
 
 import           Control.Monad           (mzero)
 import           Data.Aeson.Types        (FromJSON (..), ToJSON (..),
-                                          Value (..), (.=))
+                                          Value (..))
 import           Data.Map.Strict         (Map)
 import           Data.Maybe              (mapMaybe)
 import           Data.Text               (Text)
@@ -138,8 +139,8 @@ getName name games
   where
     gameNames =
       case games of
-        RunningGames finished (RunningGame name _ _) ->
-          Set.fromList $ name : (gameName <$> finished)
+        RunningGames finished (RunningGame n _ _) ->
+          Set.fromList $ n : (gameName <$> finished)
 
         FinishedGames finished ->
           Set.fromList $ gameName <$> finished
@@ -209,6 +210,13 @@ finishCurrentGame (RunningGames past (RunningGame name votes _)) =
   RunningGames past $ RunningGame name votes True
 
 
+-- @TODO: fails silently on finished games
+restartCurrentGame :: Games -> Games
+restartCurrentGame (FinishedGames past) = FinishedGames past
+restartCurrentGame (RunningGames past (RunningGame name _ _)) =
+  RunningGames past $ RunningGame name Map.empty False
+
+
 isFinished :: Games -> Bool
 isFinished (FinishedGames _)                       = True
 isFinished (RunningGames _ (RunningGame _ _ bool)) = bool
@@ -246,7 +254,7 @@ gamesPlayerVotes ( bankerId, bankerName ) players' games =
 playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, Vote ) ]
 playersVotes _ _ (FinishedGames _) = []
 playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
-  mapMaybe (\(id, vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id allPlayers)
+  mapMaybe (\(id_, vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id_ allPlayers)
     $ Map.toList votes
 
   where

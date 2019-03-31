@@ -64,7 +64,7 @@ instance ToJSON GameSnapshot where
       , "points"       .= points
       , "status"       .= String "Locked"
       ]
-  toJSON (FinishedGameSnapshot points votes playerVotes) =
+  toJSON (FinishedGameSnapshot points votes pVotes) =
     object
       [ "roundVotes"  .= pointsPair votes
       , "playerVotes" .=
@@ -73,7 +73,7 @@ instance ToJSON GameSnapshot where
              object [ "name" .= task
                     , "playerVotes" .= pointsPair xs
                     ])
-          playerVotes
+          pVotes
       , "points" .= points
       , "status" .= String "Finished"
       ]
