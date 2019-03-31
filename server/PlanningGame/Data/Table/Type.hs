@@ -15,14 +15,13 @@ import           Data.Map                    (Map)
 
 import qualified Data.Map.Strict             as Map
 
-import           PlanningGame.Api.Error.Class        (Error (..),
-                                                      ErrorType (..))
+import           PlanningGame.Api.Error        (Error (..), ErrorType (..))
 import           PlanningGame.Api.GameSnapshot (snapshot)
 import           PlanningGame.Data.Game        (GameError (..), Games)
 import           PlanningGame.Data.Id          (Id)
 import           PlanningGame.Data.Player      (Player, PlayerError (..), Players)
 import           PlanningGame.Data.Session     (SessionId)
-import           Data.Time.Clock             (UTCTime)
+import           Data.Time.Clock               (UTCTime)
 
 
 data TableId

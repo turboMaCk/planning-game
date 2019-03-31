@@ -19,9 +19,8 @@ import           Data.Set           (Set)
 
 import qualified Data.Set           as Set
 
-import           PlanningGame.Api.Error.Class        (Error (..),
-                                                      ErrorType (..))
-import           PlanningGame.Data.Id (Id, generateId)
+import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
+import           PlanningGame.Data.Id    (Id, generateId)
 
 
 data SessionId

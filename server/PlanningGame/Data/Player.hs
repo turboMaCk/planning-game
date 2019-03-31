@@ -29,9 +29,8 @@ import qualified Data.Map                as Map
 import qualified Data.Text               as Text
 import qualified Network.WebSockets      as WS
 
-import           PlanningGame.Api.Error.Class        (Error (..),
-                                                      ErrorType (..))
-import           PlanningGame.Data.Id      (Id)
+import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
+import           PlanningGame.Data.Id    (Id)
 import           PlanningGame.Data.Session
 
 

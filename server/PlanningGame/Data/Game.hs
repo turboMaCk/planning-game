@@ -33,8 +33,7 @@ import qualified Data.Map.Strict         as Map
 import qualified Data.Text               as Text
 import qualified Data.Set as Set
 
-import           PlanningGame.Api.Error.Class        (Error (..),
-                                                      ErrorType (..))
+import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id
 import           PlanningGame.Data.Player
 import           PlanningGame.Data.Session

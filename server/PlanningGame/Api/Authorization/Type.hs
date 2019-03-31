@@ -2,8 +2,8 @@
 
 module PlanningGame.Api.Authorization.Type where
 
-import PlanningGame.Api.Error.Class (Error (..),
-                                     ErrorType (..))
+import PlanningGame.Api.Error (Error (..),
+                               ErrorType (..))
 
 data AuthorizationError
   = SessionNotFound
