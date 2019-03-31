@@ -16,7 +16,7 @@ envRead name def =
 
 main :: IO ()
 main = do
-  state <- Api.initState
+  state <- Api.init
   gcPeriod <- envRead "GC_EVERY_MIN" 30
   gcTableMinLife <- envRead "GC_TABLE_MIN_LIFE_MIN" 120
 

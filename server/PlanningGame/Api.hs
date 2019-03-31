@@ -8,9 +8,8 @@
 
 module PlanningGame.Api
   ( ServerState
-  , initState
+  , State.init
   , app
-  , tables
   ) where
 
 import           Control.Concurrent           (MVar)
@@ -26,12 +25,13 @@ import           PlanningGame.Api.Authorization
 import           PlanningGame.Api.PlayerInfo
 
 import           PlanningGame.Data
-import           PlanningGame.State
+import           PlanningGame.State (ServerState)
 
 import qualified PlanningGame.Api.Middleware as Middleware
 import qualified PlanningGame.Api.Error as Error
 import qualified PlanningGame.Data.Table as Table
 import qualified PlanningGame.Data.Session as Session
+import qualified PlanningGame.State as State
 
 
 -- API
@@ -76,7 +76,7 @@ server state = status
     createSession :: Handler SessionJSON
     createSession =
       pure . SessionJSON =<<
-        (liftIO $ Concurrent.modifyMVar (sessions state) Session.add)
+        (liftIO $ Concurrent.modifyMVar (State.sessions state) Session.add)
 
     getSession :: (HeaderAuth Session) -> Handler SessionJSON
     getSession =
@@ -84,31 +84,31 @@ server state = status
 
     createTableHandler :: (HeaderAuth Session) -> PlayerInfo -> Handler Table
     createTableHandler (HeaderAuth session) PlayerInfo { playerInfoName } = do
-      res <- liftIO $ Concurrent.modifyMVar (tables state)
+      res <- liftIO $ Concurrent.modifyMVar (State.tables state)
                 $ Table.create session playerInfoName
 
       either Error.respond pure res
 
     joinTableHandler :: (HeaderAuth Session) -> Id TableId -> PlayerInfo -> Handler Table
     joinTableHandler (HeaderAuth session) id' PlayerInfo { playerInfoName } = do
-      tables <- liftIO $ Concurrent.readMVar (tables state)
+      tables <- liftIO $ Concurrent.readMVar (State.tables state)
       tableRes <- liftIO $ Table.join session id' playerInfoName tables
 
       either Error.respond pure tableRes
 
     meHandler :: (HeaderAuth Session) -> Id TableId -> Handler Player
     meHandler (HeaderAuth session) tableId = do
-      ts <- liftIO $ Concurrent.readMVar (tables state)
+      ts <- liftIO $ Concurrent.readMVar (State.tables state)
       playerRes <- liftIO $ Table.getPlayer session tableId ts
 
       either Error.respond pure playerRes
 
     streamTableHandler :: MonadIO m => (CookieAuth Session) -> Id TableId -> WS.Connection -> m ()
     streamTableHandler (CookieAuth session) id' conn =
-      liftIO $ Table.streamHandler (tables state) session id' conn
+      liftIO $ Table.streamHandler (State.tables state) session id' conn
 
 
 app :: ServerState -> Application
 app state = Middleware.static $
-    serveWithContext api (genContext $ sessions state) $
+    serveWithContext api (genContext $ State.sessions state) $
     server state

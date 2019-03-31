@@ -1,6 +1,7 @@
-module PlanningGame.State (ServerState(..), initState) where
+module PlanningGame.State (ServerState(..), init) where
 
 
+import           Prelude      hiding (init)
 import           Control.Concurrent  (MVar)
 
 import qualified Control.Concurrent as Concurrent
@@ -17,7 +18,7 @@ data ServerState = ServerState
   }
 
 
-initState :: IO ServerState
-initState = ServerState
+init :: IO ServerState
+init = ServerState
   <$> Concurrent.newMVar Session.empty
   <*> Concurrent.newMVar Table.empty
