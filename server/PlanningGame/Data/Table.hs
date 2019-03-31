@@ -41,12 +41,12 @@ import           PlanningGame.Api.Error        (Error (..), ErrorType (..))
 
 import           PlanningGame.Data.Game        (Games, GameError)
 import           PlanningGame.Data.Id          (Id, generateId)
-import           PlanningGame.Data.Player      hiding (getPlayer)
-import qualified          PlanningGame.Data.Player as P
+import           PlanningGame.Data.Player      (Players, Player, PlayerError (..))
 import           PlanningGame.Data.Session
 
 import           PlanningGame.Data.Table.Msg
 
+import qualified PlanningGame.Data.Player as Player
 import qualified PlanningGame.Data.Game      as Game
 
 
@@ -191,8 +191,8 @@ create id' name' tables =
     tId <- generateId tables
     now <- Clock.getCurrentTime
 
-    let banker' = createPlayer name
-    let newTable = Table tId ( id', banker' ) emptyPlayers Nothing now
+    let banker' = Player.create name
+    let newTable = Table tId ( id', banker' ) Player.empty Nothing now
 
     mvarTable <- Concurrent.newMVar newTable
 
@@ -208,10 +208,10 @@ isActive Table { banker, players } =
 
   where
     bankerOnline =
-      hasConnection $ snd banker
+      Player.hasConnection $ snd banker
 
     anyPlayerOnline =
-      not $ Map.null $ Map.filter hasConnection players
+      not $ Map.null $ Map.filter Player.hasConnection players
 
 
 -- @TODO: Add check if session is not already present
@@ -225,12 +225,12 @@ join session tableId name' tables =
     Just mvar -> do
       table <- Concurrent.readMVar mvar
 
-      if playerName (snd $ banker table) == name then
+      if Player.name (snd $ banker table) == name then
         pure $ Left $ PlayerError NameTaken
 
       else
         let
-            ePlayers = addPlayer session name (players table)
+            ePlayers = Player.add session name (players table)
         in
         case ePlayers of
           Right ( newPlayers, newPlayer ) ->
@@ -269,14 +269,14 @@ getPlayer session tableId tables =
 
 allConnections :: Table -> [ Connection ]
 allConnections Table { banker, players } =
-  concat $ (allPlayerConnections $ snd banker)
-         : (foldr (\p acc -> allPlayerConnections p : acc) [] players)
+  concat $ (Player.allConnections $ snd banker)
+         : (foldr (\p acc -> Player.allConnections p : acc) [] players)
 
 
 assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( Player, Int ) )
 assignConnection session conn table@Table { banker, players } =
     if fst banker == session then
-        let ( updatedBanker, connId ) = addConnectionToPlayer conn $ snd banker
+        let ( updatedBanker, connId ) = Player.addConnectionTo conn $ snd banker
         in
         ( table { banker = ( session, updatedBanker ) }
         , Just ( updatedBanker, connId )
@@ -285,7 +285,7 @@ assignConnection session conn table@Table { banker, players } =
     else
         let
           ( updatedPlayers, mPair ) =
-            addPlayerConnection session conn players
+            Player.addConnection session conn players
         in
         case mPair of
             Nothing   -> ( table, Nothing )
@@ -321,10 +321,10 @@ disconnect :: MVar Table -> Id SessionId -> Int -> IO ()
 disconnect state sessionId connId =
   Concurrent.modifyMVar_ state $ \table@Table { banker=banker' } ->
     if fst banker' == sessionId then do
-      let updatedTable = table { banker = ( fst banker' , removeConnectionFromPlayer connId $ snd banker' ) }
+      let updatedTable = table { banker = ( fst banker' , Player.removeConnectionFrom connId $ snd banker' ) }
       let player = snd $ banker updatedTable
 
-      if hasConnection player then
+      if Player.hasConnection player then
         pure ()
 
       else
@@ -333,7 +333,7 @@ disconnect state sessionId connId =
       pure updatedTable
 
     else do
-      let updatedTable = table { players = disconnectPlayer sessionId connId (players table) }
+      let updatedTable = table { players = Player.disconnect sessionId connId (players table) }
       let mPlayer = Map.lookup sessionId $ players updatedTable
 
       maybe mzero (broadcast updatedTable . PlayerStatusUpdate) mPlayer
@@ -366,7 +366,7 @@ streamHandler state session id' conn = do
                     WS.forkPingThread conn 30
 
                     -- 3.3 Broadcast join event
-                    if playerNumberOfConnections player == 1 then do
+                    if Player.numberOfConnections player == 1 then do
                         table' <- Concurrent.readMVar tableState
                         broadcast table' $ PlayerStatusUpdate player
 
@@ -457,7 +457,7 @@ handleMsg _ session (Vote vote) table =
     Just game ->
       case Game.addVote session vote game of
         Right newGames -> do
-          maybe (pure ()) (broadcast table . VoteAccepted) $ P.getPlayer session $ allTablePlayers table
+          maybe (pure ()) (broadcast table . VoteAccepted) $ Player.get session $ allTablePlayers table
 
           -- Auto end game when all voted
           if Game.allVoted (allTablePlayers table) newGames then do

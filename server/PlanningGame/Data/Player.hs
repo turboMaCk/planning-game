@@ -5,17 +5,17 @@ module PlanningGame.Data.Player
   ( Player(..)
   , Players
   , PlayerError(..)
-  , createPlayer
-  , addPlayer
-  , addPlayerConnection
-  , disconnectPlayer
-  , getPlayer
-  , emptyPlayers
-  , allPlayerConnections
-  , addConnectionToPlayer
-  , removeConnectionFromPlayer
+  , create
+  , add
+  , addConnection
+  , disconnect
+  , get
+  , empty
+  , allConnections
+  , addConnectionTo
+  , removeConnectionFrom
   , hasConnection
-  , playerNumberOfConnections
+  , numberOfConnections
   ) where
 
 import           Data.Aeson.Types        (ToJSON (..), object, (.=))
@@ -35,17 +35,17 @@ import           PlanningGame.Data.Session
 
 
 data Player = Player
-  { playerName        :: Text
+  { name        :: Text
   , playerConnections :: IntMap Connection
   }
 
 
 instance Show Player where
-   show Player { playerName=name } = "Name: " <> show name
+   show Player { name } = "Name: " <> show name
 
 
 instance ToJSON Player where
-  toJSON player@(Player { playerName=name }) =
+  toJSON player@(Player { name }) =
     object
         [ "name" .= name
         , "connected" .= hasConnection player
@@ -70,19 +70,19 @@ instance Error PlayerError where
   toReadable NameEmpty = "Name can't be empty."
 
 
-createPlayer :: Text -> Player
-createPlayer n =
+create :: Text -> Player
+create n =
   Player n IntMap.empty
 
 
 nameTaken :: Text -> Players -> Bool
-nameTaken name sessions =
+nameTaken name' sessions =
   not $ Map.null $
-    Map.filter ((==) name . playerName) sessions
+    Map.filter ((==) name' . name) sessions
 
 
-addPlayer :: Session -> Text -> Players -> Either PlayerError ( Players, Player )
-addPlayer id' name players =
+add :: Session -> Text -> Players -> Either PlayerError ( Players, Player )
+add id' name players =
   if Text.null name then
     Left NameEmpty
   else if nameTaken name players then
@@ -90,13 +90,13 @@ addPlayer id' name players =
   else
     let
       newPlayer =
-        createPlayer name
+        create name
     in
     Right ( Map.insert id' newPlayer players, newPlayer )
 
 
-addConnectionToPlayer :: Connection -> Player -> (Player, Int)
-addConnectionToPlayer conn player@Player { playerConnections } =
+addConnectionTo :: Connection -> Player -> (Player, Int)
+addConnectionTo conn player@Player { playerConnections } =
   (updatedPlayer, index)
 
   where
@@ -112,18 +112,18 @@ hasConnection Player { playerConnections } =
   not $ IntMap.null playerConnections
 
 
-playerNumberOfConnections :: Player -> Int
-playerNumberOfConnections Player { playerConnections } =
+numberOfConnections :: Player -> Int
+numberOfConnections Player { playerConnections } =
   IntMap.size playerConnections
 
 
-addPlayerConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( Player, Int ) )
-addPlayerConnection id' conn players =
+addConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( Player, Int ) )
+addConnection id' conn players =
   case Map.lookup id' players of
     Just player ->
       let
         ( updatedPlayer, index ) =
-          addConnectionToPlayer conn player
+          addConnectionTo conn player
       in
       ( Map.insert id' updatedPlayer players
       , Just ( updatedPlayer, index )
@@ -133,24 +133,24 @@ addPlayerConnection id' conn players =
       ( players, Nothing )
 
 
-removeConnectionFromPlayer :: Int -> Player -> Player
-removeConnectionFromPlayer index player@(Player { playerConnections }) =
+removeConnectionFrom :: Int -> Player -> Player
+removeConnectionFrom index player@(Player { playerConnections }) =
       player { playerConnections = IntMap.delete index playerConnections }
 
 
-disconnectPlayer :: Id SessionId -> Int -> Players -> Players
-disconnectPlayer sessionId index =
-  Map.alter (fmap $ removeConnectionFromPlayer index) sessionId
+disconnect :: Id SessionId -> Int -> Players -> Players
+disconnect sessionId index =
+  Map.alter (fmap $ removeConnectionFrom index) sessionId
 
 
-getPlayer :: Id SessionId -> Players -> Maybe Player
-getPlayer = Map.lookup
+get :: Id SessionId -> Players -> Maybe Player
+get = Map.lookup
 
 
-emptyPlayers :: Players
-emptyPlayers = Map.empty
+empty :: Players
+empty = Map.empty
 
 
-allPlayerConnections :: Player -> [ WS.Connection ]
-allPlayerConnections Player { playerConnections } =
+allConnections :: Player -> [ WS.Connection ]
+allConnections Player { playerConnections } =
   snd <$> IntMap.toList playerConnections

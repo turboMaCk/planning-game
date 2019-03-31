@@ -36,8 +36,10 @@ import qualified Data.Set as Set
 
 import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id
-import           PlanningGame.Data.Player
+import           PlanningGame.Data.Player hiding (name)
 import           PlanningGame.Data.Session
+
+import qualified PlanningGame.Data.Player as Player
 
 
 data Vote
@@ -257,7 +259,7 @@ playerVotes ( bankerId, bankerName ) players' games =
     playerVotes' :: FinishedGame -> [ ( Text, Vote ) ]
     playerVotes' game =
       -- @TODO: Better errr handling
-      fmap (\(sId, vote) -> (maybe "" playerName $ Map.lookup sId players, vote)) $ Map.toList $ votes game
+      fmap (\(sId, vote) -> (maybe "" Player.name $ Map.lookup sId players, vote)) $ Map.toList $ votes game
 
     players =
       Map.insert bankerId bankerName players'
@@ -266,7 +268,7 @@ playerVotes ( bankerId, bankerName ) players' games =
 playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, Vote ) ]
 playersVotes _ _ (FinishedGames _) = []
 playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
-  mapMaybe (\(id', vote) -> (\p -> ( playerName p, vote )) <$> Map.lookup id' allPlayers)
+  mapMaybe (\(id', vote) -> (\p -> ( Player.name p, vote )) <$> Map.lookup id' allPlayers)
     $ Map.toList votes
 
   where
