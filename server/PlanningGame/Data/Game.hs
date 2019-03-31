@@ -175,10 +175,10 @@ newGame name =
 
 
 finish :: Vote -> RunningGame -> FinishedGame
-finish vote (RunningGame name votes _) =
+finish vote (RunningGame n v _) =
   FinishedGame
-    { name = name
-    , votes = votes
+    { name = n
+    , votes = v
     , winningVote = vote
     }
 
