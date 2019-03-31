@@ -19,26 +19,157 @@ module PlanningGame.Data.Table
 import           Control.Concurrent          (MVar)
 import           Control.Exception           (finally)
 import           Control.Monad               (forM_, forever, mzero)
-import           Data.ByteString.Lazy        (ByteString)
 import           Data.Maybe                  (fromMaybe, isNothing)
 import           Data.Text                   (Text)
 import           Network.WebSockets          (Connection)
+import           Data.Aeson.Types            (ToJSON (..), Value (..), object,
+                                              (.=))
+import           Data.Map                    (Map)
+import           Data.Time.Clock             (UTCTime)
+import           Data.ByteString             (ByteString)
 
 import qualified Control.Concurrent          as Concurrent
+import qualified Data.ByteString.Lazy        as LazyByteString
 import qualified Data.Aeson                  as Aeson
 import qualified Data.Map.Strict             as Map
 import qualified Data.Text                   as Text
 import qualified Data.Time.Clock             as Clock
 import qualified Network.WebSockets          as WS
 
+import           PlanningGame.Api.GameSnapshot (snapshot)
+import           PlanningGame.Api.Error        (Error (..), ErrorType (..))
+
 import           PlanningGame.Data.Game
 import           PlanningGame.Data.Id          (Id, generateId)
 import           PlanningGame.Data.Player
 import           PlanningGame.Data.Session
+
 import           PlanningGame.Data.Table.Msg
 
-import           PlanningGame.Data.Table.Event
-import           PlanningGame.Data.Table.Type
+
+-- Types
+
+
+data TableId
+
+
+data Table = Table
+  { tableId        :: Id TableId
+  , tableBanker    :: ( Id SessionId, Player )
+  , tablePlayers   :: Players
+  , tableGame      :: Maybe Games
+  , tableCreatedAt :: UTCTime
+  }
+
+
+instance ToJSON Table where
+  toJSON table =
+    object
+        [ "id"      .= tableId table
+        , "banker"  .= snd (tableBanker table)
+        , "players" .= fmap snd (Map.toList $ tablePlayers table)
+        , "game"    .=
+          case tableGame table of
+            Just game ->
+              toJSON $ snapshot (tableBanker table) (tablePlayers table) game
+
+            Nothing ->
+              Null
+        ]
+
+
+type Tables =
+  Map (Id TableId) (MVar Table)
+
+
+data TableError
+  = TableNotFound
+  | PlayerNotFound
+  | PlayerError PlayerError
+  | GameError GameError
+  deriving (Eq)
+
+
+instance Show TableError where
+  show TableNotFound   = "TableNotFound"
+  show PlayerNotFound  = "PlayerNotFound"
+  show (PlayerError e) = "PlayerError:" <> show e
+  show (GameError e)   = "GameError:" <> show e
+
+
+instance Error TableError where
+  toType TableNotFound   = NotFound
+  toType PlayerNotFound  = Forbidden
+  toType (GameError e)   = toType e
+  toType (PlayerError e) = toType e
+
+  toReadable TableNotFound   = "Table doesn't exist."
+  toReadable PlayerNotFound  = "You're not a player on this table."
+  toReadable (GameError e)   = toReadable e
+  toReadable (PlayerError e) = toReadable e
+
+
+emptyTables :: Tables
+emptyTables =
+  Map.empty
+
+
+-- Event
+
+
+data Event
+    = PlayerJoined Player
+    | PlayerStatusUpdate Player
+    | SyncTableState Table
+    | GameStarted ( Id SessionId, Player ) Players Games
+    | VoteAccepted Player
+    | VotingEnded ( Id SessionId, Player ) Players Games
+    | GameEnded ( Id SessionId, Player ) Players Games
+
+
+instance ToJSON Event where
+  toJSON (PlayerJoined player) =
+    object
+        [ "event"  .= Text.pack "PlayerJoined"
+        , "player" .= player
+        ]
+  toJSON (PlayerStatusUpdate player) =
+    object
+        [ "event"  .= Text.pack "PlayerStatusUpdate"
+        , "player" .= player
+        ]
+  toJSON (SyncTableState table) =
+    object
+        [ "event"        .= Text.pack "SyncTableState"
+        , "table"        .= table
+        , "nextGameName" .= maybe "Task-1" autoNextName (tableGame table)
+        ]
+  toJSON (GameStarted dealer players games) =
+    object
+        [ "event" .= Text.pack "GameStarted"
+        , "game"  .= snapshot dealer players games
+        ]
+  toJSON (VoteAccepted player) =
+    object
+        [ "event"  .= Text.pack "VoteAccepted"
+        , "player" .= player
+        ]
+  toJSON (VotingEnded dealer players games) =
+    object
+        [ "event"        .= Text.pack "VotingEnded"
+        , "game"         .= snapshot dealer players games
+        , "nextGameName" .= autoNextName games
+        ]
+  toJSON (GameEnded dealer players games) =
+    object
+        [ "event" .= Text.pack "GameEnded"
+        , "game"  .= snapshot dealer players games
+        ]
+
+
+encodeEvent :: Event -> ByteString
+encodeEvent =
+  LazyByteString.toStrict . Aeson.encode
 
 
 -- Basic Operations
@@ -171,7 +302,7 @@ allTablePlayers table =
 
 handleStreamMsg :: Session -> MVar Table -> Connection -> IO ()
 handleStreamMsg session state conn = forever $ do
-  bs :: ByteString <- WS.receiveData conn
+  bs :: LazyByteString.ByteString <- WS.receiveData conn
   let decoded :: Maybe Msg = Aeson.decode bs
 
   case decoded of
