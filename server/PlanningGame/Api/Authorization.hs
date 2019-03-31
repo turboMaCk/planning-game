@@ -12,27 +12,26 @@ module PlanningGame.Api.Authorization
   , authCookieHandler
   ) where
 
-import           Control.Concurrent                (MVar)
-import           Control.Monad.IO.Class            (liftIO)
-import           Data.ByteString                   (ByteString)
-import           Network.Wai                       (Request)
-import           Servant                           (AuthProtect, Handler)
-import           Servant.Server.Experimental.Auth  (AuthHandler, AuthServerData,
-                                                    mkAuthHandler)
+import           Control.Concurrent               (MVar)
+import           Control.Monad.IO.Class           (liftIO)
+import           Data.ByteString                  (ByteString)
+import           Network.Wai                      (Request)
+import           Servant                          (AuthProtect, Handler)
+import           Servant.Server.Experimental.Auth (AuthHandler, AuthServerData,
+                                                   mkAuthHandler)
 
 
-import qualified Network.Wai as Wai
-import qualified Control.Concurrent                as Concurrent
-import qualified Data.ByteString                   as ByteString
-import qualified Web.Cookie                        as Cookie
+import qualified Control.Concurrent               as Concurrent
+import qualified Data.ByteString                  as ByteString
+import qualified Network.Wai                      as Wai
+import qualified Web.Cookie                       as Cookie
 
-import           PlanningGame.Api.Error              (Error (..), ErrorType(..))
-import           PlanningGame.Data.Id                (Id (..))
-import           PlanningGame.Data.Session           (Session, SessionId,
-                                                      Sessions)
+import           PlanningGame.Api.Error           (Error (..), ErrorType (..))
+import           PlanningGame.Data.Id             (Id (..))
+import           PlanningGame.Data.Session        (Session, SessionId, Sessions)
 
-import qualified PlanningGame.Data.Session as Session
-import qualified PlanningGame.Api.Error as Error
+import qualified PlanningGame.Api.Error           as Error
+import qualified PlanningGame.Data.Session        as Session
 
 
 data AuthorizationError

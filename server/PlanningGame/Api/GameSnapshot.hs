@@ -8,13 +8,13 @@ import           Data.Aeson.Types          (ToJSON (..), Value (..), object,
                                             (.=))
 import           Data.Text                 (Text)
 
+import           PlanningGame.Data.Game    (Games (..), RunningGame (..),
+                                            Vote (..))
 import           PlanningGame.Data.Id      (Id)
-import           PlanningGame.Data.Game    (RunningGame (..),
-                                            Vote (..), Games(..))
-import           PlanningGame.Data.Player  (Players, Player)
+import           PlanningGame.Data.Player  (Player, Players)
 import           PlanningGame.Data.Session (SessionId)
 
-import qualified PlanningGame.Data.Game as Game
+import qualified PlanningGame.Data.Game    as Game
 
 {--
 This can't be just and ToJSON instance of `Game` type

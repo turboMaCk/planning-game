@@ -6,16 +6,16 @@ module PlanningGame.GarbageCollector (start) where
 -- old data from ServerState to maitain certain levels
 -- of space usage.
 
-import           Control.Concurrent (MVar)
+import           Control.Concurrent      (MVar)
 import           Control.Monad
-import           Data.Map.Strict    (Map)
-import           Data.Time.Clock    (UTCTime)
+import           Data.Map.Strict         (Map)
+import           Data.Time.Clock         (UTCTime)
 
-import qualified Control.Concurrent as Concurrent
-import qualified Data.Map           as Map
-import qualified Data.Time.Clock    as Clock
+import qualified Control.Concurrent      as Concurrent
+import qualified Data.Map                as Map
+import qualified Data.Time.Clock         as Clock
 
-import           PlanningGame.Data.Table    (Tables)
+import           PlanningGame.Data.Table (Tables)
 import           PlanningGame.State
 
 import qualified PlanningGame.Data.Table as Table

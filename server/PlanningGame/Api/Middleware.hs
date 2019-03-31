@@ -5,8 +5,7 @@ module PlanningGame.Api.Middleware (static) where
 import           Data.Maybe                    (fromMaybe)
 import           Network.HTTP.Types            (status200)
 import           Network.Wai                   (Middleware, Response,
-                                                requestHeaders,
-                                                responseLBS)
+                                                requestHeaders, responseLBS)
 import           Network.Wai.Middleware.Static (addBase, staticPolicy)
 import           Network.Wai.Parse             (parseHttpAccept)
 import           Text.Blaze                    (AttributeValue)

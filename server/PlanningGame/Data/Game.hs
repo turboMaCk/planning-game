@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE NamedFieldPuns      #-}
 
 module PlanningGame.Data.Game
   ( Vote(..)
@@ -23,23 +23,23 @@ module PlanningGame.Data.Game
   , restartCurrent
   ) where
 
-import           Control.Monad           (mzero)
-import           Data.Aeson.Types        (FromJSON (..), ToJSON (..),
-                                          Value (..))
-import           Data.Map.Strict         (Map)
-import           Data.Maybe              (mapMaybe)
-import           Data.Text               (Text)
+import           Control.Monad             (mzero)
+import           Data.Aeson.Types          (FromJSON (..), ToJSON (..),
+                                            Value (..))
+import           Data.Map.Strict           (Map)
+import           Data.Maybe                (mapMaybe)
+import           Data.Text                 (Text)
 
-import qualified Data.Map.Strict         as Map
-import qualified Data.Text               as Text
-import qualified Data.Set as Set
+import qualified Data.Map.Strict           as Map
+import qualified Data.Set                  as Set
+import qualified Data.Text                 as Text
 
-import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
+import           PlanningGame.Api.Error    (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id
-import           PlanningGame.Data.Player (Players, Player)
+import           PlanningGame.Data.Player  (Player, Players)
 import           PlanningGame.Data.Session (SessionId)
 
-import qualified PlanningGame.Data.Player as Player
+import qualified PlanningGame.Data.Player  as Player
 
 
 data Vote

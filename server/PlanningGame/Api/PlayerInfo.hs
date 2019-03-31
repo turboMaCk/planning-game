@@ -9,7 +9,7 @@ import           Data.Text        (Text)
 
 
 data PlayerInfo = PlayerInfo
-  { playerInfoName :: Text
+  { name :: Text
   }
   deriving (Eq, Show)
 

@@ -18,26 +18,24 @@ module PlanningGame.Data.Player
   , numberOfConnections
   ) where
 
-import           Data.Aeson.Types        (ToJSON (..), object, (.=))
-import           Data.IntMap.Strict      (IntMap)
-import           Data.Map.Strict         (Map)
-import           Data.Text               (Text)
-import           Network.WebSockets      (Connection)
+import           Data.Aeson.Types          (ToJSON (..), object, (.=))
+import           Data.IntMap.Strict        (IntMap)
+import           Data.Map.Strict           (Map)
+import           Data.Text                 (Text)
+import           Network.WebSockets        (Connection)
 
-import qualified Data.IntMap             as IntMap
-import qualified Data.Map                as Map
-import qualified Data.Text               as Text
-import qualified Network.WebSockets      as WS
+import qualified Data.IntMap               as IntMap
+import qualified Data.Map                  as Map
+import qualified Data.Text                 as Text
+import qualified Network.WebSockets        as WS
 
-import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
-import           PlanningGame.Data.Id    (Id)
+import           PlanningGame.Api.Error    (Error (..), ErrorType (..))
+import           PlanningGame.Data.Id      (Id)
 import           PlanningGame.Data.Session (Session, SessionId)
-
-import qualified PlanningGame.Data.Session as Session
 
 
 data Player = Player
-  { name        :: Text
+  { name              :: Text
   , playerConnections :: IntMap Connection
   }
 

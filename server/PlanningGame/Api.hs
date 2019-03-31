@@ -12,26 +12,26 @@ module PlanningGame.Api
   , app
   ) where
 
-import           Control.Concurrent           (MVar)
-import           Control.Monad.IO.Class       (MonadIO, liftIO)
-import           Data.Text                    (Text)
+import           Control.Concurrent             (MVar)
+import           Control.Monad.IO.Class         (MonadIO, liftIO)
+import           Data.Text                      (Text)
 import           Servant
-import           Servant.API.WebSocket        (WebSocket)
+import           Servant.API.WebSocket          (WebSocket)
 
-import qualified Control.Concurrent           as Concurrent
-import qualified Network.WebSockets           as WS
+import qualified Control.Concurrent             as Concurrent
+import qualified Network.WebSockets             as WS
 
 import           PlanningGame.Api.Authorization
 import           PlanningGame.Api.PlayerInfo
 
 import           PlanningGame.Data
-import           PlanningGame.State (ServerState)
+import           PlanningGame.State             (ServerState)
 
-import qualified PlanningGame.Api.Middleware as Middleware
-import qualified PlanningGame.Api.Error as Error
-import qualified PlanningGame.Data.Table as Table
-import qualified PlanningGame.Data.Session as Session
-import qualified PlanningGame.State as State
+import qualified PlanningGame.Api.Error         as Error
+import qualified PlanningGame.Api.Middleware    as Middleware
+import qualified PlanningGame.Data.Session      as Session
+import qualified PlanningGame.Data.Table        as Table
+import qualified PlanningGame.State             as State
 
 
 -- API
@@ -83,16 +83,16 @@ server state = status
       pure . SessionJSON . unHeaderAuth
 
     createTableHandler :: (HeaderAuth Session) -> PlayerInfo -> Handler Table
-    createTableHandler (HeaderAuth session) PlayerInfo { playerInfoName } = do
+    createTableHandler (HeaderAuth session) PlayerInfo { name } = do
       res <- liftIO $ Concurrent.modifyMVar (State.tables state)
-                $ Table.create session playerInfoName
+                $ Table.create session name
 
       either Error.respond pure res
 
     joinTableHandler :: (HeaderAuth Session) -> Id TableId -> PlayerInfo -> Handler Table
-    joinTableHandler (HeaderAuth session) id' PlayerInfo { playerInfoName } = do
+    joinTableHandler (HeaderAuth session) id' PlayerInfo { name } = do
       tables <- liftIO $ Concurrent.readMVar (State.tables state)
-      tableRes <- liftIO $ Table.join session id' playerInfoName tables
+      tableRes <- liftIO $ Table.join session id' name tables
 
       either Error.respond pure tableRes
 

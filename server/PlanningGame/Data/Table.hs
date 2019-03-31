@@ -16,38 +16,39 @@ module PlanningGame.Data.Table
   , isActive
   ) where
 
-import           Control.Concurrent          (MVar)
-import           Control.Exception           (finally)
-import           Control.Monad               (forM_, forever, mzero)
-import           Data.Maybe                  (fromMaybe, isNothing)
-import           Data.Text                   (Text)
-import           Network.WebSockets          (Connection)
-import           Data.Aeson.Types            (ToJSON (..), Value (..), object,
-                                              (.=))
-import           Data.Map                    (Map)
-import           Data.Time.Clock             (UTCTime)
-import           Data.ByteString             (ByteString)
+import           Control.Concurrent            (MVar)
+import           Control.Exception             (finally)
+import           Control.Monad                 (forM_, forever, mzero)
+import           Data.Aeson.Types              (ToJSON (..), Value (..), object,
+                                                (.=))
+import           Data.ByteString               (ByteString)
+import           Data.Map                      (Map)
+import           Data.Maybe                    (fromMaybe, isNothing)
+import           Data.Text                     (Text)
+import           Data.Time.Clock               (UTCTime)
+import           Network.WebSockets            (Connection)
 
-import qualified Control.Concurrent          as Concurrent
-import qualified Data.ByteString.Lazy        as LazyByteString
-import qualified Data.Aeson                  as Aeson
-import qualified Data.Map.Strict             as Map
-import qualified Data.Text                   as Text
-import qualified Data.Time.Clock             as Clock
-import qualified Network.WebSockets          as WS
+import qualified Control.Concurrent            as Concurrent
+import qualified Data.Aeson                    as Aeson
+import qualified Data.ByteString.Lazy          as LazyByteString
+import qualified Data.Map.Strict               as Map
+import qualified Data.Text                     as Text
+import qualified Data.Time.Clock               as Clock
+import qualified Network.WebSockets            as WS
 
-import           PlanningGame.Api.GameSnapshot (snapshot)
 import           PlanningGame.Api.Error        (Error (..), ErrorType (..))
+import           PlanningGame.Api.GameSnapshot (snapshot)
 
-import           PlanningGame.Data.Game        (Games, GameError)
+import           PlanningGame.Data.Game        (GameError, Games)
 import           PlanningGame.Data.Id          (Id, generateId)
-import           PlanningGame.Data.Player      (Players, Player, PlayerError (..))
+import           PlanningGame.Data.Player      (Player, PlayerError (..),
+                                                Players)
 import           PlanningGame.Data.Session     (Session, SessionId)
 
 import           PlanningGame.Data.Table.Msg   (Msg (..))
 
-import qualified PlanningGame.Data.Player    as Player
-import qualified PlanningGame.Data.Game      as Game
+import qualified PlanningGame.Data.Game        as Game
+import qualified PlanningGame.Data.Player      as Player
 
 
 -- Types

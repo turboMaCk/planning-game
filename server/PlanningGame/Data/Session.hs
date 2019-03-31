@@ -14,13 +14,13 @@ module PlanningGame.Data.Session
   , remove
   ) where
 
-import           Data.Aeson.Types   (ToJSON (..), object, (.=))
-import           Data.Set           (Set)
+import           Data.Aeson.Types       (ToJSON (..), object, (.=))
+import           Data.Set               (Set)
 
-import qualified Data.Set           as Set
+import qualified Data.Set               as Set
 
-import           PlanningGame.Api.Error  (Error (..), ErrorType (..))
-import           PlanningGame.Data.Id    (Id, generateId)
+import           PlanningGame.Api.Error (Error (..), ErrorType (..))
+import           PlanningGame.Data.Id   (Id, generateId)
 
 
 data SessionId

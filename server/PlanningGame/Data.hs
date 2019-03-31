@@ -12,8 +12,8 @@ module PlanningGame.Data
     , Session.SessionJSON (..)
     ) where
 
+import qualified PlanningGame.Data.Game    as Game
 import           PlanningGame.Data.Id
+import qualified PlanningGame.Data.Player  as Player
 import qualified PlanningGame.Data.Session as Session
-import qualified PlanningGame.Data.Table as Table
-import qualified PlanningGame.Data.Player as Player
-import qualified PlanningGame.Data.Game as Game
+import qualified PlanningGame.Data.Table   as Table
