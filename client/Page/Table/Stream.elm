@@ -127,6 +127,7 @@ type Msg
     | FinishRound
     | NextGame String Vote
     | Finish Vote
+    | Restart
 
 
 encodeMsg : Msg -> Value
@@ -146,8 +147,7 @@ encodeMsg msg =
 
         FinishRound ->
             Encode.object
-                [ ( "msg", Encode.string "FinishRound" )
-                ]
+                [ ( "msg", Encode.string "FinishRound" ) ]
 
         NextGame name vote ->
             Encode.object
@@ -161,6 +161,10 @@ encodeMsg msg =
                 [ ( "msg", Encode.string "FinishGame" )
                 , ( "vote", Data.encodeVote vote )
                 ]
+
+        Restart ->
+            Encode.object
+                [ ( "msg", Encode.string "RestartRound" ) ]
 
 
 sendMsg : Msg -> Cmd msg

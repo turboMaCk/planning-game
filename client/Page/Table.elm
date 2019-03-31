@@ -482,6 +482,11 @@ viewGame model =
                         -- Banker chossing agreed estimation
                         [ Theme.highlightedHeading True [ Html.text "Choose agreed extimation!" ]
                         , viewPlayerVotes playerVotes
+                        , Html.br [] []
+                        , Html.styled Html.button
+                            [ Theme.secondaryBtn ]
+                            [ Events.onClick <| Send Stream.Restart ]
+                            [ Html.text "Restart Game" ]
                         ]
 
                     else

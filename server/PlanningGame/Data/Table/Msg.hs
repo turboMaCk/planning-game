@@ -17,6 +17,7 @@ data Msg
   | NextRound Vote Text
   | Vote Vote
   | FinishGame Vote
+  | RestartRound
 
 
 instance FromJSON Msg where
@@ -39,6 +40,9 @@ instance FromJSON Msg where
 
          "FinishGame" ->
            FinishGame <$> (v .: "vote")
+
+         "RestartRound" ->
+           pure RestartRound
 
          _ ->
            mzero

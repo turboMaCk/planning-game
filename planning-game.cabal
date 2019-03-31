@@ -60,3 +60,4 @@ executable planning-game
                      , blaze-markup
   -- hs-source-dirs:
   default-language:    Haskell2010
+  ghc-options: -Wcompat "-with-rtsopts=-T -I1" -Wall

@@ -273,10 +273,10 @@ handleMsg :: Connection -> Session -> Msg -> Table -> IO Table
 handleMsg conn session (NewGame name) table
   | isBanker session table
   , isNothing (tableGame table) = do
-      let games = startGame name
+      let game = startGame name
       let players = tablePlayers table
-      broadcast table $ GameStarted (tableBanker table) players games
-      pure $ table { tableGame = Just games }
+      broadcast table $ GameStarted (tableBanker table) players game
+      pure $ table { tableGame = Just game }
 
   | not $ isBanker session table = do
       -- @TODO: Handle forbidden action
@@ -354,12 +354,30 @@ handleMsg conn session (FinishGame vote) table
           Right newGames -> do
             broadcast table $ GameEnded (tableBanker table) (tablePlayers table) newGames
             pure $ table { tableGame = Just newGames }
+
           Left _ ->
             -- @TODO: handle already canceled
             pure table
 
       Nothing ->
         -- @TODO: handle game wasn't started
+        pure table
+
+  | otherwise =
+      -- @TODO: handle forbidden
+      pure table
+
+handleMsg conn session RestartRound table
+  | isBanker session table =
+    case tableGame table of
+      Just g -> do
+        let game = restartCurrentGame g
+        let players = tablePlayers table
+        broadcast table $ GameStarted (tableBanker table) players game
+        pure $ table { tableGame = Just game }
+
+      Nothing ->
+        -- @TODO: handle err
         pure table
 
   | otherwise =
