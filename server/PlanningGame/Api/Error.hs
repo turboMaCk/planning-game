@@ -6,7 +6,7 @@
 module PlanningGame.Api.Error
  (Error (..),
   ErrorType (..),
-  respondError
+  respond
   ) where
 
 
@@ -54,8 +54,8 @@ instance (Show a, Error a) => ToJSON (WrapError a) where
       ]
 
 
-respondError :: ( Show a, Error a) => MonadError ServantErr m => a -> m b
-respondError res =
+respond :: ( Show a, Error a) => MonadError ServantErr m => a -> m b
+respond res =
   throwError $ err
     { errBody = Aeson.encode $ toJSON (WrapError res)
     , errHeaders = [ ( "Content-Type", "application/json;charset=utf-8" ) ]

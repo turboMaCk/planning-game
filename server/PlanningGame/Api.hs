@@ -23,12 +23,13 @@ import qualified Control.Concurrent           as Concurrent
 import qualified Network.WebSockets           as WS
 
 import           PlanningGame.Api.Authorization
-import           PlanningGame.Api.Error
 import           PlanningGame.Api.Middleware
 import           PlanningGame.Api.PlayerInfo
 
 import           PlanningGame.Data
 import           PlanningGame.State
+
+import qualified PlanningGame.Api.Error as Error
 
 
 -- API
@@ -84,21 +85,21 @@ server state = status
       res <- liftIO $ Concurrent.modifyMVar (tables state)
                 $ createTable session playerInfoName
 
-      either respondError pure res
+      either Error.respond pure res
 
     joinTableHandler :: (HeaderAuth Session) -> Id TableId -> PlayerInfo -> Handler Table
     joinTableHandler (HeaderAuth session) id' PlayerInfo { playerInfoName } = do
       tables <- liftIO $ Concurrent.readMVar (tables state)
       tableRes <- liftIO $ joinTable session id' playerInfoName tables
 
-      either respondError pure tableRes
+      either Error.respond pure tableRes
 
     meHandler :: (HeaderAuth Session) -> Id TableId -> Handler Player
     meHandler (HeaderAuth session) tableId = do
       ts <- liftIO $ Concurrent.readMVar (tables state)
       playerRes <- liftIO $ getTablePlayer session tableId ts
 
-      either respondError pure playerRes
+      either Error.respond pure playerRes
 
     streamTableHandler :: MonadIO m => (CookieAuth Session) -> Id TableId -> WS.Connection -> m ()
     streamTableHandler (CookieAuth session) id' conn =
