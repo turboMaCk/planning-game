@@ -29,7 +29,7 @@ import qualified Web.Cookie                        as Cookie
 import           PlanningGame.Api.Error              (Error (..), ErrorType(..))
 import           PlanningGame.Data.Id                (Id (..))
 import           PlanningGame.Data.Session           (Session, SessionId,
-                                                    Sessions)
+                                                      Sessions)
 
 import qualified PlanningGame.Data.Session as Session
 import qualified PlanningGame.Api.Error as Error
