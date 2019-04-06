@@ -157,6 +157,7 @@ allConnections Player { playerConnections } =
   snd <$> IntMap.toList playerConnections
 
 
+-- @TODO: this might need to close the connection
 kick :: Text -> Players -> Players
 kick name' =
   Map.filter (not . (==) name' . name)
