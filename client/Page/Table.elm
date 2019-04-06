@@ -63,6 +63,7 @@ type Msg
     | NewGame String
     | FinishGame
     | ClearMyVote
+    | KickPlayer Player
 
 
 leave : () -> Cmd msg
@@ -202,6 +203,9 @@ update navigationKey msg model =
 
         ClearMyVote ->
             ( { model | myVote = Nothing }, Cmd.none )
+
+        KickPlayer _ ->
+            ( model, Cmd.none )
 
 
 
@@ -593,29 +597,6 @@ viewPointsSoFar game =
 
 view : Model -> Html Msg
 view model =
-    let
-        isMe { name } =
-            Maybe.unwrap False ((==) name << .name) model.me
-
-        toVote player =
-            case model.game of
-                NotStarted ->
-                    Hidden
-
-                Voting { maskedVotes } ->
-                    if Set.member player.name maskedVotes then
-                        Unknown
-
-                    else
-                        Hidden
-
-                RoundFinished { playerVotes } ->
-                    Dict.get player.name playerVotes
-                        |> Maybe.unwrap Unknown Voted
-
-                Overview _ ->
-                    Hidden
-    in
     Component.withTableNotFound model.tableError <|
         Html.styled Html.div
             [ Css.displayFlex
@@ -629,6 +610,32 @@ view model =
                 []
                 [ viewCurrentGame model.game
                 , viewPointsSoFar model.game
-                , Players.view isMe toVote model.banker model.players
+                , Players.view
+                    { isMe =
+                        \{ name } ->
+                            Maybe.unwrap False ((==) name << .name) model.me
+                    , toVote =
+                        \player ->
+                            case model.game of
+                                NotStarted ->
+                                    Hidden
+
+                                Voting { maskedVotes } ->
+                                    if Set.member player.name maskedVotes then
+                                        Unknown
+
+                                    else
+                                        Hidden
+
+                                RoundFinished { playerVotes } ->
+                                    Dict.get player.name playerVotes
+                                        |> Maybe.unwrap Unknown Voted
+
+                                Overview _ ->
+                                    Hidden
+                    , kick = KickPlayer
+                    }
+                    model.banker
+                    model.players
                 ]
             ]

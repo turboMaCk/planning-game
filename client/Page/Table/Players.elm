@@ -108,8 +108,15 @@ viewPlayer isMe toVote isBanker player =
         ]
 
 
-view : (Player -> Bool) -> (Player -> PlayerVote) -> Maybe Player -> Dict String Player -> Html msg
-view isMe toVote banker players =
+type alias Config msg =
+    { isMe : Player -> Bool
+    , toVote : Player -> PlayerVote
+    , kick : Player -> msg
+    }
+
+
+view : Config msg -> Maybe Player -> Dict String Player -> Html msg
+view { isMe, toVote } banker players =
     let
         isBanker =
             (==) banker << Just
