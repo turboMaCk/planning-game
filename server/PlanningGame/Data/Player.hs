@@ -16,6 +16,7 @@ module PlanningGame.Data.Player
   , removeConnectionFrom
   , hasConnection
   , numberOfConnections
+  , kick
   ) where
 
 import           Data.Aeson.Types          (ToJSON (..), object, (.=))
@@ -154,3 +155,8 @@ empty = Map.empty
 allConnections :: Player -> [ WS.Connection ]
 allConnections Player { playerConnections } =
   snd <$> IntMap.toList playerConnections
+
+
+kick :: Text -> Players -> Players
+kick name' =
+  Map.filter (not . (==) name' . name)

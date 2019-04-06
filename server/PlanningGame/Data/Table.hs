@@ -515,3 +515,11 @@ handleMsg _ session RestartRound table
   | otherwise =
       -- @TODO: handle forbidden
       pure table
+
+handleMsg _ session (KickPlayer name) table
+  | isBanker session table =
+    pure $ table { players = Player.kick name $ players table }
+
+  | otherwise =
+      -- @TODO: handle forbidden
+      pure table
