@@ -159,7 +159,6 @@ allConnections Player { playerConnections } =
   snd <$> IntMap.toList playerConnections
 
 
--- @TODO: this might need to close the connection
 kick :: Id SessionId -> Players -> Players
 kick =
   Map.delete
