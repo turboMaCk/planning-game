@@ -296,4 +296,4 @@ removePlayerVotes sesId games' =
       Map.filterWithKey (\k _ -> sesId /= k)
 
     finished games =
-          map (\g -> g { votes = filterVotes $ votes g }) games
+      map (\g -> g { votes = filterVotes $ votes g }) games
