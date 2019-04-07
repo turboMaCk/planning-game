@@ -525,6 +525,7 @@ handleMsg _ session RestartRound table
 handleMsg _ session (KickPlayer name) table
   | isBanker session table = do
     let maybePlayerData = Player.getByName name $ players table
+
     case maybePlayerData of
       Just ( id', player ) -> do
         broadcast table $ PlayerKicked player
