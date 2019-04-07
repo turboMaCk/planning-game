@@ -35,7 +35,7 @@ executable planning-game
                      , PlanningGame.State
   hs-source-dirs:      server
   -- other-extensions:
-  build-depends:       base
+  build-depends:       base             >= 4 && < 5
                      , servant
                      , servant-server
                      , wai
