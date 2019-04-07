@@ -87,8 +87,8 @@ onlineIndicator isActive =
         ]
 
 
-viewPlayer : Config msg -> (Player -> Bool) -> Player -> Html msg
-viewPlayer { isMe, toVote, kick } isBanker player =
+viewPlayer : Config msg -> (Player -> Bool) -> Bool -> Player -> Html msg
+viewPlayer { isMe, toVote, kick } isBanker showKick player =
     Html.styled Html.li
         [ Css.listStyle Css.none
         , Css.margin4 Css.zero Css.zero (Css.px 6) Css.zero
@@ -102,14 +102,22 @@ viewPlayer { isMe, toVote, kick } isBanker player =
             Css.property "foo" "bar"
         ]
         []
+    <|
         [ onlineIndicator player.isConnected
         , bankerIndicator <| isBanker player
         , Html.text player.name
         , voteIndicator <| toVote player
-        , Html.br [] []
-        , Html.span [ Events.onClick <| kick player ]
-            [ Html.text "kick" ]
         ]
+            ++ (if showKick then
+                    [ Html.br [] []
+                    , Html.span
+                        [ Events.onClick <| kick player ]
+                        [ Html.text "kick" ]
+                    ]
+
+                else
+                    []
+               )
 
 
 type alias Config msg =
@@ -124,6 +132,9 @@ view config banker players =
     let
         isBanker =
             (==) banker << Just
+
+        amIBanker =
+            Maybe.unwrap False config.isMe banker
     in
     Html.div []
         [ Html.h3 [] [ Html.text "Players:" ]
@@ -134,8 +145,8 @@ view config banker players =
             ]
             []
           <|
-            Maybe.unwrap (Html.text "") (viewPlayer config isBanker) banker
-                :: (List.map (viewPlayer config isBanker) <|
+            Maybe.unwrap (Html.text "") (viewPlayer config isBanker False) banker
+                :: (List.map (viewPlayer config isBanker amIBanker) <|
                         Dict.values players
                    )
         ]
