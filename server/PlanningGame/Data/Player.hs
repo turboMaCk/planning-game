@@ -17,6 +17,7 @@ module PlanningGame.Data.Player
   , hasConnection
   , numberOfConnections
   , kick
+  , getSessionId
   ) where
 
 import           Data.Aeson.Types          (ToJSON (..), object, (.=))
@@ -29,6 +30,7 @@ import qualified Data.IntMap               as IntMap
 import qualified Data.Map                  as Map
 import qualified Data.Text                 as Text
 import qualified Network.WebSockets        as WS
+import qualified Data.Maybe                as Maybe
 
 import           PlanningGame.Api.Error    (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id      (Id)
@@ -160,4 +162,20 @@ allConnections Player { playerConnections } =
 -- @TODO: this might need to close the connection
 kick :: Text -> Players -> Players
 kick name' =
-  Map.filter (not . (==) name' . name)
+  Map.filter ((/=) name' . name)
+
+
+getSessionId :: Text -> Players -> Maybe (Id SessionId)
+getSessionId name' =
+  headMay . Maybe.mapMaybe filterId . Map.assocs
+
+  where
+    headMay [] = Nothing
+    headMay x  = Just $ head x
+
+    filterId (id', rec) =
+      if name rec == name' then
+        Just id'
+
+      else
+        Nothing

@@ -517,8 +517,17 @@ handleMsg _ session RestartRound table
       pure table
 
 handleMsg _ session (KickPlayer name) table
-  | isBanker session table =
-    pure $ table { players = Player.kick name $ players table }
+  | isBanker session table = do
+    let sesId = Player.getSessionId name $ players table
+    case sesId of
+      Just id' ->
+        pure $ table
+            { players = Player.kick name $ players table
+            , game = Game.removePlayerVotes id' <$> game table
+            }
+
+      Nothing ->
+        pure table
 
   | otherwise =
       -- @TODO: handle forbidden
