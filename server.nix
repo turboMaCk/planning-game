@@ -15,6 +15,6 @@ mkDerivation {
     servant servant-server servant-websockets text wai wai-extra
     wai-middleware-static warp websockets time blaze-html blaze-markup
   ];
-  libraryPkgconfigDepends = [ zlib ];
+  executablePkgconfigDepends = [ zlib ];
   license = stdenv.lib.licenses.agpl3;
 }
