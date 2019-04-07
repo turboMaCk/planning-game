@@ -87,8 +87,8 @@ onlineIndicator isActive =
         ]
 
 
-viewPlayer : (Player -> Bool) -> (Player -> PlayerVote) -> (Player -> Bool) -> (Player -> msg) -> Player -> Html msg
-viewPlayer isMe toVote isBanker kick player =
+viewPlayer : Config msg -> (Player -> Bool) -> Player -> Html msg
+viewPlayer { isMe, toVote, kick } isBanker player =
     Html.styled Html.li
         [ Css.listStyle Css.none
         , Css.margin4 Css.zero Css.zero (Css.px 6) Css.zero
@@ -120,7 +120,7 @@ type alias Config msg =
 
 
 view : Config msg -> Maybe Player -> Dict String Player -> Html msg
-view { isMe, toVote, kick } banker players =
+view config banker players =
     let
         isBanker =
             (==) banker << Just
@@ -134,8 +134,8 @@ view { isMe, toVote, kick } banker players =
             ]
             []
           <|
-            Maybe.unwrap (Html.text "") (viewPlayer isMe toVote isBanker kick) banker
-                :: (List.map (viewPlayer isMe toVote isBanker kick) <|
+            Maybe.unwrap (Html.text "") (viewPlayer config isBanker) banker
+                :: (List.map (viewPlayer config isBanker) <|
                         Dict.values players
                    )
         ]
