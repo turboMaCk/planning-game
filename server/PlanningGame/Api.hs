@@ -32,6 +32,7 @@ import qualified PlanningGame.Api.Middleware    as Middleware
 import qualified PlanningGame.Data.Session      as Session
 import qualified PlanningGame.Data.Table        as Table
 import qualified PlanningGame.State             as State
+import qualified PlanningGame.Data.Table.Stream as TableStream
 
 
 -- API
@@ -92,7 +93,7 @@ server state = status
     joinTableHandler :: (HeaderAuth Session) -> Id TableId -> PlayerInfo -> Handler Table
     joinTableHandler (HeaderAuth session) id' PlayerInfo { name } = do
       tables <- liftIO $ Concurrent.readMVar (State.tables state)
-      tableRes <- liftIO $ Table.join session id' name tables
+      tableRes <- liftIO $ TableStream.join session id' name tables
 
       either Error.respond pure tableRes
 
@@ -105,7 +106,7 @@ server state = status
 
     streamTableHandler :: MonadIO m => (CookieAuth Session) -> Id TableId -> WS.Connection -> m ()
     streamTableHandler (CookieAuth session) id' conn =
-      liftIO $ Table.streamHandler (State.tables state) session id' conn
+      liftIO $ TableStream.handler (State.tables state) session id' conn
 
 
 app :: ServerState -> Application

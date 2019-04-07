@@ -18,8 +18,10 @@ module PlanningGame.Data.Player
   , numberOfConnections
   , kick
   , getByName
+  , lookup
   ) where
 
+import           Prelude                   hiding (lookup)
 import           Data.Aeson.Types          (ToJSON (..), object, (.=))
 import           Data.IntMap.Strict        (IntMap)
 import           Data.Map.Strict           (Map)
@@ -175,3 +177,6 @@ getByName name' =
 
       else
         Nothing
+
+lookup :: Id SessionId -> Players -> Maybe Player
+lookup = Map.lookup
