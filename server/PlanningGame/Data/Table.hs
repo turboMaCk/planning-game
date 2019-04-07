@@ -20,24 +20,18 @@ module PlanningGame.Data.Table
 
 import           Prelude                       hiding (lookup)
 import           Control.Concurrent            (MVar)
-import           Control.Exception             (finally)
-import           Control.Monad                 (forM_, forever, mzero)
-import           Data.Aeson.Types              (ToJSON (..), Value (..), object,
-                                                (.=))
-import           Data.ByteString               (ByteString)
+import           Data.Aeson.Types              (ToJSON (..), (.=), Value (..))
 import           Data.Map                      (Map)
-import           Data.Maybe                    (fromMaybe, isNothing)
 import           Data.Text                     (Text)
 import           Data.Time.Clock               (UTCTime)
 import           Network.WebSockets            (Connection)
 
 import qualified Control.Concurrent            as Concurrent
 import qualified Data.Aeson                    as Aeson
-import qualified Data.ByteString.Lazy          as LazyByteString
 import qualified Data.Map.Strict               as Map
+import qualified Data.Maybe                    as Maybe
 import qualified Data.Text                     as Text
 import qualified Data.Time.Clock               as Clock
-import qualified Network.WebSockets            as WS
 
 import           PlanningGame.Api.Error        (Error (..), ErrorType (..))
 import           PlanningGame.Api.GameSnapshot (snapshot)
@@ -48,7 +42,6 @@ import           PlanningGame.Data.Player      (Player, PlayerError (..),
                                                 Players)
 import           PlanningGame.Data.Session     (Session, SessionId)
 
-import qualified PlanningGame.Data.Game        as Game
 import qualified PlanningGame.Data.Player      as Player
 
 
@@ -69,7 +62,7 @@ data Table = Table
 
 instance ToJSON Table where
   toJSON table =
-    object
+    Aeson.object
         [ "id"      .= tableId table
         , "banker"  .= snd (banker table)
         , "players" .= fmap snd (Map.toList $ players table)
@@ -161,7 +154,7 @@ isActive Table { banker, players } =
 
 getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError Player)
 getPlayer session tableId tables =
-  fromMaybe (pure $ Left TableNotFound) $ getPlayer' <$>
+  Maybe.fromMaybe (pure $ Left TableNotFound) $ getPlayer' <$>
     Map.lookup tableId tables
 
   where

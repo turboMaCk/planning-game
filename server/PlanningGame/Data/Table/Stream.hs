@@ -3,7 +3,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module PlanningGame.Data.Table.Stream
-  where
+  ( join
+  , handler
+  ) where
 
 import           Data.Aeson.Types              (ToJSON (..), Value (..), object,
                                                 (.=), FromJSON (..), (.:))
@@ -24,8 +26,8 @@ import qualified Control.Exception             as Exception
 import           PlanningGame.Data.Game        (Games, Vote)
 import           PlanningGame.Api.GameSnapshot (snapshot)
 import           PlanningGame.Data.Id          (Id)
-import           PlanningGame.Data.Table       (Tables, Table(..), TableId)
-import           PlanningGame.Data.Player      (Players, Player)
+import           PlanningGame.Data.Table       (Tables, Table(..), TableId, TableError (..))
+import           PlanningGame.Data.Player      (Players, Player, PlayerError (..))
 import           PlanningGame.Data.Session     (Session, SessionId)
 
 import qualified PlanningGame.Data.Table       as Table
@@ -189,7 +191,7 @@ join session tableId name' tables =
     name =
       Text.strip name'
   in
-  case Map.lookup tableId tables of
+  case Table.lookup tableId tables of
     Just mvar -> do
       table <- Concurrent.readMVar mvar
 
@@ -217,8 +219,8 @@ join session tableId name' tables =
       pure $ Left TableNotFound
 
 
-streamHandler :: MVar Tables -> Session -> Id TableId -> Connection -> IO ()
-streamHandler state session id' conn = do
+handler :: MVar Tables -> Session -> Id TableId -> Connection -> IO ()
+handler state session id' conn = do
   tables <- Concurrent.readMVar state
   let mTable = Table.lookup id' tables
 
