@@ -625,6 +625,7 @@ viewMe { me, banker } =
                 [ Css.fontSize <| Css.px 14
                 , Css.fontWeight <| Css.int 400
                 , Css.textDecoration Css.underline
+                , Css.cursor Css.pointer
                 ]
                 (Maybe.unwrap []
                     (List.singleton
