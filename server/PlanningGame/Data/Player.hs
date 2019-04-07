@@ -189,6 +189,7 @@ getByName name' =
       else
         Nothing
 
+
 lookup :: Id SessionId -> Players -> Maybe Player
 lookup = Inc.lookup
 
