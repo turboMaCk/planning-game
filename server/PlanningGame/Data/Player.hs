@@ -36,11 +36,12 @@ import qualified Network.WebSockets        as WS
 import qualified Data.Maybe                as Maybe
 
 import           PlanningGame.Api.Error    (Error (..), ErrorType (..))
-import           PlanningGame.Data.Id      (Id, Incremental)
+import           PlanningGame.Data.AutoIncrement      (Incremental)
+import           PlanningGame.Data.Id      (Id)
 import           PlanningGame.Data.Session (Session, SessionId)
 
 
-import qualified PlanningGame.Data.Id      as Id
+import qualified PlanningGame.Data.AutoIncrement      as Inc
 
 
 data PlayerId
@@ -90,22 +91,24 @@ create n =
 
 nameTaken :: Text -> Players -> Bool
 nameTaken name' players =
-  not $ Id.null $
-    Id.filter ((==) name' . name) players
+  not $ Inc.null $
+    Inc.filter ((==) name' . name) players
 
 
 add :: Session -> Text -> Players -> Either PlayerError ( Players, Player )
 add id' name players =
   if Text.null name then
     Left NameEmpty
+
   else if nameTaken name players then
     Left NameTaken
+
   else
     let
       newPlayer =
         create name
     in
-    Right ( Id.insert id' newPlayer players, newPlayer )
+    Right ( Inc.insert id' newPlayer players, newPlayer )
 
 
 addConnectionTo :: Connection -> Player -> (Player, Int)
@@ -132,13 +135,13 @@ numberOfConnections Player { playerConnections } =
 
 addConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( Player, Int ) )
 addConnection id' conn players =
-  case Id.lookup id' players of
+  case Inc.lookup id' players of
     Just player ->
       let
         ( updatedPlayer, index ) =
           addConnectionTo conn player
       in
-      ( Id.insert id' updatedPlayer players
+      ( Inc.insert id' updatedPlayer players
       , Just ( updatedPlayer, index )
       )
 
@@ -153,15 +156,15 @@ removeConnectionFrom index player@(Player { playerConnections }) =
 
 disconnect :: Id SessionId -> Int -> Players -> Players
 disconnect sessionId index =
-  Id.alter (fmap $ removeConnectionFrom index) sessionId
+  Inc.alter (fmap $ removeConnectionFrom index) sessionId
 
 
 get :: Id SessionId -> Players -> Maybe Player
-get = Id.lookup
+get = Inc.lookup
 
 
 empty :: Players
-empty = Id.empty
+empty = Inc.empty
 
 
 allConnections :: Player -> [ WS.Connection ]
@@ -171,12 +174,12 @@ allConnections Player { playerConnections } =
 
 kick :: Id SessionId -> Players -> Players
 kick =
-  Id.delete
+  Inc.delete
 
 
 getByName :: Text -> Players -> Maybe ( Id SessionId, Player )
 getByName name' =
-  Maybe.listToMaybe . Maybe.mapMaybe filterId . Id.assocs
+  Maybe.listToMaybe . Maybe.mapMaybe filterId . Inc.assocs
 
   where
     filterId ( id', player ) =
@@ -187,17 +190,17 @@ getByName name' =
         Nothing
 
 lookup :: Id SessionId -> Players -> Maybe Player
-lookup = Id.lookup
+lookup = Inc.lookup
 
 
 insert :: Id SessionId -> Player -> Players -> Players
-insert = Id.insert
+insert = Inc.insert
 
 
 toList :: Players -> [ (Id SessionId, Player) ]
-toList = Id.assocs
+toList = Inc.assocs
 
 
 anyOnline :: Players -> Bool
 anyOnline =
-    not . Id.null . Id.filter hasConnection
+    not . Inc.null . Inc.filter hasConnection
