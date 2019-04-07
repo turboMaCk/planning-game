@@ -47,8 +47,8 @@ bankerIndicator isBanker =
             , Css.backgroundColor Theme.values.secondaryColor
             , Css.marginLeft Css.zero
             ]
-            [ Attrs.title "Banker" ]
-            [ Html.text "B" ]
+            [ Attrs.title "Dealer" ]
+            [ Html.text "D" ]
 
     else
         Html.text ""

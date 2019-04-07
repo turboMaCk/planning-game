@@ -600,6 +600,28 @@ viewPointsSoFar game =
             showPoints "Total points:" totalPoints
 
 
+viewMe : Model -> Html Msg
+viewMe { me, banker } =
+    Html.div []
+        [ Html.text "Playing as:"
+        , Html.h3 [] [ Html.text <| Maybe.unwrap "" .name me ]
+        , if Maybe.map .name me == Maybe.map .name banker then
+            Html.text ""
+
+          else
+            Html.button
+                (Maybe.unwrap []
+                    (List.singleton
+                        << Events.onClick
+                        << Send
+                        << Stream.KickPlayer
+                    )
+                    me
+                )
+                [ Html.text "Leave Table" ]
+        ]
+
+
 view : Model -> Html Msg
 view model =
     Component.withTableNotFound model.tableError <|
@@ -615,6 +637,7 @@ view model =
                 []
                 [ viewCurrentGame model.game
                 , viewPointsSoFar model.game
+                , viewMe model
                 , Players.view
                     { isMe =
                         \{ name } ->
