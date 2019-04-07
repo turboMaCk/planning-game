@@ -253,6 +253,11 @@ handleEvent event model =
         GameEnded game ->
             ( { model | game = game }, Cmd.none )
 
+        PlayerKicked player ->
+            ( { model | players = Dict.filter (\_ p -> p /= player) model.players }
+            , Cmd.none
+            )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
