@@ -10,11 +10,11 @@ module PlanningGame.Data.AutoIncrement
   , alter
   ) where
 
-import           Prelude            hiding (map, lookup, filter, null)
-import           Data.Bifunctor     (second)
-import           Data.Map.Strict    (Map)
+import           Data.Bifunctor  (second)
+import           Data.Map.Strict (Map)
+import           Prelude         hiding (filter, lookup, map, null)
 
-import qualified Data.Map           as Map
+import qualified Data.Map        as Map
 
 
 newtype IncId a =

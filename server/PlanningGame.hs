@@ -1,9 +1,9 @@
 module Main where
 
-import           Control.Concurrent          (forkIO)
-import           System.Environment          (lookupEnv)
+import           Control.Concurrent            (forkIO)
+import           System.Environment            (lookupEnv)
 
-import qualified Network.Wai.Handler.Warp    as Warp
+import qualified Network.Wai.Handler.Warp      as Warp
 
 import qualified PlanningGame.Api              as Api
 import qualified PlanningGame.GarbageCollector as GC

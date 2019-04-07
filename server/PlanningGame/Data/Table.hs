@@ -18,13 +18,13 @@ module PlanningGame.Data.Table
   , allConnections
   ) where
 
-import           Prelude                       hiding (lookup)
 import           Control.Concurrent            (MVar)
-import           Data.Aeson.Types              (ToJSON (..), (.=), Value (..))
+import           Data.Aeson.Types              (ToJSON (..), Value (..), (.=))
 import           Data.Map                      (Map)
 import           Data.Text                     (Text)
 import           Data.Time.Clock               (UTCTime)
 import           Network.WebSockets            (Connection)
+import           Prelude                       hiding (lookup)
 
 import qualified Control.Concurrent            as Concurrent
 import qualified Data.Aeson                    as Aeson

@@ -24,24 +24,24 @@ module PlanningGame.Data.Player
   , anyOnline
   ) where
 
-import           Prelude                   hiding (lookup)
-import           Data.Aeson.Types          (ToJSON (..), object, (.=))
-import           Data.IntMap.Strict        (IntMap)
-import           Data.Text                 (Text)
-import           Network.WebSockets        (Connection)
+import           Data.Aeson.Types                (ToJSON (..), object, (.=))
+import           Data.IntMap.Strict              (IntMap)
+import           Data.Text                       (Text)
+import           Network.WebSockets              (Connection)
+import           Prelude                         hiding (lookup)
 
-import qualified Data.IntMap               as IntMap
-import qualified Data.Text                 as Text
-import qualified Network.WebSockets        as WS
-import qualified Data.Maybe                as Maybe
+import qualified Data.IntMap                     as IntMap
+import qualified Data.Maybe                      as Maybe
+import qualified Data.Text                       as Text
+import qualified Network.WebSockets              as WS
 
-import           PlanningGame.Api.Error    (Error (..), ErrorType (..))
-import           PlanningGame.Data.AutoIncrement      (Incremental)
-import           PlanningGame.Data.Id      (Id)
-import           PlanningGame.Data.Session (Session, SessionId)
+import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
+import           PlanningGame.Data.AutoIncrement (Incremental)
+import           PlanningGame.Data.Id            (Id)
+import           PlanningGame.Data.Session       (Session, SessionId)
 
 
-import qualified PlanningGame.Data.AutoIncrement      as Inc
+import qualified PlanningGame.Data.AutoIncrement as Inc
 
 
 data PlayerId

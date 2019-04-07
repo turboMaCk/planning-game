@@ -1,5 +1,5 @@
-{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE NamedFieldPuns      #-}
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module PlanningGame.Data.Table.Stream
@@ -7,32 +7,34 @@ module PlanningGame.Data.Table.Stream
   , handler
   ) where
 
-import           Data.Aeson.Types              (ToJSON (..), Value (..), object,
-                                                (.=), FromJSON (..), (.:))
-import           Data.ByteString               (ByteString)
 import           Control.Concurrent            (MVar)
 import           Control.Monad                 (forM_, forever, mzero)
+import           Data.Aeson.Types              (FromJSON (..), ToJSON (..),
+                                                Value (..), object, (.:), (.=))
+import           Data.ByteString               (ByteString)
 import           Data.Text                     (Text)
 import           Network.WebSockets            (Connection)
 
+import qualified Control.Concurrent            as Concurrent
+import qualified Control.Exception             as Exception
 import qualified Data.Aeson                    as Aeson
 import qualified Data.ByteString.Lazy          as LazyByteString
-import qualified Control.Concurrent            as Concurrent
 import qualified Data.Maybe                    as Maybe
 import qualified Data.Text                     as Text
 import qualified Network.WebSockets            as WS
-import qualified Control.Exception             as Exception
 
-import           PlanningGame.Data.Game        (Games, Vote)
 import           PlanningGame.Api.GameSnapshot (snapshot)
+import           PlanningGame.Data.Game        (Games, Vote)
 import           PlanningGame.Data.Id          (Id)
-import           PlanningGame.Data.Table       (Tables, Table(..), TableId, TableError (..))
-import           PlanningGame.Data.Player      (Players, Player, PlayerError (..))
+import           PlanningGame.Data.Player      (Player, PlayerError (..),
+                                                Players)
 import           PlanningGame.Data.Session     (Session, SessionId)
+import           PlanningGame.Data.Table       (Table (..), TableError (..),
+                                                TableId, Tables)
 
-import qualified PlanningGame.Data.Table       as Table
 import qualified PlanningGame.Data.Game        as Game
 import qualified PlanningGame.Data.Player      as Player
+import qualified PlanningGame.Data.Table       as Table
 
 
 -- | Msg is incomming msg from client
