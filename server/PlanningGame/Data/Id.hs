@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -7,6 +8,7 @@ module PlanningGame.Data.Id
   , generateId
   ) where
 
+import           Prelude            hiding (lookup, filter, null)
 import           Control.Monad      (liftM)
 import           Data.Aeson.Types   (ToJSON (..))
 import           Data.ByteString    (ByteString)

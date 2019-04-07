@@ -24,6 +24,7 @@ executable planning-game
                      , PlanningGame.Api.PlayerInfo
                      , PlanningGame.Api.GameSnapshot
                      , PlanningGame.Data
+                     , PlanningGame.Data.AutoIncrement
                      , PlanningGame.Data.Id
                      , PlanningGame.Data.Player
                      , PlanningGame.Data.Session

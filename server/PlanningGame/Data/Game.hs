@@ -260,26 +260,30 @@ playerVotes ( bankerId, bankerName ) players' games =
     playerVotes' :: FinishedGame -> [ ( Text, Vote ) ]
     playerVotes' game =
       -- @TODO: Better errr handling
-      fmap (\(sId, vote) -> (maybe "" Player.name $ Map.lookup sId players, vote)) $ Map.toList $ votes game
+      fmap (\(sId, vote) -> (maybe "" Player.name $ Player.lookup sId players, vote)) $ Map.toList $ votes game
 
     players =
-      Map.insert bankerId bankerName players'
+      Player.insert bankerId bankerName players'
 
 
 playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, Vote ) ]
 playersVotes _ _ (FinishedGames _) = []
 playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
-  mapMaybe (\(id', vote) -> (\p -> ( Player.name p, vote )) <$> Map.lookup id' allPlayers)
+  mapMaybe (\(id', vote) -> (\p -> ( Player.name p, vote )) <$> Player.lookup id' allPlayers)
     $ Map.toList votes
 
   where
-    allPlayers = Map.insert bankerId banker players
+    allPlayers = Player.insert bankerId banker players
 
 
 allVoted :: Players -> Games -> Bool
 allVoted _ (FinishedGames _) = False
 allVoted players (RunningGames _ (RunningGame _ votes _ )) =
-  Map.null $ Map.filterWithKey (\sId _ -> not $ Map.member sId votes) players
+  Prelude.null $ Prelude.filter (not . flip Map.member votes) sessionIds
+
+  where
+    sessionIds =
+      fst <$> Player.toList players
 
 
 removePlayerVotes :: Id SessionId -> Games -> Games
