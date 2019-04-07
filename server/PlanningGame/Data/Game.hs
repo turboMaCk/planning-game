@@ -279,9 +279,11 @@ playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _
 allVoted :: Players -> Games -> Bool
 allVoted _ (FinishedGames _) = False
 allVoted players (RunningGames _ (RunningGame _ votes _ )) =
-  -- @TODO: fixme
-  False
-  -- Map.null $ Map.filterWithKey (\sId _ -> not $ Map.member sId votes) players
+  Prelude.null $ Prelude.filter (not . flip Map.member votes) sessionIds
+
+  where
+    sessionIds =
+      fst <$> Player.toList players
 
 
 removePlayerVotes :: Id SessionId -> Games -> Games
