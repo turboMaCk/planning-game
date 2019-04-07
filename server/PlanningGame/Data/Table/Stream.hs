@@ -386,7 +386,8 @@ handleMsg _ session RestartRound table
       pure table
 
 handleMsg _ session (KickPlayer name) table
-  | Table.isBanker session table = do
+  | Table.isBanker session table
+    || Table.sessionByName name table == Just session = do
     let maybePlayerData = Player.getByName name $ Table.players table
 
     case maybePlayerData of

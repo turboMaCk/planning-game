@@ -40,7 +40,6 @@ import           PlanningGame.Data.AutoIncrement (Incremental)
 import           PlanningGame.Data.Id            (Id)
 import           PlanningGame.Data.Session       (Session, SessionId)
 
-
 import qualified PlanningGame.Data.AutoIncrement as Inc
 
 
