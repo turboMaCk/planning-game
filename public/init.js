@@ -78,7 +78,7 @@
             ws.send(msg);
         });
 
-        app.ports.disconnect.subscribe(function() {
+        app.ports.disconnect.subscribe(function(e) {
             if (ws.readyState === WebSocket.OPEN) {
                 ws.close(1000);
             }

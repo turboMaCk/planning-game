@@ -109,10 +109,14 @@ viewPlayer { isMe, toVote, kick } isBanker showKick player =
         , voteIndicator <| toVote player
         ]
             ++ (if showKick then
-                    [ Html.br [] []
-                    , Html.span
+                    [ Html.styled Html.span
+                        [ Css.textDecoration Css.underline
+                        , Css.fontSize <| Css.px 12
+                        , Css.display Css.block
+                        , Css.cursor Css.pointer
+                        ]
                         [ Events.onClick <| kick player ]
-                        [ Html.text "kick" ]
+                        [ Html.text "kick out" ]
                     ]
 
                 else

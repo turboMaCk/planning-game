@@ -148,7 +148,7 @@ update navigationKey msg model =
         Event result ->
             case result of
                 Ok e ->
-                    handleEvent e model
+                    handleEvent navigationKey e model
 
                 Err _ ->
                     -- @TODO: handle errors
@@ -208,8 +208,8 @@ update navigationKey msg model =
 -- NoOp
 
 
-handleEvent : Event -> Model -> ( Model, Cmd Msg )
-handleEvent event model =
+handleEvent : Key -> Event -> Model -> ( Model, Cmd Msg )
+handleEvent navigationKey event model =
     case event of
         PlayerJoin player ->
             ( updatePlayer player model
@@ -255,7 +255,11 @@ handleEvent event model =
 
         PlayerKicked player ->
             ( { model | players = Dict.filter (\_ p -> p /= player) model.players }
-            , Cmd.none
+            , if Just player.name == Maybe.map .name model.me then
+                Navigation.pushUrl navigationKey "/"
+
+              else
+                Cmd.none
             )
 
 
