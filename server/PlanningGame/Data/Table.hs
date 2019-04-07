@@ -522,7 +522,7 @@ handleMsg _ session (KickPlayer name) table
     case sesId of
       Just id' ->
         pure $ table
-            { players = Player.kick name $ players table
+            { players = Player.kick id' $ players table
             , game = Game.removePlayerVotes id' <$> game table
             }
 

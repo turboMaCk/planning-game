@@ -160,19 +160,15 @@ allConnections Player { playerConnections } =
 
 
 -- @TODO: this might need to close the connection
-kick :: Text -> Players -> Players
-kick name' =
-  Map.filter ((/=) name' . name)
+kick :: Id SessionId -> Players -> Players
+kick = Map.delete
 
 
 getSessionId :: Text -> Players -> Maybe (Id SessionId)
 getSessionId name' =
-  headMay . Maybe.mapMaybe filterId . Map.assocs
+  Maybe.listToMaybe . Maybe.mapMaybe filterId . Map.assocs
 
   where
-    headMay [] = Nothing
-    headMay x  = Just $ head x
-
     filterId (id', rec) =
       if name rec == name' then
         Just id'
