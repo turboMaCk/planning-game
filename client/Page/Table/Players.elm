@@ -5,6 +5,7 @@ import Data exposing (Player, Vote)
 import Dict exposing (Dict)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
+import Html.Styled.Events as Events
 import Maybe.Extra as Maybe
 import Theme
 
@@ -86,8 +87,8 @@ onlineIndicator isActive =
         ]
 
 
-viewPlayer : (Player -> Bool) -> (Player -> PlayerVote) -> (Player -> Bool) -> Player -> Html msg
-viewPlayer isMe toVote isBanker player =
+viewPlayer : (Player -> Bool) -> (Player -> PlayerVote) -> (Player -> Bool) -> (Player -> msg) -> Player -> Html msg
+viewPlayer isMe toVote isBanker kick player =
     Html.styled Html.li
         [ Css.listStyle Css.none
         , Css.margin4 Css.zero Css.zero (Css.px 6) Css.zero
@@ -105,6 +106,9 @@ viewPlayer isMe toVote isBanker player =
         , bankerIndicator <| isBanker player
         , Html.text player.name
         , voteIndicator <| toVote player
+        , Html.br [] []
+        , Html.span [ Events.onClick <| kick player ]
+            [ Html.text "kick" ]
         ]
 
 
@@ -116,7 +120,7 @@ type alias Config msg =
 
 
 view : Config msg -> Maybe Player -> Dict String Player -> Html msg
-view { isMe, toVote } banker players =
+view { isMe, toVote, kick } banker players =
     let
         isBanker =
             (==) banker << Just
@@ -130,8 +134,8 @@ view { isMe, toVote } banker players =
             ]
             []
           <|
-            Maybe.unwrap (Html.text "") (viewPlayer isMe toVote isBanker) banker
-                :: (List.map (viewPlayer isMe toVote isBanker) <|
+            Maybe.unwrap (Html.text "") (viewPlayer isMe toVote isBanker kick) banker
+                :: (List.map (viewPlayer isMe toVote isBanker kick) <|
                         Dict.values players
                    )
         ]

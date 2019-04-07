@@ -128,6 +128,7 @@ type Msg
     | NextGame String Vote
     | Finish Vote
     | Restart
+    | KickPlayer Player
 
 
 encodeMsg : Msg -> Value
@@ -165,6 +166,12 @@ encodeMsg msg =
         Restart ->
             Encode.object
                 [ ( "msg", Encode.string "RestartRound" ) ]
+
+        KickPlayer { name } ->
+            Encode.object
+                [ ( "msg", Encode.string "KickPlayer" )
+                , ( "name", Encode.string name )
+                ]
 
 
 sendMsg : Msg -> Cmd msg

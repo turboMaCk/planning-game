@@ -63,7 +63,6 @@ type Msg
     | NewGame String
     | FinishGame
     | ClearMyVote
-    | KickPlayer Player
 
 
 leave : () -> Cmd msg
@@ -203,9 +202,6 @@ update navigationKey msg model =
 
         ClearMyVote ->
             ( { model | myVote = Nothing }, Cmd.none )
-
-        KickPlayer _ ->
-            ( model, Cmd.none )
 
 
 
@@ -633,7 +629,7 @@ view model =
 
                                 Overview _ ->
                                     Hidden
-                    , kick = KickPlayer
+                    , kick = Send << Stream.KickPlayer
                     }
                     model.banker
                     model.players
