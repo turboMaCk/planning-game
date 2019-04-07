@@ -59,6 +59,7 @@ type Event
     | VoteAccepted Player
     | VotingEnded Game String
     | GameEnded Game
+    | PlayerKicked Player
 
 
 eventField : String -> (a -> Event) -> Decoder a -> Decoder Event
@@ -99,6 +100,7 @@ eventDecoder =
             |> Decode.andMap nextGameName
             |> eventField "VotingEnded" identity
         , eventField "GameEnded" GameEnded <| Decode.field "game" Data.gameDecoder
+        , eventField "PlayerKicked" PlayerKicked <| Decode.field "player" Data.playerDecoder
         ]
 
 
@@ -128,6 +130,7 @@ type Msg
     | NextGame String Vote
     | Finish Vote
     | Restart
+    | KickPlayer Player
 
 
 encodeMsg : Msg -> Value
@@ -165,6 +168,12 @@ encodeMsg msg =
         Restart ->
             Encode.object
                 [ ( "msg", Encode.string "RestartRound" ) ]
+
+        KickPlayer { name } ->
+            Encode.object
+                [ ( "msg", Encode.string "KickPlayer" )
+                , ( "name", Encode.string name )
+                ]
 
 
 sendMsg : Msg -> Cmd msg

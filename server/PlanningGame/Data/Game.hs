@@ -21,6 +21,7 @@ module PlanningGame.Data.Game
   , finishCurrent
   , allVoted
   , restartCurrent
+  , removePlayerVotes
   ) where
 
 import           Control.Monad             (mzero)
@@ -116,7 +117,7 @@ data FinishedGame =
     }
 
 
--- Isomorphic to ( [ PatGame ], Maybe RunningGame ) but more explicit
+-- Isomorphic to ( [ PatGame ], Maybe RunningGame ) but more explicit.
 -- Past games are stored in opossite order
 data Games
   = RunningGames  [ FinishedGame ] RunningGame
@@ -279,3 +280,20 @@ allVoted :: Players -> Games -> Bool
 allVoted _ (FinishedGames _) = False
 allVoted players (RunningGames _ (RunningGame _ votes _ )) =
   Map.null $ Map.filterWithKey (\sId _ -> not $ Map.member sId votes) players
+
+
+removePlayerVotes :: Id SessionId -> Games -> Games
+removePlayerVotes sesId games' =
+  case games' of
+    FinishedGames games ->
+      FinishedGames $ finished games
+
+    RunningGames finished' (RunningGame text votes locked) ->
+      RunningGames (finished finished') $ RunningGame text (filterVotes votes) locked
+
+  where
+    filterVotes =
+      Map.filterWithKey (\k _ -> sesId /= k)
+
+    finished games =
+      map (\g -> g { votes = filterVotes $ votes g }) games

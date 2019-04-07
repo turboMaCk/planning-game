@@ -129,6 +129,7 @@ data Event
     | VoteAccepted Player
     | VotingEnded ( Id SessionId, Player ) Players Games
     | GameEnded ( Id SessionId, Player ) Players Games
+    | PlayerKicked Player
 
 
 instance ToJSON Event where
@@ -168,6 +169,11 @@ instance ToJSON Event where
     object
         [ "event" .= Text.pack "GameEnded"
         , "game"  .= snapshot dealer players games
+        ]
+  toJSON (PlayerKicked player) =
+    object
+        [ "event"  .= Text.pack "PlayerKicked"
+        , "player" .= player
         ]
 
 
@@ -510,6 +516,25 @@ handleMsg _ session RestartRound table
 
       Nothing ->
         -- @TODO: handle err
+        pure table
+
+  | otherwise =
+      -- @TODO: handle forbidden
+      pure table
+
+handleMsg _ session (KickPlayer name) table
+  | isBanker session table = do
+    let maybePlayerData = Player.getByName name $ players table
+
+    case maybePlayerData of
+      Just ( id', player ) -> do
+        broadcast table $ PlayerKicked player
+        pure $ table
+            { players = Player.kick id' $ players table
+            , game = Game.removePlayerVotes id' <$> game table
+            }
+
+      Nothing ->
         pure table
 
   | otherwise =

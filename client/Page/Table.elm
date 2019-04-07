@@ -148,7 +148,7 @@ update navigationKey msg model =
         Event result ->
             case result of
                 Ok e ->
-                    handleEvent e model
+                    handleEvent navigationKey e model
 
                 Err _ ->
                     -- @TODO: handle errors
@@ -208,8 +208,8 @@ update navigationKey msg model =
 -- NoOp
 
 
-handleEvent : Event -> Model -> ( Model, Cmd Msg )
-handleEvent event model =
+handleEvent : Key -> Event -> Model -> ( Model, Cmd Msg )
+handleEvent navigationKey event model =
     case event of
         PlayerJoin player ->
             ( updatePlayer player model
@@ -252,6 +252,15 @@ handleEvent event model =
 
         GameEnded game ->
             ( { model | game = game }, Cmd.none )
+
+        PlayerKicked player ->
+            ( { model | players = Dict.filter (\_ p -> p /= player) model.players }
+            , if Just player.name == Maybe.map .name model.me then
+                Navigation.pushUrl navigationKey "/"
+
+              else
+                Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
@@ -593,29 +602,6 @@ viewPointsSoFar game =
 
 view : Model -> Html Msg
 view model =
-    let
-        isMe { name } =
-            Maybe.unwrap False ((==) name << .name) model.me
-
-        toVote player =
-            case model.game of
-                NotStarted ->
-                    Hidden
-
-                Voting { maskedVotes } ->
-                    if Set.member player.name maskedVotes then
-                        Unknown
-
-                    else
-                        Hidden
-
-                RoundFinished { playerVotes } ->
-                    Dict.get player.name playerVotes
-                        |> Maybe.unwrap Unknown Voted
-
-                Overview _ ->
-                    Hidden
-    in
     Component.withTableNotFound model.tableError <|
         Html.styled Html.div
             [ Css.displayFlex
@@ -629,6 +615,32 @@ view model =
                 []
                 [ viewCurrentGame model.game
                 , viewPointsSoFar model.game
-                , Players.view isMe toVote model.banker model.players
+                , Players.view
+                    { isMe =
+                        \{ name } ->
+                            Maybe.unwrap False ((==) name << .name) model.me
+                    , toVote =
+                        \player ->
+                            case model.game of
+                                NotStarted ->
+                                    Hidden
+
+                                Voting { maskedVotes } ->
+                                    if Set.member player.name maskedVotes then
+                                        Unknown
+
+                                    else
+                                        Hidden
+
+                                RoundFinished { playerVotes } ->
+                                    Dict.get player.name playerVotes
+                                        |> Maybe.unwrap Unknown Voted
+
+                                Overview _ ->
+                                    Hidden
+                    , kick = Send << Stream.KickPlayer
+                    }
+                    model.banker
+                    model.players
                 ]
             ]
