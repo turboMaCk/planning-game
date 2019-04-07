@@ -28,7 +28,6 @@ executable planning-game
                      , PlanningGame.Data.Player
                      , PlanningGame.Data.Session
                      , PlanningGame.Data.Table
-                     , PlanningGame.Data.Table.Msg
                      , PlanningGame.Data.Table.Stream
                      , PlanningGame.Data.Game
                      , PlanningGame.GarbageCollector
