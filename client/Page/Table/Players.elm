@@ -109,7 +109,7 @@ viewPlayer { isMe, toVote, kick } isBanker showKick player =
         , voteIndicator <| toVote player
         ]
             ++ (if showKick then
-                    [ Html.styled Html.span
+                    [ Html.styled Html.a
                         [ Css.textDecoration Css.underline
                         , Css.fontSize <| Css.px 12
                         , Css.display Css.block
@@ -141,8 +141,7 @@ view config banker players =
             Maybe.unwrap False config.isMe banker
     in
     Html.div []
-        [ Html.h3 [] [ Html.text "Players:" ]
-        , Html.styled Html.ul
+        [ Html.styled Html.ul
             [ Css.listStyle Css.none
             , Css.margin Css.zero
             , Css.padding Css.zero

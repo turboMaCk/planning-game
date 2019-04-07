@@ -602,14 +602,30 @@ viewPointsSoFar game =
 
 viewMe : Model -> Html Msg
 viewMe { me, banker } =
-    Html.div []
-        [ Html.text "Playing as:"
-        , Html.h3 [] [ Html.text <| Maybe.unwrap "" .name me ]
+    Html.styled Html.div
+        [ Css.marginTop <| Css.px 10 ]
+        []
+        [ Html.styled Html.span
+            [ Css.fontWeight <| Css.int 400
+            , Css.fontSize <| Css.px 14
+            ]
+            []
+            [ Html.text "Playing as:" ]
+        , Html.styled Html.h3
+            [ Css.margin2 (Css.px 2) Css.zero
+            , Css.fontWeight <| Css.int 200
+            ]
+            []
+            [ Html.text <| Maybe.unwrap "" .name me ]
         , if Maybe.map .name me == Maybe.map .name banker then
-            Html.text ""
+            Html.small [] [ Html.text "" ]
 
           else
-            Html.button
+            Html.styled Html.a
+                [ Css.fontSize <| Css.px 14
+                , Css.fontWeight <| Css.int 400
+                , Css.textDecoration Css.underline
+                ]
                 (Maybe.unwrap []
                     (List.singleton
                         << Events.onClick
@@ -638,6 +654,7 @@ view model =
                 [ viewCurrentGame model.game
                 , viewPointsSoFar model.game
                 , viewMe model
+                , Html.h3 [] [ Html.text "Players:" ]
                 , Players.view
                     { isMe =
                         \{ name } ->
