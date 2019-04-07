@@ -65,7 +65,7 @@ instance ToJSON Table where
     Aeson.object
         [ "id"      .= tableId table
         , "banker"  .= snd (banker table)
-        , "players" .= fmap snd (Map.toList $ players table)
+        , "players" .= fmap snd (Player.toList $ players table)
         , "game"    .=
           case game table of
             Just game ->
@@ -141,15 +141,11 @@ create id' name' tables =
 
 isActive :: Table -> Bool
 isActive Table { banker, players } =
-  bankerOnline || anyPlayerOnline
+  bankerOnline || Player.anyOnline players
 
   where
     bankerOnline =
       Player.hasConnection $ snd banker
-
-    anyPlayerOnline =
-      not $ Map.null $ Map.filter Player.hasConnection players
-
 
 
 getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError Player)
@@ -167,7 +163,7 @@ getPlayer session tableId tables =
 
       else
           pure $ maybe (Left PlayerNotFound) Right $
-            Map.lookup session $ players table
+            Player.lookup session $ players table
 
 
 allConnections :: Table -> [ Connection ]
@@ -198,7 +194,7 @@ assignConnection session conn table@Table { banker, players } =
 
 allPlayers :: Table -> Players
 allPlayers table =
-  Map.insert bankerId banker' $ players table
+  Player.insert bankerId banker' $ players table
 
   where
     (bankerId, banker') = banker table

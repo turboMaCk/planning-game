@@ -19,24 +19,31 @@ module PlanningGame.Data.Player
   , kick
   , getByName
   , lookup
+  , insert
+  , toList
+  , anyOnline
   ) where
 
 import           Prelude                   hiding (lookup)
 import           Data.Aeson.Types          (ToJSON (..), object, (.=))
 import           Data.IntMap.Strict        (IntMap)
-import           Data.Map.Strict           (Map)
 import           Data.Text                 (Text)
 import           Network.WebSockets        (Connection)
 
 import qualified Data.IntMap               as IntMap
-import qualified Data.Map                  as Map
 import qualified Data.Text                 as Text
 import qualified Network.WebSockets        as WS
 import qualified Data.Maybe                as Maybe
 
 import           PlanningGame.Api.Error    (Error (..), ErrorType (..))
-import           PlanningGame.Data.Id      (Id)
+import           PlanningGame.Data.Id      (Id, Incremental)
 import           PlanningGame.Data.Session (Session, SessionId)
+
+
+import qualified PlanningGame.Data.Id      as Id
+
+
+data PlayerId
 
 
 data Player = Player
@@ -58,7 +65,8 @@ instance ToJSON Player where
 
 
 type Players =
-  Map (Id SessionId) Player
+  Incremental PlayerId (Id SessionId) Player
+  -- Map (Id SessionId) Player
 
 
 data PlayerError
@@ -81,9 +89,9 @@ create n =
 
 
 nameTaken :: Text -> Players -> Bool
-nameTaken name' sessions =
-  not $ Map.null $
-    Map.filter ((==) name' . name) sessions
+nameTaken name' players =
+  not $ Id.null $
+    Id.filter ((==) name' . name) players
 
 
 add :: Session -> Text -> Players -> Either PlayerError ( Players, Player )
@@ -97,7 +105,7 @@ add id' name players =
       newPlayer =
         create name
     in
-    Right ( Map.insert id' newPlayer players, newPlayer )
+    Right ( Id.insert id' newPlayer players, newPlayer )
 
 
 addConnectionTo :: Connection -> Player -> (Player, Int)
@@ -124,13 +132,13 @@ numberOfConnections Player { playerConnections } =
 
 addConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( Player, Int ) )
 addConnection id' conn players =
-  case Map.lookup id' players of
+  case Id.lookup id' players of
     Just player ->
       let
         ( updatedPlayer, index ) =
           addConnectionTo conn player
       in
-      ( Map.insert id' updatedPlayer players
+      ( Id.insert id' updatedPlayer players
       , Just ( updatedPlayer, index )
       )
 
@@ -145,15 +153,15 @@ removeConnectionFrom index player@(Player { playerConnections }) =
 
 disconnect :: Id SessionId -> Int -> Players -> Players
 disconnect sessionId index =
-  Map.alter (fmap $ removeConnectionFrom index) sessionId
+  Id.alter (fmap $ removeConnectionFrom index) sessionId
 
 
 get :: Id SessionId -> Players -> Maybe Player
-get = Map.lookup
+get = Id.lookup
 
 
 empty :: Players
-empty = Map.empty
+empty = Id.empty
 
 
 allConnections :: Player -> [ WS.Connection ]
@@ -163,12 +171,12 @@ allConnections Player { playerConnections } =
 
 kick :: Id SessionId -> Players -> Players
 kick =
-  Map.delete
+  Id.delete
 
 
 getByName :: Text -> Players -> Maybe ( Id SessionId, Player )
 getByName name' =
-  Maybe.listToMaybe . Maybe.mapMaybe filterId . Map.assocs
+  Maybe.listToMaybe . Maybe.mapMaybe filterId . Id.assocs
 
   where
     filterId ( id', player ) =
@@ -179,4 +187,17 @@ getByName name' =
         Nothing
 
 lookup :: Id SessionId -> Players -> Maybe Player
-lookup = Map.lookup
+lookup = Id.lookup
+
+
+insert :: Id SessionId -> Player -> Players -> Players
+insert = Id.insert
+
+
+toList :: Players -> [ (Id SessionId, Player) ]
+toList = Id.assocs
+
+
+anyOnline :: Players -> Bool
+anyOnline =
+    not . Id.null . Id.filter hasConnection
