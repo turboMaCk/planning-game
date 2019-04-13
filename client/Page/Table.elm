@@ -600,6 +600,46 @@ viewPointsSoFar game =
             showPoints "Total points:" totalPoints
 
 
+viewMe : Model -> Html Msg
+viewMe { me, banker } =
+    Html.styled Html.div
+        [ Css.margin2 (Css.px 20) Css.zero ]
+        []
+        [ Html.styled Html.span
+            [ Css.fontWeight <| Css.int 400
+            , Css.fontSize <| Css.px 14
+            ]
+            []
+            [ Html.text "Playing as:" ]
+        , Html.styled Html.h3
+            [ Css.margin2 (Css.px 2) Css.zero
+            , Css.fontWeight <| Css.int 200
+            ]
+            []
+            [ Html.text <| Maybe.unwrap "" .name me ]
+        , if Maybe.map .name me == Maybe.map .name banker then
+              Html.text ""
+
+          else
+            Html.styled Html.a
+                [ Css.fontSize <| Css.px 12
+                , Css.fontWeight <| Css.int 400
+                , Css.textDecoration Css.underline
+                , Css.cursor Css.pointer
+                , Css.color Theme.values.primaryColor
+                ]
+                (Maybe.unwrap []
+                    (List.singleton
+                        << Events.onClick
+                        << Send
+                        << Stream.KickPlayer
+                    )
+                    me
+                )
+                [ Html.text "Leave table" ]
+        ]
+
+
 view : Model -> Html Msg
 view model =
     Component.withTableNotFound model.tableError <|
@@ -615,6 +655,7 @@ view model =
                 []
                 [ viewCurrentGame model.game
                 , viewPointsSoFar model.game
+                , viewMe model
                 , Players.view
                     { isMe =
                         \{ name } ->

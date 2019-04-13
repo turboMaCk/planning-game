@@ -2,7 +2,7 @@
 , http-types, mtl, random, servant, servant-server
 , servant-websockets, stdenv, text, wai, wai-extra
 , wai-middleware-static, warp, websockets
-, time, blaze-html, blaze-markup, ...
+, time, blaze-html, blaze-markup, zlib, ...
 }:
 mkDerivation {
   pname = "planning-game";
@@ -15,5 +15,6 @@ mkDerivation {
     servant servant-server servant-websockets text wai wai-extra
     wai-middleware-static warp websockets time blaze-html blaze-markup
   ];
+  executablePkgconfigDepends = [ zlib ];
   license = stdenv.lib.licenses.agpl3;
 }

@@ -141,7 +141,13 @@ update msg model =
                     )
 
                 External url_ ->
-                    ( model, Navigation.load url_ )
+                    ( model
+                    , if String.isEmpty url_ then
+                        Cmd.none
+
+                      else
+                        Navigation.load url_
+                    )
 
         UrlChanged url ->
             routePage Authorize.for (Router.route url) model

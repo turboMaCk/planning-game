@@ -16,6 +16,7 @@ module PlanningGame.Data.Table
   , allPlayers
   , assignConnection
   , allConnections
+  , sessionByName
   ) where
 
 import           Control.Concurrent            (MVar)
@@ -207,3 +208,8 @@ isBanker session Table { banker=pair } =
 
 lookup :: Id TableId -> Tables -> Maybe (MVar Table)
 lookup = Map.lookup
+
+
+sessionByName :: Text -> Table -> Maybe (Id SessionId)
+sessionByName name table =
+  fst <$> (Player.getByName name $ players table)
