@@ -100,28 +100,26 @@ viewPlayer { isMe, toVote, kick } isBanker showKick player =
 
           else
             Css.property "foo" "bar"
+        , if showKick then
+            Css.hover
+                [ Css.textDecoration Css.lineThrough
+                , Css.cursor Css.pointer
+                ]
+
+          else
+            Css.hover []
         ]
-        []
-    <|
+        (if showKick then
+            [ Events.onClick <| kick player ]
+
+         else
+            []
+        )
         [ onlineIndicator player.isConnected
         , bankerIndicator <| isBanker player
         , Html.text player.name
         , voteIndicator <| toVote player
         ]
-            ++ (if showKick then
-                    [ Html.styled Html.a
-                        [ Css.textDecoration Css.underline
-                        , Css.fontSize <| Css.px 12
-                        , Css.display Css.block
-                        , Css.cursor Css.pointer
-                        ]
-                        [ Events.onClick <| kick player ]
-                        [ Html.text "kick out" ]
-                    ]
-
-                else
-                    []
-               )
 
 
 type alias Config msg =
