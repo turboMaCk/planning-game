@@ -6,7 +6,6 @@ import Dict exposing (Dict)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
-import Json.Encode as Encode
 import Maybe.Extra as Maybe
 import Theme
 
