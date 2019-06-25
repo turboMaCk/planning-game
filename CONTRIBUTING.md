@@ -31,6 +31,8 @@ $ cabal build
 $ cabal run
 ```
 
+The server should now (after also building the front-end) be reachable at http://localhost:3000.
+
 **Run ghci:**
 
 ```shell
