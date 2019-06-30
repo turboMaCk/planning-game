@@ -7,34 +7,37 @@ module PlanningGame.Data.Table.Stream
   , handler
   ) where
 
-import           Control.Concurrent            (MVar)
-import           Control.Monad                 (forM_, forever, mzero)
-import           Data.Aeson.Types              (FromJSON (..), ToJSON (..),
-                                                Value (..), object, (.:), (.=))
-import           Data.ByteString               (ByteString)
-import           Data.Text                     (Text)
-import           Network.WebSockets            (Connection)
+import           Control.Concurrent              (MVar)
+import           Control.Monad                   (forM_, forever, mzero)
+import           Data.Aeson.Types                (FromJSON (..), ToJSON (..),
+                                                  Value (..), object, (.:),
+                                                  (.=))
+import           Data.ByteString                 (ByteString)
+import           Data.Text                       (Text)
+import           Network.WebSockets              (Connection)
 
-import qualified Control.Concurrent            as Concurrent
-import qualified Control.Exception             as Exception
-import qualified Data.Aeson                    as Aeson
-import qualified Data.ByteString.Lazy          as LazyByteString
-import qualified Data.Maybe                    as Maybe
-import qualified Data.Text                     as Text
-import qualified Network.WebSockets            as WS
+import qualified Control.Concurrent              as Concurrent
+import qualified Control.Exception               as Exception
+import qualified Data.Aeson                      as Aeson
+import qualified Data.ByteString.Lazy            as LazyByteString
+import qualified Data.Maybe                      as Maybe
+import qualified Data.Text                       as Text
+import qualified Network.WebSockets              as WS
 
-import           PlanningGame.Api.GameSnapshot (snapshot)
-import           PlanningGame.Data.Game        (Games, Vote)
-import           PlanningGame.Data.Id          (Id)
-import           PlanningGame.Data.Player      (Player, PlayerError (..),
-                                                Players)
-import           PlanningGame.Data.Session     (Session, SessionId)
-import           PlanningGame.Data.Table       (Table (..), TableError (..),
-                                                TableId, Tables)
+import           PlanningGame.Api.GameSnapshot   (snapshot)
+import           PlanningGame.Data.AutoIncrement (WithId (..))
+import           PlanningGame.Data.Game          (Games, Vote)
+import           PlanningGame.Data.Id            (Id)
+import           PlanningGame.Data.Player        (Player, PlayerError (..),
+                                                  PlayerId, Players)
+import           PlanningGame.Data.Session       (Session, SessionId)
+import           PlanningGame.Data.Table         (Table (..), TableError (..),
+                                                  TableId, Tables)
 
-import qualified PlanningGame.Data.Game        as Game
-import qualified PlanningGame.Data.Player      as Player
-import qualified PlanningGame.Data.Table       as Table
+import qualified PlanningGame.Data.Game          as Game
+import qualified PlanningGame.Data.Player        as Player
+import qualified PlanningGame.Data.Table         as Table
+import qualified PlanningGame.Data.AutoIncrement as Inc
 
 
 -- | Msg is incomming msg from client
@@ -83,14 +86,14 @@ instance FromJSON Msg where
 
 -- | Event is outgoing event to clients
 data Event
-    = PlayerJoined Player
-    | PlayerStatusUpdate Player
+    = PlayerJoined (WithId PlayerId Player)
+    | PlayerStatusUpdate (WithId PlayerId Player)
     | SyncTableState Table
     | GameStarted ( Id SessionId, Player ) Players Games
-    | VoteAccepted Player
+    | VoteAccepted (WithId PlayerId Player)
     | VotingEnded ( Id SessionId, Player ) Players Games
     | GameEnded ( Id SessionId, Player ) Players Games
-    | PlayerKicked Player
+    | PlayerKicked (WithId PlayerId Player)
 
 
 instance ToJSON Event where
@@ -168,7 +171,8 @@ disconnect state sessionId connId =
   Concurrent.modifyMVar_ state $ \table@Table { Table.banker=banker' } ->
     if fst banker' == sessionId then do
       let updatedTable = table { Table.banker = ( fst banker' , Player.removeConnectionFrom connId $ snd banker' ) }
-      let player = snd $ banker updatedTable
+      -- TODO: implement
+      let player =  undefined--snd $ banker updatedTable
 
       if Player.hasConnection player then
         pure ()
@@ -250,7 +254,9 @@ handler state session id' conn = do
                     -- 3.3 Broadcast join event
                     if Player.numberOfConnections player == 1 then do
                         table' <- Concurrent.readMVar tableState
-                        broadcast table' $ PlayerStatusUpdate player
+                        -- TODO: fix
+                        -- broadcast table' $ PlayerStatusUpdate player
+                        pure ()
 
                     else
                         mzero
@@ -326,7 +332,7 @@ handleMsg _ session (Vote vote) table =
       case Game.addVote session vote game of
         Right newGames -> do
           maybe (pure ()) (broadcast table . VoteAccepted)
-            $ Player.get session
+            $ Player.lookup session
             $ Table.allPlayers table
 
           -- Auto end game when all voted

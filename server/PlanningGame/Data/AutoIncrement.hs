@@ -1,5 +1,7 @@
 module PlanningGame.Data.AutoIncrement
   ( Incremental
+  , WithId(..)
+  , unwrapValue
   , empty
   , insert
   , lookup
@@ -8,6 +10,8 @@ module PlanningGame.Data.AutoIncrement
   , filter
   , null
   , alter
+  , nextId
+  , withIdAssocs
   ) where
 
 import           Data.Bifunctor  (second)
@@ -48,14 +52,20 @@ empty =
   Incremental 0 Map.empty
 
 
-insert :: Ord k => k -> v -> Incremental i k v -> Incremental i k v
+insert :: Ord k => k -> v -> Incremental i k v -> ( Incremental i k v, WithId i v )
 insert k v (Incremental i map) =
-  Incremental (i + 1) $ Map.insert k (WithId (IncId i) v) map
+  (Incremental (i + 1) $ Map.insert k withId map, withId)
+  where
+    withId = WithId (IncId i) v
 
 
-lookup :: Ord k => k -> Incremental i k v -> Maybe v
+nextId :: Incremental i k v -> Int
+nextId (Incremental i _) = i + 1
+
+
+lookup :: Ord k => k -> Incremental i k v -> Maybe (WithId i v)
 lookup k (Incremental _ map) =
-  unwrapValue <$> Map.lookup k map
+  Map.lookup k map
 
 
 delete :: Ord k => k -> Incremental i k v -> Incremental i k v
@@ -66,6 +76,11 @@ delete k (Incremental i map) =
 assocs :: Incremental i k v -> [ ( k, v ) ]
 assocs (Incremental _ map) =
   second unwrapValue <$> Map.assocs map
+
+
+withIdAssocs :: Incremental i k v -> [ (k, WithId i v )]
+withIdAssocs (Incremental _ map) =
+    Map.assocs map
 
 
 filter :: (v -> Bool) -> Incremental i k v -> Incremental i k v
