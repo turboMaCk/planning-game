@@ -17,33 +17,36 @@ module PlanningGame.Data.Table
   , assignConnection
   , allConnections
   , sessionByName
+  , bankerToPlayer
   ) where
 
-import           Control.Concurrent            (MVar)
-import           Data.Aeson.Types              (ToJSON (..), Value (..), (.=))
-import           Data.Map                      (Map)
-import           Data.Text                     (Text)
-import           Data.Time.Clock               (UTCTime)
-import           Network.WebSockets            (Connection)
-import           Prelude                       hiding (lookup)
+import           Control.Concurrent              (MVar)
+import           Data.Aeson.Types                (ToJSON (..), Value (..), (.=))
+import           Data.Map                        (Map)
+import           Data.Text                       (Text)
+import           Data.Time.Clock                 (UTCTime)
+import           Network.WebSockets              (Connection)
+import           Prelude                         hiding (lookup)
 
-import qualified Control.Concurrent            as Concurrent
-import qualified Data.Aeson                    as Aeson
-import qualified Data.Map.Strict               as Map
-import qualified Data.Maybe                    as Maybe
-import qualified Data.Text                     as Text
-import qualified Data.Time.Clock               as Clock
+import qualified Control.Concurrent              as Concurrent
+import qualified Data.Aeson                      as Aeson
+import qualified Data.Map.Strict                 as Map
+import qualified Data.Maybe                      as Maybe
+import qualified Data.Text                       as Text
+import qualified Data.Time.Clock                 as Clock
 
-import           PlanningGame.Api.Error        (Error (..), ErrorType (..))
-import           PlanningGame.Api.GameSnapshot (snapshot)
+import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
+import           PlanningGame.Api.GameSnapshot   (snapshot)
 
-import           PlanningGame.Data.Game        (GameError, Games)
-import           PlanningGame.Data.Id          (Id, generateId)
-import           PlanningGame.Data.Player      (Player, PlayerError (..),
-                                                Players)
-import           PlanningGame.Data.Session     (Session, SessionId)
+import           PlanningGame.Data.AutoIncrement (WithId)
+import           PlanningGame.Data.Game          (GameError, Games)
+import           PlanningGame.Data.Id            (Id (..), generateId)
+import           PlanningGame.Data.Player        (Player (..), PlayerError (..),
+                                                  PlayerId, Players)
+import           PlanningGame.Data.Session       (Session, SessionId)
 
-import qualified PlanningGame.Data.Player      as Player
+import qualified PlanningGame.Data.AutoIncrement as Inc
+import qualified PlanningGame.Data.Player        as Player
 
 
 -- Types
@@ -65,8 +68,8 @@ instance ToJSON Table where
   toJSON table =
     Aeson.object
         [ "id"      .= tableId table
-        , "banker"  .= snd (banker table)
-        , "players" .= fmap snd (Player.toList $ players table)
+        , "banker"  .= bankerToPlayer (snd $ banker table)
+        , "players" .= Player.collection (players table)
         , "game"    .=
           case game table of
             Just game ->
@@ -149,22 +152,22 @@ isActive Table { banker, players } =
       Player.hasConnection $ snd banker
 
 
-getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError Player)
+getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError (WithId PlayerId Player))
 getPlayer session tableId tables =
   Maybe.fromMaybe (pure $ Left TableNotFound) $ getPlayer' <$>
     Map.lookup tableId tables
 
   where
-    getPlayer' :: MVar Table -> IO (Either TableError Player)
+    getPlayer' :: MVar Table -> IO (Either TableError (WithId PlayerId Player))
     getPlayer' mvar = do
       table <- Concurrent.readMVar mvar
 
       if fst (banker table) == session then
-          pure $ Right $ snd (banker table)
+        pure $ Right $ bankerToPlayer $ snd $ banker table
 
       else
           pure $ maybe (Left PlayerNotFound) Right $
-            Player.lookup session $ players table
+             Player.lookup session $ players table
 
 
 allConnections :: Table -> [ Connection ]
@@ -173,25 +176,27 @@ allConnections Table { banker, players } =
          : (foldr (\p acc -> Player.allConnections p : acc) [] players)
 
 
-assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( Player, Int ) )
+assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( WithId PlayerId Player, Int ) )
 assignConnection session conn table@Table { banker, players } =
     if fst banker == session then
-        let ( updatedBanker, connId ) = Player.addConnectionTo conn $ snd banker
+        let
+          ( updatedBanker, connId ) =
+            Player.addConnectionTo conn $ snd banker
         in
         ( table { banker = ( session, updatedBanker ) }
-        , Just ( updatedBanker, connId )
+        , Just ( bankerToPlayer updatedBanker, connId )
         )
 
     else
         let
           ( updatedPlayers, mPair ) =
-            Player.addConnection session conn players
+                Player.addConnection session conn players
         in
         case mPair of
             Nothing   -> ( table, Nothing )
             Just pair -> ( table { players = updatedPlayers }
-                           , Just pair
-                           )
+                         , Just pair
+                         )
 
 allPlayers :: Table -> Players
 allPlayers table =
@@ -213,3 +218,8 @@ lookup = Map.lookup
 sessionByName :: Text -> Table -> Maybe (Id SessionId)
 sessionByName name table =
   fst <$> (Player.getByName name $ players table)
+
+
+-- @TODO: Using Inc.mock hack
+bankerToPlayer :: Player -> WithId PlayerId Player
+bankerToPlayer = Inc.mock 0

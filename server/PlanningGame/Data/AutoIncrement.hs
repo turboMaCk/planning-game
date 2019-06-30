@@ -1,5 +1,7 @@
 module PlanningGame.Data.AutoIncrement
   ( Incremental
+  , WithId(..)
+  , unwrapValue
   , empty
   , insert
   , lookup
@@ -8,11 +10,12 @@ module PlanningGame.Data.AutoIncrement
   , filter
   , null
   , alter
+  , mock
   ) where
 
-import           Data.Bifunctor  (second)
 import           Data.Map.Strict (Map)
 import           Prelude         hiding (filter, lookup, map, null)
+import           Data.Aeson.Types                (ToJSON (..))
 
 import qualified Data.Map        as Map
 
@@ -28,6 +31,10 @@ instance Show (IncId a) where
 
 data WithId i a =
   WithId (IncId i) a
+
+
+instance ToJSON (IncId a) where
+  toJSON (IncId i) = toJSON i
 
 
 unwrapValue :: WithId i a -> a
@@ -48,14 +55,16 @@ empty =
   Incremental 0 Map.empty
 
 
-insert :: Ord k => k -> v -> Incremental i k v -> Incremental i k v
+insert :: Ord k => k -> v -> Incremental i k v -> ( Incremental i k v, WithId i v )
 insert k v (Incremental i map) =
-  Incremental (i + 1) $ Map.insert k (WithId (IncId i) v) map
+  (Incremental (i + 1) $ Map.insert k withId map, withId)
+  where
+    withId = WithId (IncId i) v
 
 
-lookup :: Ord k => k -> Incremental i k v -> Maybe v
+lookup :: Ord k => k -> Incremental i k v -> Maybe (WithId i v)
 lookup k (Incremental _ map) =
-  unwrapValue <$> Map.lookup k map
+  Map.lookup k map
 
 
 delete :: Ord k => k -> Incremental i k v -> Incremental i k v
@@ -63,9 +72,9 @@ delete k (Incremental i map) =
   Incremental i $ Map.delete k map
 
 
-assocs :: Incremental i k v -> [ ( k, v ) ]
+assocs :: Incremental i k v -> [ (k, WithId i v )]
 assocs (Incremental _ map) =
-  second unwrapValue <$> Map.assocs map
+    Map.assocs map
 
 
 filter :: (v -> Bool) -> Incremental i k v -> Incremental i k v
@@ -84,3 +93,8 @@ alter f k (Incremental i map) =
   where
     g Nothing               = WithId (IncId i) <$> f Nothing
     g (Just (WithId id' v)) = WithId id' <$> f (Just v)
+
+
+-- @TODO: used as a temporary hack
+mock :: Int -> v -> WithId i v
+mock i v = WithId (IncId i) v

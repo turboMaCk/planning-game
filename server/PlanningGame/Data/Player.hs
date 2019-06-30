@@ -1,15 +1,18 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module PlanningGame.Data.Player
   ( Player(..)
+  , PlayerId
   , Players
   , PlayerError(..)
   , create
+  , getName
+  , collection
   , add
   , addConnection
   , disconnect
-  , get
   , empty
   , allConnections
   , addConnectionTo
@@ -24,19 +27,21 @@ module PlanningGame.Data.Player
   , anyOnline
   ) where
 
-import           Data.Aeson.Types                (ToJSON (..), object, (.=))
+import           Data.Aeson.Types                (ToJSON (..), (.=))
+import           Data.Bifunctor                  (second)
 import           Data.IntMap.Strict              (IntMap)
 import           Data.Text                       (Text)
 import           Network.WebSockets              (Connection)
 import           Prelude                         hiding (lookup)
 
+import qualified Data.Aeson.Types                as Aeson
 import qualified Data.IntMap                     as IntMap
 import qualified Data.Maybe                      as Maybe
 import qualified Data.Text                       as Text
 import qualified Network.WebSockets              as WS
 
 import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
-import           PlanningGame.Data.AutoIncrement (Incremental)
+import           PlanningGame.Data.AutoIncrement (Incremental, WithId (..))
 import           PlanningGame.Data.Id            (Id)
 import           PlanningGame.Data.Session       (Session, SessionId)
 
@@ -56,10 +61,11 @@ instance Show Player where
    show Player { name } = "Name: " <> show name
 
 
-instance ToJSON Player where
-  toJSON player@(Player { name }) =
-    object
-        [ "name" .= name
+instance ToJSON (WithId PlayerId Player) where
+  toJSON (WithId id' player@(Player { name })) =
+    Aeson.object
+        [ "id" .= toJSON id'
+        , "name" .= name
         , "connected" .= hasConnection player
         ]
 
@@ -88,13 +94,17 @@ create n =
   Player n IntMap.empty
 
 
+getName :: WithId PlayerId Player -> Text
+getName = name . Inc.unwrapValue
+
+
 nameTaken :: Text -> Players -> Bool
 nameTaken name' players =
   not $ Inc.null $
     Inc.filter ((==) name' . name) players
 
 
-add :: Session -> Text -> Players -> Either PlayerError ( Players, Player )
+add :: Session -> Text -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
 add id' name players =
   if Text.null name then
     Left NameEmpty
@@ -103,11 +113,7 @@ add id' name players =
     Left NameTaken
 
   else
-    let
-      newPlayer =
-        create name
-    in
-    Right ( Inc.insert id' newPlayer players, newPlayer )
+    Right $ Inc.insert id' (create name) players
 
 
 addConnectionTo :: Connection -> Player -> (Player, Int)
@@ -132,16 +138,18 @@ numberOfConnections Player { playerConnections } =
   IntMap.size playerConnections
 
 
-addConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( Player, Int ) )
+addConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( WithId PlayerId Player, Int ) )
 addConnection id' conn players =
   case Inc.lookup id' players of
     Just player ->
       let
         ( updatedPlayer, index ) =
-          addConnectionTo conn player
+          addConnectionTo conn $ Inc.unwrapValue player
+
+        (updatedPlayers, playerWithId) = Inc.insert id' updatedPlayer players
       in
-      ( Inc.insert id' updatedPlayer players
-      , Just ( updatedPlayer, index )
+      ( updatedPlayers
+      , Just ( playerWithId, index )
       )
 
     Nothing ->
@@ -158,10 +166,6 @@ disconnect sessionId index =
   Inc.alter (fmap $ removeConnectionFrom index) sessionId
 
 
-get :: Id SessionId -> Players -> Maybe Player
-get = Inc.lookup
-
-
 empty :: Players
 empty = Inc.empty
 
@@ -176,29 +180,34 @@ kick =
   Inc.delete
 
 
-getByName :: Text -> Players -> Maybe ( Id SessionId, Player )
+getByName :: Text -> Players -> Maybe ( Id SessionId, WithId PlayerId Player )
 getByName name' =
   Maybe.listToMaybe . Maybe.mapMaybe filterId . Inc.assocs
 
   where
     filterId ( id', player ) =
-      if name player == name' then
+      if getName player == name' then
         Just ( id', player )
 
       else
         Nothing
 
 
-lookup :: Id SessionId -> Players -> Maybe Player
+lookup :: Id SessionId -> Players -> Maybe (WithId PlayerId Player)
 lookup = Inc.lookup
 
 
+-- TODO: review
 insert :: Id SessionId -> Player -> Players -> Players
-insert = Inc.insert
+insert i p = fst . Inc.insert i p
 
 
 toList :: Players -> [ (Id SessionId, Player) ]
-toList = Inc.assocs
+toList ps = second Inc.unwrapValue <$> Inc.assocs ps
+
+
+collection :: Players -> [ WithId PlayerId Player ]
+collection players = snd <$> Inc.assocs players
 
 
 anyOnline :: Players -> Bool

@@ -12,27 +12,28 @@ module PlanningGame.Api
   , app
   ) where
 
-import           Control.Concurrent             (MVar)
-import           Control.Monad.IO.Class         (MonadIO, liftIO)
-import           Data.Text                      (Text)
+import           Control.Concurrent              (MVar)
+import           Control.Monad.IO.Class          (MonadIO, liftIO)
+import           Data.Text                       (Text)
 import           Servant
-import           Servant.API.WebSocket          (WebSocket)
+import           Servant.API.WebSocket           (WebSocket)
 
-import qualified Control.Concurrent             as Concurrent
-import qualified Network.WebSockets             as WS
+import qualified Control.Concurrent              as Concurrent
+import qualified Network.WebSockets              as WS
 
 import           PlanningGame.Api.Authorization
 import           PlanningGame.Api.PlayerInfo
 
 import           PlanningGame.Data
-import           PlanningGame.State             (ServerState)
+import           PlanningGame.Data.AutoIncrement (WithId)
+import           PlanningGame.State              (ServerState)
 
-import qualified PlanningGame.Api.Error         as Error
-import qualified PlanningGame.Api.Middleware    as Middleware
-import qualified PlanningGame.Data.Session      as Session
-import qualified PlanningGame.Data.Table        as Table
-import qualified PlanningGame.State             as State
-import qualified PlanningGame.Data.Table.Stream as TableStream
+import qualified PlanningGame.Api.Error          as Error
+import qualified PlanningGame.Api.Middleware     as Middleware
+import qualified PlanningGame.Data.Session       as Session
+import qualified PlanningGame.Data.Table         as Table
+import qualified PlanningGame.Data.Table.Stream  as TableStream
+import qualified PlanningGame.State              as State
 
 
 -- API
@@ -45,7 +46,7 @@ type Api = "status"                                :> Get  '[JSON] Text
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "join"
                      :> ReqBody '[JSON] PlayerInfo :> Post '[JSON] Table
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "me"
-                                                   :> Get '[JSON] Player
+                                                   :> Get '[JSON] (WithId PlayerId Player)
       :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" (Id TableId)  :> "stream" :> WebSocket
 
 
@@ -97,7 +98,7 @@ server state = status
 
       either Error.respond pure tableRes
 
-    meHandler :: (HeaderAuth Session) -> Id TableId -> Handler Player
+    meHandler :: (HeaderAuth Session) -> Id TableId -> Handler (WithId PlayerId Player)
     meHandler (HeaderAuth session) tableId = do
       ts <- liftIO $ Concurrent.readMVar (State.tables state)
       playerRes <- liftIO $ Table.getPlayer session tableId ts
