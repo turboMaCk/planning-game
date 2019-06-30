@@ -12,6 +12,7 @@ module PlanningGame.Data.AutoIncrement
   , alter
   , nextId
   , withIdAssocs
+  , mock
   ) where
 
 import           Data.Bifunctor  (second)
@@ -99,3 +100,8 @@ alter f k (Incremental i map) =
   where
     g Nothing               = WithId (IncId i) <$> f Nothing
     g (Just (WithId id' v)) = WithId id' <$> f (Just v)
+
+
+-- @TODO: used as a temporary hack
+mock :: Int -> v -> WithId i v
+mock i v = WithId (IncId i) v

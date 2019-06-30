@@ -171,10 +171,10 @@ disconnect state sessionId connId =
   Concurrent.modifyMVar_ state $ \table@Table { Table.banker=banker' } ->
     if fst banker' == sessionId then do
       let updatedTable = table { Table.banker = ( fst banker' , Player.removeConnectionFrom connId $ snd banker' ) }
-      -- TODO: implement
-      let player =  undefined--snd $ banker updatedTable
+      -- TODO: using Inc.mock hack
+      let player = Inc.mock 0 $ snd $ banker updatedTable
 
-      if Player.hasConnection player then
+      if Player.hasConnection $ Inc.unwrapValue player then
         pure ()
 
       else
@@ -252,11 +252,9 @@ handler state session id' conn = do
                     WS.forkPingThread conn 30
 
                     -- 3.3 Broadcast join event
-                    if Player.numberOfConnections player == 1 then do
+                    if Player.numberOfConnections (Inc.unwrapValue player) == 1 then do
                         table' <- Concurrent.readMVar tableState
-                        -- TODO: fix
-                        -- broadcast table' $ PlayerStatusUpdate player
-                        pure ()
+                        broadcast table' $ PlayerStatusUpdate player
 
                     else
                         mzero

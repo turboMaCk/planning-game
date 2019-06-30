@@ -137,17 +137,18 @@ numberOfConnections Player { playerConnections } =
   IntMap.size playerConnections
 
 
--- TODO: review
-addConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( Player, Int ) )
+addConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( WithId PlayerId Player, Int ) )
 addConnection id' conn players =
   case Inc.lookup id' players of
     Just player ->
       let
         ( updatedPlayer, index ) =
           addConnectionTo conn $ Inc.unwrapValue player
+
+        (updatedPlayers, playerWithId) = Inc.insert id' updatedPlayer players
       in
-      ( fst $ Inc.insert id' updatedPlayer players
-      , Just ( updatedPlayer, index )
+      ( updatedPlayers
+      , Just ( playerWithId, index )
       )
 
     Nothing ->

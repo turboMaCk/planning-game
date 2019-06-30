@@ -38,7 +38,7 @@ import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
 import           PlanningGame.Api.GameSnapshot   (snapshot)
 
 import           PlanningGame.Data.Game          (GameError, Games)
-import           PlanningGame.Data.Id            (Id, generateId)
+import           PlanningGame.Data.Id            (Id(..), generateId)
 import           PlanningGame.Data.Player        (Player (..), PlayerError (..),
                                                   Players, PlayerId)
 import           PlanningGame.Data.Session       (Session, SessionId)
@@ -62,13 +62,14 @@ data Table = Table
   , createdAt :: UTCTime
   }
 
-newtype Banker = Banker { unBanker :: Player }
+-- @TODO: maybe we should avoid this
+newtype Banker = Banker Player
 
 instance ToJSON Banker where
   toJSON (Banker player@(Player { name })) =
     Aeson.object
         [ "id" .= toJSON (0 :: Int)
-        , name .= name
+        , "name" .= name
         , "connected" .= Player.hasConnection player
         ]
 
@@ -171,9 +172,9 @@ getPlayer session tableId tables =
       table <- Concurrent.readMVar mvar
 
       if fst (banker table) == session then
-        -- TODO: fix me
-          undefined
-          -- pure $ Right $ snd (banker table)
+        -- @TODO: This is a bit hacky
+        -- banker has always id 0
+        pure $ Right $ Inc.mock 0 $ snd (banker table)
 
       else
           pure $ maybe (Left PlayerNotFound) Right $
@@ -186,7 +187,7 @@ allConnections Table { banker, players } =
          : (foldr (\p acc -> Player.allConnections p : acc) [] players)
 
 
-assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( Player, Int ) )
+assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( WithId PlayerId Player, Int ) )
 assignConnection session conn table@Table { banker, players } =
     if fst banker == session then
         let
@@ -194,13 +195,13 @@ assignConnection session conn table@Table { banker, players } =
             Player.addConnectionTo conn $ snd banker
         in
         ( table { banker = ( session, updatedBanker ) }
-        , Just ( updatedBanker, connId )
+        , Just ( Inc.mock 0 updatedBanker, connId )
         )
 
     else
         let
           ( updatedPlayers, mPair ) =
-            Player.addConnection session conn players
+                Player.addConnection session conn players
         in
         case mPair of
             Nothing   -> ( table, Nothing )
