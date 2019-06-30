@@ -12,28 +12,28 @@ module PlanningGame.Api
   , app
   ) where
 
-import           Control.Concurrent             (MVar)
-import           Control.Monad.IO.Class         (MonadIO, liftIO)
-import           Data.Text                      (Text)
+import           Control.Concurrent              (MVar)
+import           Control.Monad.IO.Class          (MonadIO, liftIO)
+import           Data.Text                       (Text)
 import           Servant
-import           Servant.API.WebSocket          (WebSocket)
+import           Servant.API.WebSocket           (WebSocket)
 
-import qualified Control.Concurrent             as Concurrent
-import qualified Network.WebSockets             as WS
+import qualified Control.Concurrent              as Concurrent
+import qualified Network.WebSockets              as WS
 
 import           PlanningGame.Api.Authorization
 import           PlanningGame.Api.PlayerInfo
 
 import           PlanningGame.Data
-import           PlanningGame.State             (ServerState)
 import           PlanningGame.Data.AutoIncrement (WithId)
+import           PlanningGame.State              (ServerState)
 
-import qualified PlanningGame.Api.Error         as Error
-import qualified PlanningGame.Api.Middleware    as Middleware
-import qualified PlanningGame.Data.Session      as Session
-import qualified PlanningGame.Data.Table        as Table
-import qualified PlanningGame.State             as State
-import qualified PlanningGame.Data.Table.Stream as TableStream
+import qualified PlanningGame.Api.Error          as Error
+import qualified PlanningGame.Api.Middleware     as Middleware
+import qualified PlanningGame.Data.Session       as Session
+import qualified PlanningGame.Data.Table         as Table
+import qualified PlanningGame.Data.Table.Stream  as TableStream
+import qualified PlanningGame.State              as State
 
 
 -- API
