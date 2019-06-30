@@ -254,7 +254,8 @@ joinTable id session msg name =
 
 
 type alias Player =
-    { name : String
+    { id : Int
+    , name : String
     , isConnected : Bool
     }
 
@@ -262,6 +263,7 @@ type alias Player =
 playerDecoder : Decoder Player
 playerDecoder =
     Decode.succeed Player
+        |> Decode.andMap (Decode.field "id" Decode.int)
         |> Decode.andMap (Decode.field "name" Decode.string)
         |> Decode.andMap (Decode.field "connected" Decode.bool)
 

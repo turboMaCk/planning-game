@@ -15,6 +15,7 @@ module PlanningGame.Data.AutoIncrement
 
 import           Data.Map.Strict (Map)
 import           Prelude         hiding (filter, lookup, map, null)
+import           Data.Aeson.Types                (ToJSON (..))
 
 import qualified Data.Map        as Map
 
@@ -30,6 +31,10 @@ instance Show (IncId a) where
 
 data WithId i a =
   WithId (IncId i) a
+
+
+instance ToJSON (IncId a) where
+  toJSON (IncId i) = toJSON i
 
 
 unwrapValue :: WithId i a -> a

@@ -64,7 +64,7 @@ instance Show Player where
 instance ToJSON (WithId PlayerId Player) where
   toJSON (WithId id' player@(Player { name })) =
     Aeson.object
-        [ "id" .= show id'
+        [ "id" .= toJSON id'
         , "name" .= name
         , "connected" .= hasConnection player
         ]
