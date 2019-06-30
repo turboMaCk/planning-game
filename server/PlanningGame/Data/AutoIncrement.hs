@@ -10,7 +10,6 @@ module PlanningGame.Data.AutoIncrement
   , filter
   , null
   , alter
-  , nextId
   , withIdAssocs
   , mock
   ) where
@@ -58,10 +57,6 @@ insert k v (Incremental i map) =
   (Incremental (i + 1) $ Map.insert k withId map, withId)
   where
     withId = WithId (IncId i) v
-
-
-nextId :: Incremental i k v -> Int
-nextId (Incremental i _) = i + 1
 
 
 lookup :: Ord k => k -> Incremental i k v -> Maybe (WithId i v)
