@@ -10,11 +10,9 @@ module PlanningGame.Data.AutoIncrement
   , filter
   , null
   , alter
-  , withIdAssocs
   , mock
   ) where
 
-import           Data.Bifunctor  (second)
 import           Data.Map.Strict (Map)
 import           Prelude         hiding (filter, lookup, map, null)
 
@@ -69,13 +67,8 @@ delete k (Incremental i map) =
   Incremental i $ Map.delete k map
 
 
-assocs :: Incremental i k v -> [ ( k, v ) ]
+assocs :: Incremental i k v -> [ (k, WithId i v )]
 assocs (Incremental _ map) =
-  second unwrapValue <$> Map.assocs map
-
-
-withIdAssocs :: Incremental i k v -> [ (k, WithId i v )]
-withIdAssocs (Incremental _ map) =
     Map.assocs map
 
 

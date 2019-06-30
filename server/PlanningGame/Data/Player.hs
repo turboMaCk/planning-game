@@ -28,6 +28,7 @@ module PlanningGame.Data.Player
   ) where
 
 import           Data.Aeson.Types                (ToJSON (..), (.=))
+import           Data.Bifunctor                  (second)
 import           Data.IntMap.Strict              (IntMap)
 import           Data.Text                       (Text)
 import           Network.WebSockets              (Connection)
@@ -181,7 +182,7 @@ kick =
 
 getByName :: Text -> Players -> Maybe ( Id SessionId, WithId PlayerId Player )
 getByName name' =
-  Maybe.listToMaybe . Maybe.mapMaybe filterId . Inc.withIdAssocs
+  Maybe.listToMaybe . Maybe.mapMaybe filterId . Inc.assocs
 
   where
     filterId ( id', player ) =
@@ -202,11 +203,11 @@ insert i p = fst . Inc.insert i p
 
 
 toList :: Players -> [ (Id SessionId, Player) ]
-toList = Inc.assocs
+toList ps = second Inc.unwrapValue <$> Inc.assocs ps
 
 
 collection :: Players -> [ WithId PlayerId Player ]
-collection players = snd <$> Inc.withIdAssocs players
+collection players = snd <$> Inc.assocs players
 
 
 anyOnline :: Players -> Bool
