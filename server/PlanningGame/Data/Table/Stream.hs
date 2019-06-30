@@ -171,8 +171,7 @@ disconnect state sessionId connId =
   Concurrent.modifyMVar_ state $ \table@Table { Table.banker=banker' } ->
     if fst banker' == sessionId then do
       let updatedTable = table { Table.banker = ( fst banker' , Player.removeConnectionFrom connId $ snd banker' ) }
-      -- TODO: using Inc.mock hack
-      let player = Inc.mock 0 $ snd $ banker updatedTable
+      let player = Table.bankerToPlayer $ snd $ banker updatedTable
 
       if Player.hasConnection $ Inc.unwrapValue player then
         pure ()

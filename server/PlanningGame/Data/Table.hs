@@ -17,6 +17,7 @@ module PlanningGame.Data.Table
   , assignConnection
   , allConnections
   , sessionByName
+  , bankerToPlayer
   ) where
 
 import           Control.Concurrent              (MVar)
@@ -37,12 +38,12 @@ import qualified Data.Time.Clock                 as Clock
 import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
 import           PlanningGame.Api.GameSnapshot   (snapshot)
 
-import           PlanningGame.Data.Game          (GameError, Games)
-import           PlanningGame.Data.Id            (Id(..), generateId)
-import           PlanningGame.Data.Player        (Player (..), PlayerError (..),
-                                                  Players, PlayerId)
-import           PlanningGame.Data.Session       (Session, SessionId)
 import           PlanningGame.Data.AutoIncrement (WithId)
+import           PlanningGame.Data.Game          (GameError, Games)
+import           PlanningGame.Data.Id            (Id (..), generateId)
+import           PlanningGame.Data.Player        (Player (..), PlayerError (..),
+                                                  PlayerId, Players)
+import           PlanningGame.Data.Session       (Session, SessionId)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
 import qualified PlanningGame.Data.Player        as Player
@@ -62,22 +63,12 @@ data Table = Table
   , createdAt :: UTCTime
   }
 
--- @TODO: maybe we should avoid this
-newtype Banker = Banker Player
-
-instance ToJSON Banker where
-  toJSON (Banker player@(Player { name })) =
-    Aeson.object
-        [ "id" .= toJSON (0 :: Int)
-        , "name" .= name
-        , "connected" .= Player.hasConnection player
-        ]
 
 instance ToJSON Table where
   toJSON table =
     Aeson.object
         [ "id"      .= tableId table
-        , "banker"  .= Banker (snd $ banker table)
+        , "banker"  .= bankerToPlayer (snd $ banker table)
         , "players" .= Player.collection (players table)
         , "game"    .=
           case game table of
@@ -172,9 +163,7 @@ getPlayer session tableId tables =
       table <- Concurrent.readMVar mvar
 
       if fst (banker table) == session then
-        -- @TODO: This is a bit hacky
-        -- banker has always id 0
-        pure $ Right $ Inc.mock 0 $ snd (banker table)
+        pure $ Right $ bankerToPlayer $ snd $ banker table
 
       else
           pure $ maybe (Left PlayerNotFound) Right $
@@ -195,7 +184,7 @@ assignConnection session conn table@Table { banker, players } =
             Player.addConnectionTo conn $ snd banker
         in
         ( table { banker = ( session, updatedBanker ) }
-        , Just ( Inc.mock 0 updatedBanker, connId )
+        , Just ( bankerToPlayer updatedBanker, connId )
         )
 
     else
@@ -229,3 +218,8 @@ lookup = Map.lookup
 sessionByName :: Text -> Table -> Maybe (Id SessionId)
 sessionByName name table =
   fst <$> (Player.getByName name $ players table)
+
+
+-- @TODO: Using Inc.mock hack
+bankerToPlayer :: Player -> WithId PlayerId Player
+bankerToPlayer = Inc.mock 0
