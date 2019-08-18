@@ -48,7 +48,7 @@ data Msg
   | Vote Vote
   | FinishGame Vote
   | RestartRound
-  | KickPlayer Text
+  | KickPlayer Int
 
 
 instance FromJSON Msg where
@@ -76,7 +76,7 @@ instance FromJSON Msg where
            pure RestartRound
 
          "KickPlayer" ->
-           KickPlayer <$> (v .: "name")
+           KickPlayer <$> (v .: "id")
 
          _ ->
            mzero
@@ -389,21 +389,21 @@ handleMsg _ session RestartRound table
       -- @TODO: handle forbidden
       pure table
 
-handleMsg _ session (KickPlayer name) table
+handleMsg _ session (KickPlayer pId) table
   | Table.isBanker session table
-    || Table.sessionByName name table == Just session = do
-    let maybePlayerData = Player.getByName name $ Table.players table
+    || Table.sessionByPlayerId pId table == Just session = do
+      let maybePlayerData = Inc.getById pId $ Table.players table
 
-    case maybePlayerData of
-      Just ( id', player ) -> do
-        broadcast table $ PlayerKicked player
-        pure $ table
-            { Table.players = Player.kick id' $ Table.players table
-            , Table.game = Game.removePlayerVotes id' <$> Table.game table
-            }
+      case maybePlayerData of
+        Just ( id', player ) -> do
+            broadcast table $ PlayerKicked player
+            pure $ table
+                { Table.players = Player.kick id' $ Table.players table
+                , Table.game = Game.removePlayerVotes id' <$> Table.game table
+                }
 
-      Nothing ->
-        pure table
+        Nothing ->
+            pure table
 
   | otherwise =
       -- @TODO: handle forbidden

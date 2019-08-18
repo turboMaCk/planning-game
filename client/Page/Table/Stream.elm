@@ -169,10 +169,10 @@ encodeMsg msg =
             Encode.object
                 [ ( "msg", Encode.string "RestartRound" ) ]
 
-        KickPlayer { name } ->
+        KickPlayer { id } ->
             Encode.object
                 [ ( "msg", Encode.string "KickPlayer" )
-                , ( "name", Encode.string name )
+                , ( "id", Encode.int id )
                 ]
 
 
