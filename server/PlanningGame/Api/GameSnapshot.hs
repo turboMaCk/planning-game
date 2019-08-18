@@ -31,23 +31,33 @@ data GameSnapshot
     }
   | LockedGameSnapshot
     { snapshotName :: Text
-    , playerVotes  :: [ ( Text, Vote ) ]
+    , playerVotes  :: [ ( Int, Text, Vote ) ]
     , totalPoints  :: Int
     }
   | FinishedGameSnapshot
     { totalPoints       :: Int
     , snapshotGameVotes :: [ ( Text, Vote ) ]
-    , playerGameVotes   :: [ ( Text, [ ( Text, Vote ) ] ) ]
+    , playerGameVotes   :: [ ( Text, [ ( Int, Text, Vote ) ] ) ]
     }
 
 
 -- @TODO: possible to generalize
-pointsPair :: [ ( Text, Vote ) ] -> [ Value ]
-pointsPair = fmap toVal
+taskPointsPair :: [ ( Text, Vote ) ] -> [ Value ]
+taskPointsPair = fmap toVal
   where
     toVal ( name, points ) =
       object
-        [ "name" .= name
+        [ "name"  .= name
+        , "value" .= points
+        ]
+
+userPointsPair :: [ ( Int, Text, Vote ) ] -> [ Value ]
+userPointsPair = fmap toVal
+  where
+    toVal ( id', name, points ) =
+      object
+        [ "id"    .= id'
+        , "name"  .= name
         , "value" .= points
         ]
 
@@ -63,18 +73,18 @@ instance ToJSON GameSnapshot where
   toJSON (LockedGameSnapshot name votes points) =
     object
       [ "name"         .= name
-      , "playerVotes"  .= pointsPair votes
+      , "playerVotes"  .= userPointsPair votes
       , "points"       .= points
       , "status"       .= String "Locked"
       ]
   toJSON (FinishedGameSnapshot points votes pVotes) =
     object
-      [ "roundVotes"  .= pointsPair votes
+      [ "roundVotes"  .= taskPointsPair votes
       , "playerVotes" .=
         fmap
           (\(task, xs) ->
              object [ "name" .= task
-                    , "playerVotes" .= pointsPair xs
+                    , "playerVotes" .= userPointsPair xs
                     ])
           pVotes
       , "points" .= points
@@ -94,12 +104,12 @@ snapshot banker players games@(RunningGames _ (RunningGame name _ isLocked)) =
   if isLocked then
     LockedGameSnapshot
         { snapshotName = name
-        , playerVotes  = Game.playersVotes banker players games
+        , playerVotes  = Game.currentPlayerVotes banker players games
         , totalPoints  = Game.sumPoints games
         }
   else
     RunningGameSnapshot
         { snapshotName  = name
-        , snapshotVotes = fst <$> Game.playersVotes banker players games
+        , snapshotVotes = (\(_, name', _) -> name') <$> Game.currentPlayerVotes banker players games
         , totalPoints   = Game.sumPoints games
         }
