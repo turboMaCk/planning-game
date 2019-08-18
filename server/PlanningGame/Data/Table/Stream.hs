@@ -415,9 +415,7 @@ handleMsg _ session (KickPlayer pId) table
 
 handleMsg _ session (ChangeName newName) table
   | Table.isBanker session table = do
-
     let updatedPlayer = (\p -> p { Player.name = newName } ) $ snd $ Table.banker table
-
     broadcast table $ PlayerStatusUpdate $ Table.bankerToPlayer updatedPlayer
     pure $ table { banker = ( fst $ Table.banker table, updatedPlayer ) }
 
