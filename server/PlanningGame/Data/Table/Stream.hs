@@ -30,7 +30,7 @@ import           PlanningGame.Data.Game          (Games, Vote)
 import           PlanningGame.Data.Id            (Id)
 import           PlanningGame.Data.Player        (Player, PlayerError (..),
                                                   PlayerId, Players)
-import           PlanningGame.Data.Session       (Session, SessionId)
+import           PlanningGame.Data.Session       (Session)
 import           PlanningGame.Data.Table         (Table (..), TableError (..),
                                                   TableId, Tables)
 
@@ -49,6 +49,7 @@ data Msg
   | FinishGame Vote
   | RestartRound
   | KickPlayer Int
+  | ChangeName Text
 
 
 instance FromJSON Msg where
@@ -78,6 +79,9 @@ instance FromJSON Msg where
          "KickPlayer" ->
            KickPlayer <$> (v .: "id")
 
+         "ChangeName" ->
+           ChangeName <$> (v .: "name")
+
          _ ->
            mzero
 
@@ -89,10 +93,10 @@ data Event
     = PlayerJoined (WithId PlayerId Player)
     | PlayerStatusUpdate (WithId PlayerId Player)
     | SyncTableState Table
-    | GameStarted ( Id SessionId, Player ) Players Games
+    | GameStarted ( Session, Player ) Players Games
     | VoteAccepted (WithId PlayerId Player)
-    | VotingEnded ( Id SessionId, Player ) Players Games
-    | GameEnded ( Id SessionId, Player ) Players Games
+    | VotingEnded ( Session, Player ) Players Games
+    | GameEnded ( Session, Player ) Players Games
     | PlayerKicked (WithId PlayerId Player)
 
 
@@ -166,7 +170,7 @@ handleStreamMsg session state conn = forever $ do
       Concurrent.modifyMVar_ state $ handleMsg conn session msg
 
 
-disconnect :: MVar Table -> Id SessionId -> Int -> IO ()
+disconnect :: MVar Table -> Session -> Int -> IO ()
 disconnect state sessionId connId =
   Concurrent.modifyMVar_ state $ \table@Table { Table.banker=banker' } ->
     if fst banker' == sessionId then do
@@ -408,3 +412,23 @@ handleMsg _ session (KickPlayer pId) table
   | otherwise =
       -- @TODO: handle forbidden
       pure table
+
+handleMsg _ session (ChangeName newName) table
+  | Table.isBanker session table = do
+
+    let updatedPlayer = (\p -> p { Player.name = newName } ) $ snd $ Table.banker table
+
+    broadcast table $ PlayerStatusUpdate $ Table.bankerToPlayer updatedPlayer
+    pure $ table { banker = ( fst $ Table.banker table, updatedPlayer ) }
+
+  | otherwise =
+    case Player.lookup session $ players table of
+      Just player -> do
+          let newPlayer = (\p -> p { Player.name = newName }) $ Inc.unwrapValue player
+          let ( newPlayers, newPlayerWithId ) = Inc.insert session newPlayer $ players table
+
+          broadcast table $ PlayerStatusUpdate newPlayerWithId
+          pure $ table { players = newPlayers }
+
+      Nothing ->
+          pure table
