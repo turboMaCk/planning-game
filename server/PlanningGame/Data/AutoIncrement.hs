@@ -2,6 +2,7 @@ module PlanningGame.Data.AutoIncrement
   ( Incremental
   , WithId(..)
   , unwrapValue
+  , unwrapId
   , empty
   , insert
   , lookup
@@ -38,7 +39,13 @@ instance ToJSON (IncId a) where
 
 
 unwrapValue :: WithId i a -> a
-unwrapValue (WithId _ a) = a
+unwrapValue (WithId _ a) =
+  a
+
+
+unwrapId :: WithId i a -> Int
+unwrapId (WithId id' _) =
+  unIncId id'
 
 
 data Incremental i k v =

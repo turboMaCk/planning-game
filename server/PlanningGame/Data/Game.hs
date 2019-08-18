@@ -16,7 +16,7 @@ module PlanningGame.Data.Game
   , complete
   , sumPoints
   , allVotes
-  , playersVotes
+  , currentPlayerVotes
   , isFinished
   , finishCurrent
   , allVoted
@@ -24,23 +24,24 @@ module PlanningGame.Data.Game
   , removePlayerVotes
   ) where
 
-import           Control.Monad             (mzero)
-import           Data.Aeson.Types          (FromJSON (..), ToJSON (..),
-                                            Value (..))
-import           Data.Map.Strict           (Map)
-import           Data.Maybe                (mapMaybe)
-import           Data.Text                 (Text)
+import           Control.Monad                   (mzero)
+import           Data.Aeson.Types                (FromJSON (..), ToJSON (..),
+                                                  Value (..))
+import           Data.Map.Strict                 (Map)
+import           Data.Maybe                      (mapMaybe)
+import           Data.Text                       (Text)
 
-import qualified Data.Map.Strict           as Map
-import qualified Data.Set                  as Set
-import qualified Data.Text                 as Text
+import qualified Data.Map.Strict                 as Map
+import qualified Data.Set                        as Set
+import qualified Data.Text                       as Text
 
-import           PlanningGame.Api.Error    (Error (..), ErrorType (..))
+import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id
-import           PlanningGame.Data.Player  (Player, Players)
-import           PlanningGame.Data.Session (SessionId)
+import           PlanningGame.Data.Player        (Player, Players)
+import           PlanningGame.Data.Session       (SessionId)
 
-import qualified PlanningGame.Data.Player  as Player
+import qualified PlanningGame.Data.AutoIncrement as Inc
+import qualified PlanningGame.Data.Player        as Player
 
 
 data Vote
@@ -251,25 +252,32 @@ allVotes games =
   <$> finishedGames games
 
 
-playerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, [ ( Text, Vote ) ] ) ]
+playerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, [ ( Int, Text, Vote ) ] ) ]
 playerVotes ( bankerId, bankerName ) players' games =
   reverse $ (\game@(FinishedGame { name }) -> ( name, playerVotes' game ))
   <$> finishedGames games
 
   where
-    playerVotes' :: FinishedGame -> [ ( Text, Vote ) ]
+    playerVotes' :: FinishedGame -> [ ( Int, Text, Vote ) ]
     playerVotes' game =
-      -- @TODO: Better errr handling
-      fmap (\(sId, vote) -> (maybe "" Player.getName $ Player.lookup sId players, vote)) $ Map.toList $ votes game
+      fmap (\(sId, vote) ->
+              let player = Player.lookup sId players
+              in
+              -- @TODO: Better errr handling
+              ( maybe 0 Inc.unwrapId player
+              , maybe "" Player.getName player
+              , vote
+              )
+           ) $ Map.toList $ votes game
 
     players =
       Player.insert bankerId bankerName players'
 
-
-playersVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, Vote ) ]
-playersVotes _ _ (FinishedGames _) = []
-playersVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
-  mapMaybe (\(id', vote) -> (\p -> ( Player.getName p, vote )) <$> Player.lookup id' allPlayers)
+-- @TODO: refactor `playerVotes` vs `playersVotes`
+currentPlayerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Int, Text, Vote ) ]
+currentPlayerVotes _ _ (FinishedGames _) = []
+currentPlayerVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
+  mapMaybe (\(id', vote) -> (\p -> ( Inc.unwrapId p, Player.getName p, vote )) <$> Player.lookup id' allPlayers)
     $ Map.toList votes
 
   where
