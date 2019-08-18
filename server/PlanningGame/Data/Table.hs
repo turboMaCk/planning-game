@@ -16,7 +16,7 @@ module PlanningGame.Data.Table
   , allPlayers
   , assignConnection
   , allConnections
-  , sessionByName
+  , sessionByPlayerId
   , bankerToPlayer
   ) where
 
@@ -215,9 +215,9 @@ lookup :: Id TableId -> Tables -> Maybe (MVar Table)
 lookup = Map.lookup
 
 
-sessionByName :: Text -> Table -> Maybe (Id SessionId)
-sessionByName name table =
-  fst <$> (Player.getByName name $ players table)
+sessionByPlayerId :: Int -> Table -> Maybe (Id SessionId)
+sessionByPlayerId id' table =
+  fst <$> (Inc.getById id' $ players table)
 
 
 -- @TODO: Using Inc.mock hack

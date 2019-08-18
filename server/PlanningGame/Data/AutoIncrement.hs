@@ -2,6 +2,7 @@ module PlanningGame.Data.AutoIncrement
   ( Incremental
   , WithId(..)
   , unwrapValue
+  , getById
   , unwrapId
   , empty
   , insert
@@ -14,11 +15,12 @@ module PlanningGame.Data.AutoIncrement
   , mock
   ) where
 
-import           Data.Map.Strict (Map)
-import           Prelude         hiding (filter, lookup, map, null)
-import           Data.Aeson.Types                (ToJSON (..))
+import           Data.Aeson.Types (ToJSON (..))
+import           Data.List        (find)
+import           Data.Map.Strict  (Map)
+import           Prelude          hiding (filter, lookup, map, null)
 
-import qualified Data.Map        as Map
+import qualified Data.Map         as Map
 
 
 newtype IncId a =
@@ -90,9 +92,17 @@ delete k (Incremental i map) =
   Incremental i $ Map.delete k map
 
 
-assocs :: Incremental i k v -> [ (k, WithId i v )]
+assocs :: Incremental i k v -> [ ( k, WithId i v )]
 assocs (Incremental _ map) =
-    Map.assocs map
+  Map.assocs map
+
+
+getById :: Int -> Incremental i k v -> Maybe ( k, WithId i v )
+getById id' =
+  find f . assocs
+
+  where
+    f ( _, (WithId i _) ) = unIncId i == id'
 
 
 filter :: (v -> Bool) -> Incremental i k v -> Incremental i k v

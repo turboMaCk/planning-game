@@ -20,7 +20,6 @@ module PlanningGame.Data.Player
   , hasConnection
   , numberOfConnections
   , kick
-  , getByName
   , lookup
   , insert
   , toList
@@ -36,7 +35,6 @@ import           Prelude                         hiding (lookup)
 
 import qualified Data.Aeson.Types                as Aeson
 import qualified Data.IntMap                     as IntMap
-import qualified Data.Maybe                      as Maybe
 import qualified Data.Text                       as Text
 import qualified Network.WebSockets              as WS
 
@@ -180,19 +178,6 @@ allConnections Player { playerConnections } =
 kick :: Id SessionId -> Players -> Players
 kick =
   Inc.delete
-
-
-getByName :: Text -> Players -> Maybe ( Id SessionId, WithId PlayerId Player )
-getByName name' =
-  Maybe.listToMaybe . Maybe.mapMaybe filterId . Inc.assocs
-
-  where
-    filterId ( id', player ) =
-      if getName player == name' then
-        Just ( id', player )
-
-      else
-        Nothing
 
 
 lookup :: Id SessionId -> Players -> Maybe (WithId PlayerId Player)
