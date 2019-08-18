@@ -28,6 +28,7 @@ import           Control.Monad                   (mzero)
 import           Data.Aeson.Types                (FromJSON (..), ToJSON (..),
                                                   Value (..))
 import           Data.Map.Strict                 (Map)
+import           Data.Maybe                      (mapMaybe)
 import           Data.Text                       (Text)
 
 import qualified Data.Map.Strict                 as Map
@@ -39,8 +40,8 @@ import           PlanningGame.Data.Id
 import           PlanningGame.Data.Player        (Player, Players)
 import           PlanningGame.Data.Session       (SessionId)
 
-import qualified PlanningGame.Data.Player        as Player
 import qualified PlanningGame.Data.AutoIncrement as Inc
+import qualified PlanningGame.Data.Player        as Player
 
 
 data Vote
@@ -275,7 +276,12 @@ playerVotes ( bankerId, bankerName ) players' games =
 -- @TODO: refactor `playerVotes` vs `playersVotes`
 currentPlayerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Int, Text, Vote ) ]
 currentPlayerVotes _ _ (FinishedGames _) = []
-currentPlayerVotes state p g = playerVotes state p g >>= snd
+currentPlayerVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
+  mapMaybe (\(id', vote) -> (\p -> ( Inc.unwrapId p, Player.getName p, vote )) <$> Player.lookup id' allPlayers)
+    $ Map.toList votes
+
+  where
+    allPlayers = Player.insert bankerId banker players
 
 
 allVoted :: Players -> Games -> Bool
