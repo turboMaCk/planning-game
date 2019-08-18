@@ -37,6 +37,7 @@ data WithId i a =
 instance Functor (WithId a) where
   fmap f (WithId i a) = WithId i (f a)
 
+
 instance ToJSON (IncId a) where
   toJSON (IncId i) = toJSON i
 
