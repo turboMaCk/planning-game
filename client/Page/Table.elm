@@ -105,7 +105,7 @@ playerVoted player model =
 
 updatePlayer : Player -> Model -> Model
 updatePlayer player model =
-    if Just player.name == Maybe.map .name model.banker then
+    if Just player.id == Maybe.map .id model.banker then
         { model | banker = Just player }
 
     else
@@ -254,8 +254,8 @@ handleEvent navigationKey event model =
             ( { model | game = game }, Cmd.none )
 
         PlayerKicked player ->
-            ( { model | players = Dict.filter (\_ p -> p /= player) model.players }
-            , if Just player.name == Maybe.map .name model.me then
+            ( { model | players = Dict.remove player.id model.players }
+            , if Just player.id == Maybe.map .id model.me then
                 Navigation.pushUrl navigationKey "/"
 
               else
@@ -446,7 +446,6 @@ viewOverviewTable players_ { playerVotes, results } =
             [ Html.tr [] <|
                 Html.styled Html.th [ thStyle, Css.textAlign Css.left ] [] [ Html.text "Task" ]
                     :: Html.styled Html.th [ thStyle ] [] [ Html.text "Agreed" ]
-                    -- @TODO: translate ids to names
                     :: List.map
                         (\id ->
                             Html.styled Html.th

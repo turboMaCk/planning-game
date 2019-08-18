@@ -34,6 +34,9 @@ data WithId i a =
   WithId (IncId i) a
 
 
+instance Functor (WithId a) where
+  fmap f (WithId i a) = WithId i (f a)
+
 instance ToJSON (IncId a) where
   toJSON (IncId i) = toJSON i
 
@@ -59,14 +62,21 @@ instance Foldable (Incremental i k) where
 
 empty :: Incremental i k v
 empty =
-  Incremental 0 Map.empty
+  Incremental 1 Map.empty
 
 
 insert :: Ord k => k -> v -> Incremental i k v -> ( Incremental i k v, WithId i v )
 insert k v (Incremental i map) =
-  (Incremental (i + 1) $ Map.insert k withId map, withId)
-  where
-    withId = WithId (IncId i) v
+  case Map.lookup k map of
+    Just (WithId id' _) ->
+        ( Incremental i $ Map.insert k (WithId id' v) map
+        , WithId id' v
+        )
+
+    Nothing ->
+        ( Incremental (i + 1) $ Map.insert k (WithId (IncId i) v) map
+        , WithId (IncId i) v
+        )
 
 
 lookup :: Ord k => k -> Incremental i k v -> Maybe (WithId i v)

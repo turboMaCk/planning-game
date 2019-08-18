@@ -200,6 +200,7 @@ join session tableId name' tables =
     Just mvar -> do
       table <- Concurrent.readMVar mvar
 
+      -- Colision with banker name
       if Player.name (snd $ banker table) == name then
         pure $ Left $ PlayerError NameTaken
 
