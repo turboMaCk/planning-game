@@ -28,7 +28,7 @@ type alias Model =
     { tableId : String
     , me : Maybe Player
     , banker : Maybe Player
-    , players : Dict String Player
+    , players : Dict Int Player
     , tableError : Maybe (ApiError TableError)
     , myVote : Maybe Vote
     , game : Game
@@ -70,9 +70,9 @@ leave () =
     Stream.disconnect ()
 
 
-allPlayers : Model -> Dict String Player
+allPlayers : Model -> Dict Int Player
 allPlayers model =
-    Maybe.unwrap model.players (\b -> Dict.insert b.name b model.players) model.banker
+    Maybe.unwrap model.players (\b -> Dict.insert b.id b model.players) model.banker
 
 
 focusNameField : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -95,7 +95,7 @@ playerVoted player model =
                     Voting
                         { data
                             | maskedVotes =
-                                Set.insert player.name data.maskedVotes
+                                Set.insert player.id data.maskedVotes
                         }
             }
 
@@ -109,7 +109,7 @@ updatePlayer player model =
         { model | banker = Just player }
 
     else
-        { model | players = Dict.insert player.name player model.players }
+        { model | players = Dict.insert player.id player model.players }
 
 
 amIBanker : Model -> Bool
@@ -227,7 +227,7 @@ handleEvent navigationKey event model =
                 , banker = Just table.banker
                 , nextGameName = nextGameName
                 , players =
-                    List.map (\player -> ( player.name, player )) table.players
+                    List.map (\player -> ( player.id, player )) table.players
                         |> Dict.fromList
                 , game = game
               }
@@ -292,7 +292,7 @@ viewVoting model =
     viewTable toSide
 
 
-viewPlayerVotes : Dict String Vote -> Html Msg
+viewPlayerVotes : Dict Int Vote -> Html Msg
 viewPlayerVotes dict =
     let
         voteSet =
@@ -382,7 +382,7 @@ setNameView model =
             ]
 
 
-viewOverviewTable : Dict String a -> { b | playerVotes : List ( String, Dict String Vote ), results : Dict String Vote } -> Html msg
+viewOverviewTable : Dict Int { p | name : String } -> { b | playerVotes : List ( String, Dict Int Vote ), results : Dict String Vote } -> Html msg
 viewOverviewTable players_ { playerVotes, results } =
     let
         toString =
@@ -444,10 +444,17 @@ viewOverviewTable players_ { playerVotes, results } =
         []
         [ Html.thead [] <|
             [ Html.tr [] <|
-                [ Html.styled Html.th [ thStyle, Css.textAlign Css.left ] [] [ Html.text "Task" ]
-                , Html.styled Html.th [ thStyle ] [] [ Html.text "Agreed" ]
-                ]
-                    ++ List.map (\n -> Html.styled Html.th [ thStyle ] [] [ Html.text n ]) players
+                Html.styled Html.th [ thStyle, Css.textAlign Css.left ] [] [ Html.text "Task" ]
+                    :: Html.styled Html.th [ thStyle ] [] [ Html.text "Agreed" ]
+                    -- @TODO: translate ids to names
+                    :: List.map
+                        (\id ->
+                            Html.styled Html.th
+                                [ thStyle ]
+                                []
+                                [ Html.text <| Maybe.unwrap "[unknown]" .name <| Dict.get id players_ ]
+                        )
+                        players
             ]
         , tBody
         ]
@@ -618,7 +625,7 @@ viewMe { me, banker } =
             []
             [ Html.text <| Maybe.unwrap "" .name me ]
         , if Maybe.map .name me == Maybe.map .name banker then
-              Html.text ""
+            Html.text ""
 
           else
             Html.styled Html.a
@@ -667,14 +674,14 @@ view model =
                                     Hidden
 
                                 Voting { maskedVotes } ->
-                                    if Set.member player.name maskedVotes then
+                                    if Set.member player.id maskedVotes then
                                         Unknown
 
                                     else
                                         Hidden
 
                                 RoundFinished { playerVotes } ->
-                                    Dict.get player.name playerVotes
+                                    Dict.get player.id playerVotes
                                         |> Maybe.unwrap Unknown Voted
 
                                 Overview _ ->
