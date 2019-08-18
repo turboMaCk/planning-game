@@ -26,7 +26,7 @@ doesn't leak outside.
 data GameSnapshot
   = RunningGameSnapshot
     { snapshotName  :: Text
-    , snapshotVotes :: [ Text ]
+    , snapshotVotes :: [ Int ]
     , totalPoints   :: Int
     }
   | LockedGameSnapshot
@@ -110,6 +110,6 @@ snapshot banker players games@(RunningGames _ (RunningGame name _ isLocked)) =
   else
     RunningGameSnapshot
         { snapshotName  = name
-        , snapshotVotes = (\(_, name', _) -> name') <$> Game.currentPlayerVotes banker players games
+        , snapshotVotes = (\(id', _, _) -> id') <$> Game.currentPlayerVotes banker players games
         , totalPoints   = Game.sumPoints games
         }

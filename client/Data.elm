@@ -419,17 +419,17 @@ type Game
     = NotStarted
     | Voting
         { name : String
-        , maskedVotes : Set String
+        , maskedVotes : Set Int
         , totalPoints : Int
         }
     | RoundFinished
         { name : String
-        , playerVotes : Dict String Vote
+        , playerVotes : Dict Int Vote
         , totalPoints : Int
         }
     | Overview
         { totalPoints : Int
-        , playerVotes : List ( String, Dict String Vote )
+        , playerVotes : List ( String, Dict Int Vote )
         , results : Dict String Vote
         }
 
@@ -463,9 +463,19 @@ isRoundFinished game =
         _ ->
             False
 
+playerPointsDictDecoder : Decoder (Dict Int Vote)
+playerPointsDictDecoder =
+    let
+        itemDecoder =
+            Decode.succeed Tuple.pair
+                |> Decode.andMap (Decode.field "id" Decode.int)
+                |> Decode.andMap (Decode.field "value" voteDecoder)
+    in
+    Decode.list itemDecoder
+        |> Decode.map Dict.fromList
 
-pointsDictDecoder : Decoder (Dict String Vote)
-pointsDictDecoder =
+roundPointsDictDecoder : Decoder (Dict String Vote)
+roundPointsDictDecoder =
     let
         itemDecoder =
             Decode.succeed Tuple.pair
@@ -480,7 +490,7 @@ votingDecoder : Decoder Game
 votingDecoder =
     Decode.succeed (\n v t -> { name = n, maskedVotes = v, totalPoints = t })
         |> Decode.andMap (Decode.field "name" Decode.string)
-        |> Decode.andMap (Decode.field "maskedVotes" <| Decode.map Set.fromList <| Decode.list Decode.string)
+        |> Decode.andMap (Decode.field "maskedVotes" <| Decode.map Set.fromList <| Decode.list Decode.int)
         |> Decode.andMap (Decode.field "points" Decode.int)
         |> Decode.map Voting
 
@@ -489,17 +499,17 @@ lockedDecoder : Decoder Game
 lockedDecoder =
     Decode.succeed (\n v t -> { name = n, playerVotes = v, totalPoints = t })
         |> Decode.andMap (Decode.field "name" Decode.string)
-        |> Decode.andMap (Decode.field "playerVotes" pointsDictDecoder)
+        |> Decode.andMap (Decode.field "playerVotes" playerPointsDictDecoder)
         |> Decode.andMap (Decode.field "points" Decode.int)
         |> Decode.map RoundFinished
 
 
-playerVotesDecoder : Decoder ( String, Dict String Vote )
+playerVotesDecoder : Decoder ( String, Dict Int Vote )
 playerVotesDecoder =
     let
         votesDecoder =
             Decode.succeed Tuple.pair
-                |> Decode.andMap (Decode.field "name" Decode.string)
+                |> Decode.andMap (Decode.field "id" Decode.int)
                 |> Decode.andMap (Decode.field "value" voteDecoder)
     in
     Decode.succeed Tuple.pair
@@ -513,7 +523,7 @@ playerVotesDecoder =
 overviewDecoder : Decoder Game
 overviewDecoder =
     Decode.succeed (\r p t -> { results = r, playerVotes = p, totalPoints = t })
-        |> Decode.andMap (Decode.field "roundVotes" pointsDictDecoder)
+        |> Decode.andMap (Decode.field "roundVotes" roundPointsDictDecoder)
         |> Decode.andMap (Decode.field "playerVotes" <| Decode.list playerVotesDecoder)
         |> Decode.andMap (Decode.field "points" Decode.int)
         |> Decode.map Overview

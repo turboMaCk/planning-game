@@ -53,6 +53,7 @@ data PlayerId
 
 data Player = Player
   { name              :: Text
+  -- @TODO: autoincrement can be maybe utilized here as well
   , playerConnections :: IntMap Connection
   }
 
@@ -105,7 +106,7 @@ nameTaken name' players =
 
 
 add :: Session -> Text -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
-add id' name players =
+add sesId' name players =
   if Text.null name then
     Left NameEmpty
 
@@ -113,12 +114,12 @@ add id' name players =
     Left NameTaken
 
   else
-    Right $ Inc.insert id' (create name) players
+    Right $ Inc.insert sesId' (create name) players
 
 
-addConnectionTo :: Connection -> Player -> (Player, Int)
+addConnectionTo :: Connection -> Player -> ( Player, Int )
 addConnectionTo conn player@Player { playerConnections } =
-  (updatedPlayer, index)
+  ( updatedPlayer, index )
 
   where
     index =
@@ -146,7 +147,8 @@ addConnection id' conn players =
         ( updatedPlayer, index ) =
           addConnectionTo conn $ Inc.unwrapValue player
 
-        (updatedPlayers, playerWithId) = Inc.insert id' updatedPlayer players
+        ( updatedPlayers, playerWithId ) =
+          Inc.insert id' updatedPlayer players
       in
       ( updatedPlayers
       , Just ( playerWithId, index )

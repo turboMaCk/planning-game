@@ -129,7 +129,7 @@ type alias Config msg =
     }
 
 
-view : Config msg -> Maybe Player -> Dict String Player -> Html msg
+view : Config msg -> Maybe Player -> Dict Int Player -> Html msg
 view config banker players =
     let
         isBanker =
