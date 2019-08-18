@@ -1,7 +1,7 @@
 let
   config = {
     packageOverrides = pkgs: rec {
-      client =
+      elm =
         import ./client.nix {};
 
       # Build docker container
@@ -14,7 +14,7 @@ let
           name = "planning-game";
           extraCommands = ''
             ln -s ${haskellPackages.planningGame-mini}/bin/planning-game ./planning-game
-            cp -r ${client}/public ./public
+            cp -r ${elm}/public ./public
           '';
           config.Cmd = [ "${haskellPackages.planningGame-mini}/bin/planning-game" "-qg" ];
         };
@@ -38,10 +38,13 @@ let
     import <nixpkgs> { inherit config; };
 in
   with pkgs;
-  {
+  rec {
     server = haskellPackages.planningGame;
     server-mini = haskellPackages.planningGame-mini;
-    client = client;
+    client = elm;
     docker = docker-container;
-    shell  = client // haskellPackages.planningGame.env;
+    shell  = mkShell {
+      inputsFrom = [ server.env client ];
+      buildInputs = [ haskellPackages.ghcid elmPackages.elm ];
+    };
   }
