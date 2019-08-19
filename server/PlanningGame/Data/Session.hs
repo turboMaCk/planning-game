@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE OverloadedStrings    #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 
 module PlanningGame.Data.Session
   ( Session
@@ -58,7 +57,7 @@ instance ToJSON SessionJSON where
 add :: Sessions -> IO ( Sessions, Id SessionId )
 add sessions = do
     newId <- generateId sessions
-    pure $ ( Set.insert newId sessions, newId )
+    pure ( Set.insert newId sessions, newId )
 
 
 empty :: Sessions

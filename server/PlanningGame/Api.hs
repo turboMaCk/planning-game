@@ -77,8 +77,8 @@ server state = status
 
     createSession :: Handler SessionJSON
     createSession =
-      pure . SessionJSON =<<
-        (liftIO $ Concurrent.modifyMVar (State.sessions state) Session.add)
+      SessionJSON <$>
+        liftIO (Concurrent.modifyMVar (State.sessions state) Session.add)
 
     getSession :: (HeaderAuth Session) -> Handler SessionJSON
     getSession =

@@ -154,7 +154,7 @@ encodeEvent =
 
 
 broadcast :: Table -> Event -> IO ()
-broadcast table event = do
+broadcast table event =
   forM_ (Table.allConnections table) $ flip WS.sendTextData $ encodeEvent event
 
 
@@ -285,13 +285,13 @@ handleMsg _ session (NewGame name) table
       broadcast table $ GameStarted (banker table) players' game
       pure $ table { Table.game = Just game }
 
-  | not $ Table.isBanker session table = do
+  | not $ Table.isBanker session table =
       -- @TODO: Handle forbidden action
-      pure $ table
+      pure table
 
   | otherwise =
       -- @TODO: Handle already started
-      pure $ table
+      pure table
 
 handleMsg _ session FinishRound table
   | Table.isBanker session table =
@@ -312,7 +312,7 @@ handleMsg _ session FinishRound table
 handleMsg _ session (NextRound vote name) table
   | Table.isBanker session table =
       case game table of
-        Just games -> do
+        Just games ->
           case Game.nextRound vote name games of
             Left _ ->
               -- @TODO: missing err handling
@@ -358,7 +358,7 @@ handleMsg _ session (Vote vote) table =
 handleMsg _ session (FinishGame vote) table
   | Table.isBanker session table =
     case game table of
-      Just games -> do
+      Just games ->
         case Game.complete vote games of
           Right newGames -> do
             broadcast table $ GameEnded (banker table) (players table) newGames
