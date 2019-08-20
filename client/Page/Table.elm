@@ -34,6 +34,7 @@ type alias Model =
     , game : Game
     , gameName : Maybe String
     , nextGameName : String
+    , newName : Maybe String
     }
 
 
@@ -48,6 +49,7 @@ init token id =
       , game = NotStarted
       , gameName = Just ""
       , nextGameName = "Task-1"
+      , newName = Nothing
       }
     , Data.getMe token id Me
     )
@@ -63,6 +65,9 @@ type Msg
     | NewGame String
     | FinishGame
     | ClearMyVote
+    | SetNewName String
+    | SaveNewName
+    | DiscardNewName
 
 
 leave : () -> Cmd msg
@@ -105,11 +110,21 @@ playerVoted player model =
 
 updatePlayer : Player -> Model -> Model
 updatePlayer player model =
+    let
+        updateMe newModel =
+            if Just player.id == Maybe.map .id newModel.me then
+                { newModel | me = Just player }
+
+            else
+                newModel
+    in
     if Just player.id == Maybe.map .id model.banker then
         { model | banker = Just player }
+            |> updateMe
 
     else
         { model | players = Dict.insert player.id player model.players }
+            |> updateMe
 
 
 amIBanker : Model -> Bool
@@ -202,6 +217,16 @@ update navigationKey msg model =
 
         ClearMyVote ->
             ( { model | myVote = Nothing }, Cmd.none )
+
+        SetNewName name ->
+            ( { model | newName = Just name }, Cmd.none )
+
+        SaveNewName ->
+            { model | newName = Nothing }
+                |> Cmd.with (Maybe.unwrap Cmd.none (\name -> Stream.sendMsg <| Stream.ChangeName name) model.newName)
+
+        DiscardNewName ->
+            ( model, Cmd.none )
 
 
 
@@ -606,8 +631,24 @@ viewPointsSoFar game =
             showPoints "Total points:" totalPoints
 
 
+viewSetName : Maybe String -> Html Msg
+viewSetName newName =
+    case newName of
+        Just name ->
+            Html.form [ Events.onSubmit SaveNewName ]
+                [ Html.input [ Events.onInput SetNewName, Attrs.value name ] []
+                , Html.button [ Attrs.type_ "submit" ] [ Html.text "save" ]
+                , Html.button [ Attrs.type_ "button", Events.onClick DiscardNewName ]
+                    [ Html.text "cancel" ]
+                ]
+
+        Nothing ->
+            Html.a [ Events.onClick <| SetNewName "" ]
+                [ Html.text "change name" ]
+
+
 viewMe : Model -> Html Msg
-viewMe { me, banker } =
+viewMe { me, banker, newName } =
     Html.styled Html.div
         [ Css.margin2 (Css.px 20) Css.zero ]
         []
@@ -623,7 +664,7 @@ viewMe { me, banker } =
             ]
             []
             [ Html.text <| Maybe.unwrap "" .name me ]
-        , Html.button [ Events.onClick <| Send <| Stream.ChangeName "sailor" ] [ Html.text "change name" ]
+        , viewSetName newName
         , if Maybe.map .name me == Maybe.map .name banker then
             Html.text ""
 
