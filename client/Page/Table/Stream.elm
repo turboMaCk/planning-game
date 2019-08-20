@@ -131,6 +131,7 @@ type Msg
     | Finish Vote
     | Restart
     | KickPlayer Player
+    | ChangeName String
 
 
 encodeMsg : Msg -> Value
@@ -173,6 +174,12 @@ encodeMsg msg =
             Encode.object
                 [ ( "msg", Encode.string "KickPlayer" )
                 , ( "id", Encode.int id )
+                ]
+
+        ChangeName newName ->
+            Encode.object
+                [ ( "msg", Encode.string "ChageName" )
+                , ( "name", Encode.string newName )
                 ]
 
 

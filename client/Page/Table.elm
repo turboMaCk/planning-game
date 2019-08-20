@@ -623,6 +623,7 @@ viewMe { me, banker } =
             ]
             []
             [ Html.text <| Maybe.unwrap "" .name me ]
+        , Html.button [ Events.onClick <| Send <| Stream.ChangeName "sailor" ] [ Html.text "change name" ]
         , if Maybe.map .name me == Maybe.map .name banker then
             Html.text ""
 
