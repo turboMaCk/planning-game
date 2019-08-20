@@ -178,7 +178,7 @@ encodeMsg msg =
 
         ChangeName newName ->
             Encode.object
-                [ ( "msg", Encode.string "ChageName" )
+                [ ( "msg", Encode.string "ChangeName" )
                 , ( "name", Encode.string newName )
                 ]
 
