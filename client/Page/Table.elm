@@ -26,7 +26,11 @@ single Result type
 -}
 type alias Model =
     { tableId : String
+
+    -- @TODO: refactor to just id reference
     , me : Maybe Player
+
+    -- @TODO: refactor to just id reference
     , banker : Maybe Player
     , players : Dict Int Player
     , tableError : Maybe (ApiError TableError)
@@ -226,7 +230,7 @@ update navigationKey msg model =
                 |> Cmd.with (Maybe.unwrap Cmd.none (\name -> Stream.sendMsg <| Stream.ChangeName name) model.newName)
 
         DiscardNewName ->
-            ( model, Cmd.none )
+            ( { model | newName = Nothing }, Cmd.none )
 
 
 
@@ -339,8 +343,8 @@ nameFieldId =
     "game-name-field"
 
 
-setNameView : Model -> Html Msg
-setNameView model =
+viewSetName : Model -> Html Msg
+viewSetName model =
     let
         name =
             Maybe.withDefault "" model.gameName
@@ -499,7 +503,7 @@ viewGame model =
                                 ( False, "Prepare for start!" )
                     in
                     [ Theme.highlightedHeading shake [ Html.text text ]
-                    , setNameView model
+                    , viewSetName model
                     ]
 
                 Voting _ ->
@@ -524,7 +528,7 @@ viewGame model =
                     if amIBanker model && model.myVote /= Nothing then
                         -- Banker definitng new ticket
                         [ Theme.highlightedHeading False [ Html.text "Set next taks OR finish the game!" ]
-                        , setNameView model
+                        , viewSetName model
                         ]
 
                     else if amIBanker model then
@@ -631,8 +635,8 @@ viewPointsSoFar game =
             showPoints "Total points:" totalPoints
 
 
-viewSetName : Maybe String -> Html Msg
-viewSetName newName =
+viewPlayerSetName : Maybe Player -> Maybe String -> Html Msg
+viewPlayerSetName me newName =
     case newName of
         Just name ->
             Html.form [ Events.onSubmit SaveNewName ]
@@ -643,8 +647,17 @@ viewSetName newName =
                 ]
 
         Nothing ->
-            Html.a [ Events.onClick <| SetNewName "" ]
-                [ Html.text "change name" ]
+            Html.div []
+                [ Html.styled Html.h3
+                    [ Css.margin2 (Css.px 2) Css.zero
+                    , Css.fontWeight <| Css.int 200
+                    ]
+                    []
+                    [ Html.text <| Maybe.unwrap "" .name me ]
+                , Html.a
+                    [ Events.onClick <| SetNewName "" ]
+                    [ Html.text "change name" ]
+                ]
 
 
 viewMe : Model -> Html Msg
@@ -658,13 +671,7 @@ viewMe { me, banker, newName } =
             ]
             []
             [ Html.text "Playing as:" ]
-        , Html.styled Html.h3
-            [ Css.margin2 (Css.px 2) Css.zero
-            , Css.fontWeight <| Css.int 200
-            ]
-            []
-            [ Html.text <| Maybe.unwrap "" .name me ]
-        , viewSetName newName
+        , viewPlayerSetName me newName
         , if Maybe.map .name me == Maybe.map .name banker then
             Html.text ""
 
