@@ -170,19 +170,19 @@ addConnection :: Session -> Connection -> Players -> ( Players, Maybe ( WithId P
 addConnection id' conn players =
   case Inc.lookup id' players of
     Just player ->
-        let
+      let
         ( updatedPlayer, index ) =
             addConnectionTo conn $ Inc.unwrapValue player
 
         ( updatedPlayers, playerWithId ) =
             Inc.insert id' updatedPlayer players
-        in
-        ( updatedPlayers
-        , Just ( playerWithId, index )
-        )
+      in
+      ( updatedPlayers
+      , Just ( playerWithId, index )
+      )
 
     Nothing ->
-        ( players, Nothing )
+      ( players, Nothing )
 
 
 removeConnectionFrom :: Int -> Player -> Player

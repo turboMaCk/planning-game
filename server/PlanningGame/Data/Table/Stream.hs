@@ -164,7 +164,7 @@ handleStreamMsg session state conn = forever $ do
 
   case decoded of
     -- @TODO: handle unrecosinable msg
-    Nothing  -> pure ()
+    Nothing  -> mzero
     Just msg ->
       Concurrent.modifyMVar_ state $ handleMsg conn session msg
 
@@ -239,20 +239,20 @@ handler state session id' conn = do
                         table' <- Concurrent.readMVar tableState
                         broadcast table' $ PlayerStatusUpdate player
 
-                    else
+                    else do
                         mzero
 
                     -- 3.4 Delegate to Msg handler
                     handleStreamMsg session tableState conn
 
-            Nothing ->
+            Nothing -> do
                 -- @TODO: player doesn't exist (session is not a member)
                 mzero
 
     Nothing -> do
         -- @TODO: handle table doesn't exist
-        putStrLn "Table not found"
         mzero
+
 
 -- @TODO: refactor
 handleMsg :: Connection -> Session -> Msg -> Table -> IO Table
@@ -296,9 +296,11 @@ handleMsg _ session (NextRound vote name) table
             Left _ ->
               -- @TODO: missing err handling
               pure table
+
             Right newGames -> do
               broadcast table $ GameStarted (players table) newGames
               pure $ table { Table.game = Just newGames }
+
         Nothing ->
           -- @TODO: handled non started game
           pure table
@@ -312,7 +314,7 @@ handleMsg _ session (Vote vote) table =
     Just game ->
       case Game.addVote session vote game of
         Right newGames -> do
-          maybe (pure ()) (broadcast table . VoteAccepted)
+          maybe mzero (broadcast table . VoteAccepted)
             $ Player.lookup session
             $ Table.players table
 
@@ -372,6 +374,7 @@ handleMsg _ session RestartRound table
       -- @TODO: handle forbidden
       pure table
 
+-- @TODO: Allows to kick out dealer
 handleMsg _ session (KickPlayer pId) table
   | Table.isDealer session table
     || Table.sessionByPlayerId pId table == Just session = do

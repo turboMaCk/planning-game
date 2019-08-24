@@ -168,8 +168,8 @@ assignConnection session conn table@Table { players } =
     case mPair of
         Nothing   -> ( table, Nothing )
         Just pair -> ( table { players = updatedPlayers }
-                        , Just pair
-                        )
+                     , Just pair
+                     )
 
 isDealer :: Session -> Table -> Bool
 isDealer session Table { dealer } =
