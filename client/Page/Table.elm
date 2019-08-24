@@ -1,5 +1,6 @@
 module Page.Table exposing (Model, Msg, init, leave, subscriptions, update, view)
 
+import Basics.Extra exposing (flip)
 import Browser.Dom as Dom
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
@@ -26,9 +27,7 @@ single Result type
 -}
 type alias Model =
     { tableId : String
-
-    -- @TODO: refactor to just id reference
-    , me : Maybe Player
+    , me : Maybe Int
     , dealer : Maybe Int
     , players : Dict Int Player
     , tableError : Maybe (ApiError TableError)
@@ -108,31 +107,15 @@ playerVoted player model =
 
 updatePlayer : Player -> Model -> Model
 updatePlayer player model =
-    let
-        updateMe newModel =
-            if Just player.id == Maybe.map .id newModel.me then
-                { newModel | me = Just player }
-
-            else
-                newModel
-    in
-    if Just player.id == model.dealer then
-        { model | dealer = Just player.id }
-            |> updateMe
-
-    else
-        { model | players = Dict.insert player.id player model.players }
-            |> updateMe
+    { model | players = Dict.insert player.id player model.players }
 
 
 amIDealer : Model -> Bool
 amIDealer { me, dealer } =
-    case ( me, dealer ) of
-        ( Just p1, Just id ) ->
-            p1.id == id
-
-        _ ->
-            False
+    Just (==)
+        |> Maybe.andMap me
+        |> Maybe.andMap dealer
+        |> Maybe.withDefault False
 
 
 update : Key -> Msg -> Model -> ( Model, Cmd Msg )
@@ -144,7 +127,7 @@ update navigationKey msg model =
         Me result ->
             case result of
                 Ok player ->
-                    ( { model | me = Just player }
+                    ( { model | me = Just player.id }
                     , Stream.connect model.tableId
                     )
 
@@ -282,7 +265,7 @@ handleEvent navigationKey event model =
 
         PlayerKicked player ->
             ( { model | players = Dict.remove player.id model.players }
-            , if Just player.id == Maybe.map .id model.me then
+            , if Just player.id == model.me then
                 Navigation.pushUrl navigationKey "/"
 
               else
@@ -691,7 +674,7 @@ viewPlayerSetName me newName =
 
 
 viewMe : Model -> Html Msg
-viewMe { me, dealer, newName } =
+viewMe { me, dealer, newName, players } =
     Html.styled Html.div
         [ Css.margin2 (Css.px 20) Css.zero ]
         []
@@ -701,8 +684,8 @@ viewMe { me, dealer, newName } =
             ]
             []
             [ Html.text "Playing as:" ]
-        , viewPlayerSetName me newName
-        , if Maybe.map .id me == dealer then
+        , viewPlayerSetName (Maybe.andThen (flip Dict.get players) me) newName
+        , if me == dealer then
             Html.text ""
 
           else
@@ -719,7 +702,7 @@ viewMe { me, dealer, newName } =
                         << Send
                         << Stream.KickPlayer
                     )
-                    me
+                    (Maybe.andThen (flip Dict.get players) me)
                 )
                 [ Html.text "Leave table" ]
         ]
@@ -744,7 +727,7 @@ view model =
                 , Players.view
                     { isMe =
                         \{ id } ->
-                            Maybe.unwrap False ((==) id << .id) model.me
+                            Maybe.unwrap False ((==) id) model.me
                     , isDealer =
                         \{ id } -> Maybe.unwrap False ((==) id) model.dealer
                     , toVote =
