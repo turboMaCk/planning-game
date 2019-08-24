@@ -69,6 +69,7 @@ type Msg
     | NewGame String
     | FinishGame
     | ClearMyVote
+    | EditName
     | SetNewName String
     | SaveNewName
     | DiscardNewName
@@ -221,6 +222,10 @@ update navigationKey msg model =
 
         ClearMyVote ->
             ( { model | myVote = Nothing }, Cmd.none )
+
+        EditName ->
+            { model | newName = Just "" }
+                |> Cmd.with (Task.attempt (always NoOp) <| Dom.focus editNameFieldId)
 
         SetNewName name ->
             ( { model | newName = Just name }, Cmd.none )
@@ -635,28 +640,60 @@ viewPointsSoFar game =
             showPoints "Total points:" totalPoints
 
 
+editNameFieldId : String
+editNameFieldId =
+    "edit-player-name"
+
+
 viewPlayerSetName : Maybe Player -> Maybe String -> Html Msg
 viewPlayerSetName me newName =
     case newName of
         Just name ->
             Html.form [ Events.onSubmit SaveNewName ]
-                [ Html.input [ Events.onInput SetNewName, Attrs.value name ] []
-                , Html.button [ Attrs.type_ "submit" ] [ Html.text "save" ]
-                , Html.button [ Attrs.type_ "button", Events.onClick DiscardNewName ]
+                [ Html.styled Html.input
+                    [ Theme.textField ]
+                    [ Events.onInput SetNewName
+                    , Attrs.value name
+                    , Attrs.id editNameFieldId
+                    ]
+                    []
+                , Html.styled Html.button
+                    [ Theme.primaryBtn
+                    , Css.display Css.inlineBlock
+                    , Css.marginRight <| Css.px 6
+                    ]
+                    [ Attrs.type_ "submit" ]
+                    [ Html.text "save" ]
+                , Html.styled Html.button
+                    [ Theme.secondaryBtn
+                    , Css.display Css.inlineBlock
+                    ]
+                    [ Attrs.type_ "button", Events.onClick DiscardNewName ]
                     [ Html.text "cancel" ]
                 ]
 
         Nothing ->
             Html.div []
                 [ Html.styled Html.h3
-                    [ Css.margin2 (Css.px 2) Css.zero
+                    [ Css.position Css.relative
+                    , Css.margin2 (Css.px 2) Css.zero
+                    , Css.marginBottom <| Css.px 0
                     , Css.fontWeight <| Css.int 200
+                    , Css.hover
+                        [ Css.before
+                            [ Css.property "content" "'Edit name'"
+                            , Css.position Css.absolute
+                            , Css.fontSize <| Css.px 11
+                            , Css.color <| Theme.values.secondaryColor
+                            , Css.backgroundColor <| Css.hex "ffffff"
+                            , Css.top <| Css.pct 100
+                            , Css.textDecoration Css.underline
+                            , Css.marginTop <| Css.px -2
+                            ]
+                        ]
                     ]
-                    []
+                    [ Events.onClick <| EditName ]
                     [ Html.text <| Maybe.unwrap "" .name me ]
-                , Html.a
-                    [ Events.onClick <| SetNewName "" ]
-                    [ Html.text "change name" ]
                 ]
 
 
