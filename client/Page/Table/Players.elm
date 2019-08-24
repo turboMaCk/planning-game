@@ -18,6 +18,7 @@ type PlayerVote
 
 type alias Config msg =
     { isMe : Player -> Bool
+    , isDealer : Player -> Bool
     , toVote : Player -> PlayerVote
     , kick : Player -> msg
     }
@@ -46,9 +47,9 @@ voteIndicator playerVote =
             show <| String.fromInt <| Data.voteToInt vote
 
 
-bankerIndicator : Bool -> Html msg
-bankerIndicator isBanker =
-    if isBanker then
+dealerIndicator : Bool -> Html msg
+dealerIndicator isDealer =
+    if isDealer then
         Html.styled Html.span
             [ Theme.pill
             , Css.backgroundColor Theme.values.secondaryColor
@@ -94,8 +95,12 @@ onlineIndicator isActive =
         ]
 
 
-viewPlayer : Config msg -> (Player -> Bool) -> Bool -> Player -> Html msg
-viewPlayer { isMe, toVote, kick } isBanker showKick player =
+viewPlayer : Config msg -> Bool -> Player -> Html msg
+viewPlayer { isMe, toVote, kick, isDealer } amIDealer player =
+    let
+        showKick =
+            amIDealer && not (isMe player)
+    in
     Html.styled Html.li
         [ Css.listStyle Css.none
         , Css.margin4 Css.zero Css.zero (Css.px 6) Css.zero
@@ -123,21 +128,14 @@ viewPlayer { isMe, toVote, kick } isBanker showKick player =
             []
         )
         [ onlineIndicator player.isConnected
-        , bankerIndicator <| isBanker player
+        , dealerIndicator <| isDealer player
         , Html.text player.name
         , voteIndicator <| toVote player
         ]
 
 
-view : Config msg -> Maybe Player -> Dict Int Player -> Html msg
-view config banker players =
-    let
-        isBanker =
-            (==) banker << Just
-
-        amIBanker =
-            Maybe.unwrap False config.isMe banker
-    in
+view : Config msg -> Bool -> Dict Int Player -> Html msg
+view config amIDealer players =
     Html.div []
         [ Html.styled Html.ul
             [ Css.listStyle Css.none
@@ -146,8 +144,7 @@ view config banker players =
             ]
             []
           <|
-            Maybe.unwrap (Html.text "") (viewPlayer config isBanker False) banker
-                :: (List.map (viewPlayer config isBanker amIBanker) <|
-                        Dict.values players
-                   )
+            (List.map (viewPlayer config amIDealer) <|
+                Dict.values players
+            )
         ]
