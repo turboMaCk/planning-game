@@ -16,6 +16,13 @@ type PlayerVote
     | Voted Vote
 
 
+type alias Config msg =
+    { isMe : Player -> Bool
+    , toVote : Player -> PlayerVote
+    , kick : Player -> msg
+    }
+
+
 voteIndicator : PlayerVote -> Html msg
 voteIndicator playerVote =
     let
@@ -120,13 +127,6 @@ viewPlayer { isMe, toVote, kick } isBanker showKick player =
         , Html.text player.name
         , voteIndicator <| toVote player
         ]
-
-
-type alias Config msg =
-    { isMe : Player -> Bool
-    , toVote : Player -> PlayerVote
-    , kick : Player -> msg
-    }
 
 
 view : Config msg -> Maybe Player -> Dict Int Player -> Html msg

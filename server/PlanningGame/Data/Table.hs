@@ -31,7 +31,6 @@ import           Prelude                         hiding (lookup)
 import qualified Control.Concurrent              as Concurrent
 import qualified Data.Aeson                      as Aeson
 import qualified Data.Map.Strict                 as Map
-import qualified Data.Maybe                      as Maybe
 import qualified Data.Text                       as Text
 import qualified Data.Time.Clock                 as Clock
 
@@ -154,7 +153,7 @@ isActive Table { banker, players } =
 
 getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError (WithId PlayerId Player))
 getPlayer session tableId tables =
-  Maybe.fromMaybe (pure $ Left TableNotFound) $ getPlayer' <$>
+  maybe (pure $ Left TableNotFound) getPlayer' $
     Map.lookup tableId tables
 
   where
@@ -172,7 +171,7 @@ getPlayer session tableId tables =
 
 allConnections :: Table -> [ Connection ]
 allConnections Table { banker, players } =
-  concat $ (Player.allConnections $ snd banker)
+  concat $ Player.allConnections (snd banker)
          : (foldr (\p acc -> Player.allConnections p : acc) [] players)
 
 
@@ -212,14 +211,16 @@ isBanker session Table { banker=pair } =
 
 
 lookup :: Id TableId -> Tables -> Maybe (MVar Table)
-lookup = Map.lookup
+lookup =
+  Map.lookup
 
 
 sessionByPlayerId :: Int -> Table -> Maybe (Id SessionId)
 sessionByPlayerId id' table =
-  fst <$> (Inc.getById id' $ players table)
+  fst <$> Inc.getById id' (players table)
 
 
 -- @TODO: Using Inc.mock hack
 bankerToPlayer :: Player -> WithId PlayerId Player
-bankerToPlayer = Inc.mock 0
+bankerToPlayer =
+  Inc.mock 0

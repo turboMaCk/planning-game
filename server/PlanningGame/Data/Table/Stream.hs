@@ -30,7 +30,7 @@ import           PlanningGame.Data.Game          (Games, Vote)
 import           PlanningGame.Data.Id            (Id)
 import           PlanningGame.Data.Player        (Player, PlayerError (..),
                                                   PlayerId, Players)
-import           PlanningGame.Data.Session       (Session, SessionId)
+import           PlanningGame.Data.Session       (Session)
 import           PlanningGame.Data.Table         (Table (..), TableError (..),
                                                   TableId, Tables)
 
@@ -49,6 +49,7 @@ data Msg
   | FinishGame Vote
   | RestartRound
   | KickPlayer Int
+  | ChangeName Text
 
 
 instance FromJSON Msg where
@@ -78,6 +79,9 @@ instance FromJSON Msg where
          "KickPlayer" ->
            KickPlayer <$> (v .: "id")
 
+         "ChangeName" ->
+           ChangeName <$> (v .: "name")
+
          _ ->
            mzero
 
@@ -89,10 +93,10 @@ data Event
     = PlayerJoined (WithId PlayerId Player)
     | PlayerStatusUpdate (WithId PlayerId Player)
     | SyncTableState Table
-    | GameStarted ( Id SessionId, Player ) Players Games
+    | GameStarted ( Session, Player ) Players Games
     | VoteAccepted (WithId PlayerId Player)
-    | VotingEnded ( Id SessionId, Player ) Players Games
-    | GameEnded ( Id SessionId, Player ) Players Games
+    | VotingEnded ( Session, Player ) Players Games
+    | GameEnded ( Session, Player ) Players Games
     | PlayerKicked (WithId PlayerId Player)
 
 
@@ -150,7 +154,7 @@ encodeEvent =
 
 
 broadcast :: Table -> Event -> IO ()
-broadcast table event = do
+broadcast table event =
   forM_ (Table.allConnections table) $ flip WS.sendTextData $ encodeEvent event
 
 
@@ -166,7 +170,7 @@ handleStreamMsg session state conn = forever $ do
       Concurrent.modifyMVar_ state $ handleMsg conn session msg
 
 
-disconnect :: MVar Table -> Id SessionId -> Int -> IO ()
+disconnect :: MVar Table -> Session -> Int -> IO ()
 disconnect state sessionId connId =
   Concurrent.modifyMVar_ state $ \table@Table { Table.banker=banker' } ->
     if fst banker' == sessionId then do
@@ -281,13 +285,13 @@ handleMsg _ session (NewGame name) table
       broadcast table $ GameStarted (banker table) players' game
       pure $ table { Table.game = Just game }
 
-  | not $ Table.isBanker session table = do
+  | not $ Table.isBanker session table =
       -- @TODO: Handle forbidden action
-      pure $ table
+      pure table
 
   | otherwise =
       -- @TODO: Handle already started
-      pure $ table
+      pure table
 
 handleMsg _ session FinishRound table
   | Table.isBanker session table =
@@ -308,7 +312,7 @@ handleMsg _ session FinishRound table
 handleMsg _ session (NextRound vote name) table
   | Table.isBanker session table =
       case game table of
-        Just games -> do
+        Just games ->
           case Game.nextRound vote name games of
             Left _ ->
               -- @TODO: missing err handling
@@ -354,7 +358,7 @@ handleMsg _ session (Vote vote) table =
 handleMsg _ session (FinishGame vote) table
   | Table.isBanker session table =
     case game table of
-      Just games -> do
+      Just games ->
         case Game.complete vote games of
           Right newGames -> do
             broadcast table $ GameEnded (banker table) (players table) newGames
@@ -408,3 +412,19 @@ handleMsg _ session (KickPlayer pId) table
   | otherwise =
       -- @TODO: handle forbidden
       pure table
+
+handleMsg _ session (ChangeName newName) table
+  | Table.isBanker session table = do
+    let updatedPlayer = (\p -> p { Player.name = newName } ) $ snd $ Table.banker table
+    broadcast table $ PlayerStatusUpdate $ Table.bankerToPlayer updatedPlayer
+    pure $ table { banker = ( fst $ Table.banker table, updatedPlayer ) }
+
+  | otherwise =
+    case Player.changeName session newName $ players table of
+      Right (Just ( newPlayers, newPlayer )) -> do
+          broadcast table $ PlayerStatusUpdate newPlayer
+          pure $ table { players = newPlayers }
+
+      -- @TODO: handle errors
+      _ ->
+          pure table

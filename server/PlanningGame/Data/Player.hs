@@ -10,6 +10,7 @@ module PlanningGame.Data.Player
   , create
   , getName
   , collection
+  , changeName
   , add
   , addConnection
   , disconnect
@@ -104,15 +105,42 @@ nameTaken name' players =
 
 
 add :: Session -> Text -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
-add sesId' name players =
-  if Text.null name then
+add sesId' name players
+  | Text.null name =
     Left NameEmpty
 
-  else if nameTaken name players then
+  | nameTaken name players =
     Left NameTaken
 
-  else
+  | otherwise =
     Right $ Inc.insert sesId' (create name) players
+
+
+--- @TODO: using Maybe because PlayerNotfound is already part of TableError
+--- Probably need to to rething error handling types because of this case
+changeName :: Session -> Text -> Players -> Either PlayerError (Maybe ( Players, WithId PlayerId Player ))
+changeName session name' players
+  | Text.null name =
+    Left NameEmpty
+
+  | nameTaken name players =
+    Left NameTaken
+
+  | otherwise =
+    case lookup session players of
+      Just player ->
+        let
+          newPlayer = (\p -> p { name = name }) $ Inc.unwrapValue player
+        in
+        Right $ Just $ Inc.insert session newPlayer players
+
+      Nothing ->
+        -- Doesn't feel right lol
+        Right Nothing
+
+  where
+    name =
+      Text.strip name'
 
 
 addConnectionTo :: Connection -> Player -> ( Player, Int )
@@ -121,10 +149,10 @@ addConnectionTo conn player@Player { playerConnections } =
 
   where
     index =
-      IntMap.size playerConnections
+        IntMap.size playerConnections
 
     updatedPlayer =
-      player { playerConnections = IntMap.insert index conn playerConnections }
+        player { playerConnections = IntMap.insert index conn playerConnections }
 
 
 hasConnection :: Player -> Bool
@@ -141,24 +169,24 @@ addConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( Wit
 addConnection id' conn players =
   case Inc.lookup id' players of
     Just player ->
-      let
+        let
         ( updatedPlayer, index ) =
-          addConnectionTo conn $ Inc.unwrapValue player
+            addConnectionTo conn $ Inc.unwrapValue player
 
         ( updatedPlayers, playerWithId ) =
-          Inc.insert id' updatedPlayer players
-      in
-      ( updatedPlayers
-      , Just ( playerWithId, index )
-      )
+            Inc.insert id' updatedPlayer players
+        in
+        ( updatedPlayers
+        , Just ( playerWithId, index )
+        )
 
     Nothing ->
-      ( players, Nothing )
+        ( players, Nothing )
 
 
 removeConnectionFrom :: Int -> Player -> Player
 removeConnectionFrom index player@(Player { playerConnections }) =
-      player { playerConnections = IntMap.delete index playerConnections }
+  player { playerConnections = IntMap.delete index playerConnections }
 
 
 disconnect :: Id SessionId -> Int -> Players -> Players
@@ -167,7 +195,8 @@ disconnect sessionId index =
 
 
 empty :: Players
-empty = Inc.empty
+empty =
+  Inc.empty
 
 
 allConnections :: Player -> [ WS.Connection ]
@@ -181,22 +210,26 @@ kick =
 
 
 lookup :: Id SessionId -> Players -> Maybe (WithId PlayerId Player)
-lookup = Inc.lookup
+lookup =
+  Inc.lookup
 
 
 -- TODO: review
 insert :: Id SessionId -> Player -> Players -> Players
-insert i p = fst . Inc.insert i p
+insert i p =
+  fst . Inc.insert i p
 
 
 toList :: Players -> [ (Id SessionId, Player) ]
-toList ps = second Inc.unwrapValue <$> Inc.assocs ps
+toList ps =
+  second Inc.unwrapValue <$> Inc.assocs ps
 
 
 collection :: Players -> [ WithId PlayerId Player ]
-collection players = snd <$> Inc.assocs players
+collection players =
+  snd <$> Inc.assocs players
 
 
 anyOnline :: Players -> Bool
 anyOnline =
-    not . Inc.null . Inc.filter hasConnection
+  not . Inc.null . Inc.filter hasConnection

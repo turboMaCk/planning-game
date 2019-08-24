@@ -26,7 +26,11 @@ single Result type
 -}
 type alias Model =
     { tableId : String
+
+    -- @TODO: refactor to just id reference
     , me : Maybe Player
+
+    -- @TODO: refactor to just id reference
     , banker : Maybe Player
     , players : Dict Int Player
     , tableError : Maybe (ApiError TableError)
@@ -34,6 +38,7 @@ type alias Model =
     , game : Game
     , gameName : Maybe String
     , nextGameName : String
+    , newName : Maybe String
     }
 
 
@@ -48,6 +53,7 @@ init token id =
       , game = NotStarted
       , gameName = Just ""
       , nextGameName = "Task-1"
+      , newName = Nothing
       }
     , Data.getMe token id Me
     )
@@ -63,6 +69,10 @@ type Msg
     | NewGame String
     | FinishGame
     | ClearMyVote
+    | EditName
+    | SetNewName String
+    | SaveNewName
+    | DiscardNewName
 
 
 leave : () -> Cmd msg
@@ -105,11 +115,21 @@ playerVoted player model =
 
 updatePlayer : Player -> Model -> Model
 updatePlayer player model =
+    let
+        updateMe newModel =
+            if Just player.id == Maybe.map .id newModel.me then
+                { newModel | me = Just player }
+
+            else
+                newModel
+    in
     if Just player.id == Maybe.map .id model.banker then
         { model | banker = Just player }
+            |> updateMe
 
     else
         { model | players = Dict.insert player.id player model.players }
+            |> updateMe
 
 
 amIBanker : Model -> Bool
@@ -202,6 +222,20 @@ update navigationKey msg model =
 
         ClearMyVote ->
             ( { model | myVote = Nothing }, Cmd.none )
+
+        EditName ->
+            { model | newName = Just "" }
+                |> Cmd.with (Task.attempt (always NoOp) <| Dom.focus editNameFieldId)
+
+        SetNewName name ->
+            ( { model | newName = Just name }, Cmd.none )
+
+        SaveNewName ->
+            { model | newName = Nothing }
+                |> Cmd.with (Maybe.unwrap Cmd.none (\name -> Stream.sendMsg <| Stream.ChangeName name) model.newName)
+
+        DiscardNewName ->
+            ( { model | newName = Nothing }, Cmd.none )
 
 
 
@@ -314,8 +348,8 @@ nameFieldId =
     "game-name-field"
 
 
-setNameView : Model -> Html Msg
-setNameView model =
+viewSetName : Model -> Html Msg
+viewSetName model =
     let
         name =
             Maybe.withDefault "" model.gameName
@@ -474,7 +508,7 @@ viewGame model =
                                 ( False, "Prepare for start!" )
                     in
                     [ Theme.highlightedHeading shake [ Html.text text ]
-                    , setNameView model
+                    , viewSetName model
                     ]
 
                 Voting _ ->
@@ -499,7 +533,7 @@ viewGame model =
                     if amIBanker model && model.myVote /= Nothing then
                         -- Banker definitng new ticket
                         [ Theme.highlightedHeading False [ Html.text "Set next taks OR finish the game!" ]
-                        , setNameView model
+                        , viewSetName model
                         ]
 
                     else if amIBanker model then
@@ -606,8 +640,65 @@ viewPointsSoFar game =
             showPoints "Total points:" totalPoints
 
 
+editNameFieldId : String
+editNameFieldId =
+    "edit-player-name"
+
+
+viewPlayerSetName : Maybe Player -> Maybe String -> Html Msg
+viewPlayerSetName me newName =
+    case newName of
+        Just name ->
+            Html.form [ Events.onSubmit SaveNewName ]
+                [ Html.styled Html.input
+                    [ Theme.textField ]
+                    [ Events.onInput SetNewName
+                    , Attrs.value name
+                    , Attrs.id editNameFieldId
+                    ]
+                    []
+                , Html.styled Html.button
+                    [ Theme.primaryBtn
+                    , Css.display Css.inlineBlock
+                    , Css.marginRight <| Css.px 6
+                    ]
+                    [ Attrs.type_ "submit" ]
+                    [ Html.text "save" ]
+                , Html.styled Html.button
+                    [ Theme.secondaryBtn
+                    , Css.display Css.inlineBlock
+                    ]
+                    [ Attrs.type_ "button", Events.onClick DiscardNewName ]
+                    [ Html.text "cancel" ]
+                ]
+
+        Nothing ->
+            Html.div []
+                [ Html.styled Html.h3
+                    [ Css.position Css.relative
+                    , Css.margin2 (Css.px 2) Css.zero
+                    , Css.marginBottom <| Css.px 0
+                    , Css.fontWeight <| Css.int 200
+                    , Css.hover
+                        [ Css.before
+                            [ Css.property "content" "'Edit name'"
+                            , Css.position Css.absolute
+                            , Css.fontSize <| Css.px 11
+                            , Css.color <| Theme.values.secondaryColor
+                            , Css.backgroundColor <| Css.hex "ffffff"
+                            , Css.top <| Css.pct 100
+                            , Css.textDecoration Css.underline
+                            , Css.marginTop <| Css.px -2
+                            ]
+                        ]
+                    ]
+                    [ Events.onClick <| EditName ]
+                    [ Html.text <| Maybe.unwrap "" .name me ]
+                ]
+
+
 viewMe : Model -> Html Msg
-viewMe { me, banker } =
+viewMe { me, banker, newName } =
     Html.styled Html.div
         [ Css.margin2 (Css.px 20) Css.zero ]
         []
@@ -617,12 +708,7 @@ viewMe { me, banker } =
             ]
             []
             [ Html.text "Playing as:" ]
-        , Html.styled Html.h3
-            [ Css.margin2 (Css.px 2) Css.zero
-            , Css.fontWeight <| Css.int 200
-            ]
-            []
-            [ Html.text <| Maybe.unwrap "" .name me ]
+        , viewPlayerSetName me newName
         , if Maybe.map .name me == Maybe.map .name banker then
             Html.text ""
 
