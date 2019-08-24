@@ -119,7 +119,7 @@ add sesId' name players
 --- @TODO: using Maybe because PlayerNotfound is already part of TableError
 --- Probably need to to rething error handling types because of this case
 changeName :: Session -> Text -> Players -> Either PlayerError (Maybe ( Players, WithId PlayerId Player ))
-changeName session name players
+changeName session name' players
   | Text.null name =
     Left NameEmpty
 
@@ -137,6 +137,10 @@ changeName session name players
       Nothing ->
         -- Doesn't feel right lol
         Right Nothing
+
+  where
+    name =
+      Text.strip name'
 
 
 addConnectionTo :: Connection -> Player -> ( Player, Int )
