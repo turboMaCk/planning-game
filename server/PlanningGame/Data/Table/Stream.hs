@@ -420,13 +420,11 @@ handleMsg _ session (ChangeName newName) table
     pure $ table { banker = ( fst $ Table.banker table, updatedPlayer ) }
 
   | otherwise =
-    case Player.lookup session $ players table of
-      Just player -> do
-          let newPlayer = (\p -> p { Player.name = newName }) $ Inc.unwrapValue player
-          let ( newPlayers, newPlayerWithId ) = Inc.insert session newPlayer $ players table
-
-          broadcast table $ PlayerStatusUpdate newPlayerWithId
+    case Player.changeName session newName $ players table of
+      Right (Just ( newPlayers, newPlayer )) -> do
+          broadcast table $ PlayerStatusUpdate newPlayer
           pure $ table { players = newPlayers }
 
-      Nothing ->
+      -- @TODO: handle errors
+      _ ->
           pure table
