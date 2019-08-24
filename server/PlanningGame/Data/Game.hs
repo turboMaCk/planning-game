@@ -252,29 +252,28 @@ allVotes games =
   <$> finishedGames games
 
 
-playerVotes ::  Players -> Games -> [ ( Text, [ ( Int, Text, Vote ) ] ) ]
+playerVotes ::  Players -> Games -> [ ( Text, [ ( Int, Vote ) ] ) ]
 playerVotes players games =
   reverse $ (\game@(FinishedGame { name }) -> ( name, playerVotes' game ))
   <$> finishedGames games
 
   where
-    playerVotes' :: FinishedGame -> [ ( Int, Text, Vote ) ]
+    playerVotes' :: FinishedGame -> [ ( Int, Vote ) ]
     playerVotes' game =
       fmap (\(sId, vote) ->
               let player = Player.lookup sId players
               in
               -- @TODO: Better errr handling
               ( maybe 0 Inc.unwrapId player
-              , maybe "" Player.getName player
               , vote
               )
            ) $ Map.toList $ votes game
 
 -- @TODO: refactor `playerVotes` vs `playersVotes`
-currentPlayerVotes :: Players -> Games -> [ ( Int, Text, Vote ) ]
+currentPlayerVotes :: Players -> Games -> [ ( Int, Vote ) ]
 currentPlayerVotes _ (FinishedGames _) = []
 currentPlayerVotes players (RunningGames _ (RunningGame _ votes _)) =
-  mapMaybe (\(id', vote) -> (\p -> ( Inc.unwrapId p, Player.getName p, vote )) <$> Player.lookup id' players)
+  mapMaybe (\(id', vote) -> (\p -> ( Inc.unwrapId p, vote )) <$> Player.lookup id' players)
     $ Map.toList votes
 
 

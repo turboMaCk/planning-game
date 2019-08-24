@@ -29,13 +29,13 @@ data GameSnapshot
     }
   | LockedGameSnapshot
     { snapshotName :: Text
-    , playerVotes  :: [ ( Int, Text, Vote ) ]
+    , playerVotes  :: [ ( Int, Vote ) ]
     , totalPoints  :: Int
     }
   | FinishedGameSnapshot
     { totalPoints       :: Int
     , snapshotGameVotes :: [ ( Text, Vote ) ]
-    , playerGameVotes   :: [ ( Text, [ ( Int, Text, Vote ) ] ) ]
+    , playerGameVotes   :: [ ( Text, [ ( Int, Vote ) ] ) ]
     }
 
 
@@ -49,13 +49,12 @@ taskPointsPair = fmap toVal
         , "value" .= points
         ]
 
-userPointsPair :: [ ( Int, Text, Vote ) ] -> [ Value ]
+userPointsPair :: [ ( Int, Vote ) ] -> [ Value ]
 userPointsPair = fmap toVal
   where
-    toVal ( id', name, points ) =
+    toVal ( id', points ) =
       object
         [ "id"    .= id'
-        , "name"  .= name
         , "value" .= points
         ]
 
@@ -107,6 +106,6 @@ snapshot players games@(RunningGames _ (RunningGame name _ isLocked)) =
   else
     RunningGameSnapshot
         { snapshotName  = name
-        , snapshotVotes = (\(id', _, _) -> id') <$> Game.currentPlayerVotes players games
+        , snapshotVotes = fst <$> Game.currentPlayerVotes players games
         , totalPoints   = Game.sumPoints games
         }
