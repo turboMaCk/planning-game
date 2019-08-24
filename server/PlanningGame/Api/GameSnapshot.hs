@@ -90,7 +90,6 @@ instance ToJSON GameSnapshot where
       ]
 
 
--- @TODO: might need banker as well
 snapshot :: Players -> Games -> GameSnapshot
 snapshot players games@(FinishedGames _) =
   FinishedGameSnapshot
