@@ -29,9 +29,7 @@ type alias Model =
 
     -- @TODO: refactor to just id reference
     , me : Maybe Player
-
-    -- @TODO: refactor to just id reference
-    , dealer : Maybe Player
+    , dealer : Maybe Int
     , players : Dict Int Player
     , tableError : Maybe (ApiError TableError)
     , myVote : Maybe Vote
@@ -80,11 +78,6 @@ leave () =
     Stream.disconnect ()
 
 
-allPlayers : Model -> Dict Int Player
-allPlayers model =
-    Maybe.unwrap model.players (\b -> Dict.insert b.id b model.players) model.dealer
-
-
 focusNameField : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 focusNameField ( model, cmd ) =
     -- @TODO: add check on game state?
@@ -123,8 +116,8 @@ updatePlayer player model =
             else
                 newModel
     in
-    if Just player.id == Maybe.map .id model.dealer then
-        { model | dealer = Just player }
+    if Just player.id == model.dealer then
+        { model | dealer = Just player.id }
             |> updateMe
 
     else
@@ -135,8 +128,8 @@ updatePlayer player model =
 amIDealer : Model -> Bool
 amIDealer { me, dealer } =
     case ( me, dealer ) of
-        ( Just p1, Just p2 ) ->
-            p1.name == p2.name
+        ( Just p1, Just id ) ->
+            p1.id == id
 
         _ ->
             False
@@ -258,7 +251,7 @@ handleEvent navigationKey event model =
         SyncTableState ( table, game ) nextGameName ->
             ( { model
                 | tableId = table.id
-                , dealer = Just table.dealer
+                , dealer = Just table.dealer.id
                 , nextGameName = nextGameName
                 , players =
                     List.map (\player -> ( player.id, player )) table.players
@@ -555,7 +548,7 @@ viewGame model =
 
                 Overview data ->
                     [ Html.styled Html.h2 [ Theme.heading, Css.marginTop Css.zero ] [] [ Html.text "Game results" ]
-                    , viewOverviewTable (allPlayers model) data
+                    , viewOverviewTable model.players data
                     ]
     in
     Html.styled Html.div [ Css.width <| Css.px 835 ] [] inner
@@ -709,7 +702,7 @@ viewMe { me, dealer, newName } =
             []
             [ Html.text "Playing as:" ]
         , viewPlayerSetName me newName
-        , if Maybe.map .name me == Maybe.map .name dealer then
+        , if Maybe.map .id me == dealer then
             Html.text ""
 
           else
@@ -750,8 +743,10 @@ view model =
                 , viewMe model
                 , Players.view
                     { isMe =
-                        \{ name } ->
-                            Maybe.unwrap False ((==) name << .name) model.me
+                        \{ id } ->
+                            Maybe.unwrap False ((==) id << .id) model.me
+                    , isDealer =
+                        \{ id } -> Maybe.unwrap False ((==) id) model.dealer
                     , toVote =
                         \player ->
                             case model.game of
@@ -773,7 +768,7 @@ view model =
                                     Hidden
                     , kick = Send << Stream.KickPlayer
                     }
-                    model.dealer
+                    (amIDealer model)
                     model.players
                 ]
             ]
