@@ -239,8 +239,8 @@ handler state session id' conn = do
                         table' <- Concurrent.readMVar tableState
                         broadcast table' $ PlayerStatusUpdate player
 
-                    else do
-                        mzero
+                    else
+                        pure ()
 
                     -- 3.4 Delegate to Msg handler
                     handleStreamMsg session tableState conn
