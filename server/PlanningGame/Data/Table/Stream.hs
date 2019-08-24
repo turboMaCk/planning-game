@@ -261,7 +261,7 @@ handler state session id' conn = do
                         broadcast table' $ PlayerStatusUpdate player
 
                     else
-                        mzero
+                        pure ()
 
                     -- 3.4 Delegate to Msg handler
                     handleStreamMsg session tableState conn
