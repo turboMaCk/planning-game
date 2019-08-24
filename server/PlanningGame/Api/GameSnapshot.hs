@@ -10,9 +10,7 @@ import           Data.Text                 (Text)
 
 import           PlanningGame.Data.Game    (Games (..), RunningGame (..),
                                             Vote (..))
-import           PlanningGame.Data.Id      (Id)
-import           PlanningGame.Data.Player  (Player, Players)
-import           PlanningGame.Data.Session (SessionId)
+import           PlanningGame.Data.Player  (Players)
 
 import qualified PlanningGame.Data.Game    as Game
 
@@ -31,13 +29,13 @@ data GameSnapshot
     }
   | LockedGameSnapshot
     { snapshotName :: Text
-    , playerVotes  :: [ ( Int, Text, Vote ) ]
+    , playerVotes  :: [ ( Int, Vote ) ]
     , totalPoints  :: Int
     }
   | FinishedGameSnapshot
     { totalPoints       :: Int
     , snapshotGameVotes :: [ ( Text, Vote ) ]
-    , playerGameVotes   :: [ ( Text, [ ( Int, Text, Vote ) ] ) ]
+    , playerGameVotes   :: [ ( Text, [ ( Int, Vote ) ] ) ]
     }
 
 
@@ -51,13 +49,12 @@ taskPointsPair = fmap toVal
         , "value" .= points
         ]
 
-userPointsPair :: [ ( Int, Text, Vote ) ] -> [ Value ]
+userPointsPair :: [ ( Int, Vote ) ] -> [ Value ]
 userPointsPair = fmap toVal
   where
-    toVal ( id', name, points ) =
+    toVal ( id', points ) =
       object
         [ "id"    .= id'
-        , "name"  .= name
         , "value" .= points
         ]
 
@@ -92,24 +89,23 @@ instance ToJSON GameSnapshot where
       ]
 
 
--- @TODO: might need banker as well
-snapshot :: ( Id SessionId, Player ) -> Players -> Games -> GameSnapshot
-snapshot banker players games@(FinishedGames _) =
+snapshot :: Players -> Games -> GameSnapshot
+snapshot players games@(FinishedGames _) =
   FinishedGameSnapshot
     { totalPoints       = Game.sumPoints games
     , snapshotGameVotes = Game.allVotes games
-    , playerGameVotes   = Game.playerVotes banker players games
+    , playerGameVotes   = Game.playerVotes players games
     }
-snapshot banker players games@(RunningGames _ (RunningGame name _ isLocked)) =
+snapshot players games@(RunningGames _ (RunningGame name _ isLocked)) =
   if isLocked then
     LockedGameSnapshot
         { snapshotName = name
-        , playerVotes  = Game.currentPlayerVotes banker players games
+        , playerVotes  = Game.currentPlayerVotes players games
         , totalPoints  = Game.sumPoints games
         }
   else
     RunningGameSnapshot
         { snapshotName  = name
-        , snapshotVotes = (\(id', _, _) -> id') <$> Game.currentPlayerVotes banker players games
+        , snapshotVotes = fst <$> Game.currentPlayerVotes players games
         , totalPoints   = Game.sumPoints games
         }

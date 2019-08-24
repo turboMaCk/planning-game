@@ -12,7 +12,6 @@ module PlanningGame.Data.AutoIncrement
   , filter
   , null
   , alter
-  , mock
   ) where
 
 import           Data.Aeson.Types (ToJSON (..))
@@ -121,8 +120,3 @@ alter f k (Incremental i map) =
   where
     g Nothing               = WithId (IncId i) <$> f Nothing
     g (Just (WithId id' v)) = WithId id' <$> f (Just v)
-
-
--- @TODO: used as a temporary hack
-mock :: Int -> v -> WithId i v
-mock i v = WithId (IncId i) v

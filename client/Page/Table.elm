@@ -1,5 +1,6 @@
 module Page.Table exposing (Model, Msg, init, leave, subscriptions, update, view)
 
+import Basics.Extra exposing (flip)
 import Browser.Dom as Dom
 import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
@@ -26,12 +27,8 @@ single Result type
 -}
 type alias Model =
     { tableId : String
-
-    -- @TODO: refactor to just id reference
-    , me : Maybe Player
-
-    -- @TODO: refactor to just id reference
-    , banker : Maybe Player
+    , me : Maybe Int
+    , dealer : Maybe Int
     , players : Dict Int Player
     , tableError : Maybe (ApiError TableError)
     , myVote : Maybe Vote
@@ -46,7 +43,7 @@ init : String -> String -> ( Model, Cmd Msg )
 init token id =
     ( { tableId = id
       , me = Nothing
-      , banker = Nothing
+      , dealer = Nothing
       , players = Dict.empty
       , tableError = Nothing
       , myVote = Nothing
@@ -80,15 +77,10 @@ leave () =
     Stream.disconnect ()
 
 
-allPlayers : Model -> Dict Int Player
-allPlayers model =
-    Maybe.unwrap model.players (\b -> Dict.insert b.id b model.players) model.banker
-
-
 focusNameField : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 focusNameField ( model, cmd ) =
     -- @TODO: add check on game state?
-    if amIBanker model then
+    if amIDealer model then
         ( model, cmd )
             |> Cmd.add (Task.attempt (always NoOp) <| Dom.focus nameFieldId)
 
@@ -115,31 +107,15 @@ playerVoted player model =
 
 updatePlayer : Player -> Model -> Model
 updatePlayer player model =
-    let
-        updateMe newModel =
-            if Just player.id == Maybe.map .id newModel.me then
-                { newModel | me = Just player }
-
-            else
-                newModel
-    in
-    if Just player.id == Maybe.map .id model.banker then
-        { model | banker = Just player }
-            |> updateMe
-
-    else
-        { model | players = Dict.insert player.id player model.players }
-            |> updateMe
+    { model | players = Dict.insert player.id player model.players }
 
 
-amIBanker : Model -> Bool
-amIBanker { me, banker } =
-    case ( me, banker ) of
-        ( Just p1, Just p2 ) ->
-            p1.name == p2.name
-
-        _ ->
-            False
+amIDealer : Model -> Bool
+amIDealer { me, dealer } =
+    Just (==)
+        |> Maybe.andMap me
+        |> Maybe.andMap dealer
+        |> Maybe.withDefault False
 
 
 update : Key -> Msg -> Model -> ( Model, Cmd Msg )
@@ -151,7 +127,7 @@ update navigationKey msg model =
         Me result ->
             case result of
                 Ok player ->
-                    ( { model | me = Just player }
+                    ( { model | me = Just player.id }
                     , Stream.connect model.tableId
                     )
 
@@ -183,7 +159,7 @@ update navigationKey msg model =
                 { model | myVote = Just vote }
                     |> Cmd.with (Stream.sendMsg <| Stream.Vote vote)
 
-            else if Data.isRoundFinished model.game && amIBanker model then
+            else if Data.isRoundFinished model.game && amIDealer model then
                 ( { model | gameName = Just "", myVote = Just vote }, Cmd.none )
                     |> focusNameField
 
@@ -258,7 +234,7 @@ handleEvent navigationKey event model =
         SyncTableState ( table, game ) nextGameName ->
             ( { model
                 | tableId = table.id
-                , banker = Just table.banker
+                , dealer = Just table.dealer.id
                 , nextGameName = nextGameName
                 , players =
                     List.map (\player -> ( player.id, player )) table.players
@@ -289,7 +265,7 @@ handleEvent navigationKey event model =
 
         PlayerKicked player ->
             ( { model | players = Dict.remove player.id model.players }
-            , if Just player.id == Maybe.map .id model.me then
+            , if Just player.id == model.me then
                 Navigation.pushUrl navigationKey "/"
 
               else
@@ -354,7 +330,7 @@ viewSetName model =
         name =
             Maybe.withDefault "" model.gameName
     in
-    if amIBanker model then
+    if amIDealer model then
         Component.nameForm
             { onInput = SetName
             , onSubmit = NewGame name
@@ -501,7 +477,7 @@ viewGame model =
                 NotStarted ->
                     let
                         ( shake, text ) =
-                            if amIBanker model then
+                            if amIDealer model then
                                 ( True, "Start the game when ready..." )
 
                             else
@@ -519,7 +495,7 @@ viewGame model =
                     [ Theme.highlightedHeading shake [ Html.text "Pick your card!" ]
                     , viewVoting model
                     , Html.br [] []
-                    , if amIBanker model then
+                    , if amIDealer model then
                         Html.styled Html.button
                             [ Theme.secondaryBtn ]
                             [ Events.onClick <| Send Stream.FinishRound ]
@@ -530,14 +506,14 @@ viewGame model =
                     ]
 
                 RoundFinished { playerVotes } ->
-                    if amIBanker model && model.myVote /= Nothing then
-                        -- Banker definitng new ticket
+                    if amIDealer model && model.myVote /= Nothing then
+                        -- Dealer definitng new ticket
                         [ Theme.highlightedHeading False [ Html.text "Set next taks OR finish the game!" ]
                         , viewSetName model
                         ]
 
-                    else if amIBanker model then
-                        -- Banker chossing agreed estimation
+                    else if amIDealer model then
+                        -- Dealer chossing agreed estimation
                         [ Theme.highlightedHeading True [ Html.text "Choose agreed extimation!" ]
                         , viewPlayerVotes playerVotes
                         , Html.br [] []
@@ -548,14 +524,14 @@ viewGame model =
                         ]
 
                     else
-                        --Player waiting for banker
+                        -- Player waiting for dealer
                         [ Theme.highlightedHeading False [ Html.text "Wait for the next ticket!" ]
                         , viewPlayerVotes playerVotes
                         ]
 
                 Overview data ->
                     [ Html.styled Html.h2 [ Theme.heading, Css.marginTop Css.zero ] [] [ Html.text "Game results" ]
-                    , viewOverviewTable (allPlayers model) data
+                    , viewOverviewTable model.players data
                     ]
     in
     Html.styled Html.div [ Css.width <| Css.px 835 ] [] inner
@@ -698,7 +674,7 @@ viewPlayerSetName me newName =
 
 
 viewMe : Model -> Html Msg
-viewMe { me, banker, newName } =
+viewMe { me, dealer, newName, players } =
     Html.styled Html.div
         [ Css.margin2 (Css.px 20) Css.zero ]
         []
@@ -708,8 +684,8 @@ viewMe { me, banker, newName } =
             ]
             []
             [ Html.text "Playing as:" ]
-        , viewPlayerSetName me newName
-        , if Maybe.map .name me == Maybe.map .name banker then
+        , viewPlayerSetName (Maybe.andThen (flip Dict.get players) me) newName
+        , if me == dealer then
             Html.text ""
 
           else
@@ -726,7 +702,7 @@ viewMe { me, banker, newName } =
                         << Send
                         << Stream.KickPlayer
                     )
-                    me
+                    (Maybe.andThen (flip Dict.get players) me)
                 )
                 [ Html.text "Leave table" ]
         ]
@@ -750,8 +726,10 @@ view model =
                 , viewMe model
                 , Players.view
                     { isMe =
-                        \{ name } ->
-                            Maybe.unwrap False ((==) name << .name) model.me
+                        \{ id } ->
+                            Maybe.unwrap False ((==) id) model.me
+                    , isDealer =
+                        \{ id } -> Maybe.unwrap False ((==) id) model.dealer
                     , toVote =
                         \player ->
                             case model.game of
@@ -773,7 +751,7 @@ view model =
                                     Hidden
                     , kick = Send << Stream.KickPlayer
                     }
-                    model.banker
+                    (amIDealer model)
                     model.players
                 ]
             ]

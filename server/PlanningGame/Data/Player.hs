@@ -16,7 +16,6 @@ module PlanningGame.Data.Player
   , disconnect
   , empty
   , allConnections
-  , addConnectionTo
   , removeConnectionFrom
   , hasConnection
   , numberOfConnections
@@ -105,7 +104,7 @@ nameTaken name' players =
 
 
 add :: Session -> Text -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
-add sesId' name players
+add sesId' name' players
   | Text.null name =
     Left NameEmpty
 
@@ -114,6 +113,9 @@ add sesId' name players
 
   | otherwise =
     Right $ Inc.insert sesId' (create name) players
+
+  where
+    name = Text.strip name'
 
 
 --- @TODO: using Maybe because PlayerNotfound is already part of TableError
@@ -139,8 +141,7 @@ changeName session name' players
         Right Nothing
 
   where
-    name =
-      Text.strip name'
+    name = Text.strip name'
 
 
 addConnectionTo :: Connection -> Player -> ( Player, Int )
@@ -165,23 +166,23 @@ numberOfConnections Player { playerConnections } =
   IntMap.size playerConnections
 
 
-addConnection :: Id SessionId -> Connection -> Players -> ( Players, Maybe ( WithId PlayerId Player, Int ) )
+addConnection :: Session -> Connection -> Players -> ( Players, Maybe ( WithId PlayerId Player, Int ) )
 addConnection id' conn players =
   case Inc.lookup id' players of
     Just player ->
-        let
+      let
         ( updatedPlayer, index ) =
             addConnectionTo conn $ Inc.unwrapValue player
 
         ( updatedPlayers, playerWithId ) =
             Inc.insert id' updatedPlayer players
-        in
-        ( updatedPlayers
-        , Just ( playerWithId, index )
-        )
+      in
+      ( updatedPlayers
+      , Just ( playerWithId, index )
+      )
 
     Nothing ->
-        ( players, Nothing )
+      ( players, Nothing )
 
 
 removeConnectionFrom :: Int -> Player -> Player

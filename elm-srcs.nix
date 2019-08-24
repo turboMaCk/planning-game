@@ -20,9 +20,9 @@
         version = "1.1.2";
       };
 
-      "elm/html" = {
-        sha256 = "1n3gpzmpqqdsldys4ipgyl1zacn0kbpc3g4v3hdpiyfjlgh8bf3k";
-        version = "1.0.0";
+      "elm-community/basics-extra" = {
+        sha256 = "02f5c0lhw6lrxdpmn09jpfhd45sbn7mr95hwrfyilx5yfrqa4z15";
+        version = "4.0.0";
       };
 
       "elm/browser" = {
@@ -63,6 +63,11 @@
       "elm/file" = {
         sha256 = "15vw1ilbg0msimq2k9magwigp8lwqrgvz3vk6qia6b3ldahvw8jr";
         version = "1.0.1";
+      };
+
+      "elm/html" = {
+        sha256 = "1n3gpzmpqqdsldys4ipgyl1zacn0kbpc3g4v3hdpiyfjlgh8bf3k";
+        version = "1.0.0";
       };
 
       "turboMaCk/any-dict" = {
