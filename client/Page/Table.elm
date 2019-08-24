@@ -507,13 +507,13 @@ viewGame model =
 
                 RoundFinished { playerVotes } ->
                     if amIDealer model && model.myVote /= Nothing then
-                        -- Banker definitng new ticket
+                        -- Dealer definitng new ticket
                         [ Theme.highlightedHeading False [ Html.text "Set next taks OR finish the game!" ]
                         , viewSetName model
                         ]
 
                     else if amIDealer model then
-                        -- Banker chossing agreed estimation
+                        -- Dealer chossing agreed estimation
                         [ Theme.highlightedHeading True [ Html.text "Choose agreed extimation!" ]
                         , viewPlayerVotes playerVotes
                         , Html.br [] []
@@ -524,7 +524,7 @@ viewGame model =
                         ]
 
                     else
-                        --Player waiting for banker
+                        -- Player waiting for dealer
                         [ Theme.highlightedHeading False [ Html.text "Wait for the next ticket!" ]
                         , viewPlayerVotes playerVotes
                         ]
