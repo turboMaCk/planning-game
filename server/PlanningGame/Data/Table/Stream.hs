@@ -28,16 +28,15 @@ import           PlanningGame.Api.GameSnapshot   (snapshot)
 import           PlanningGame.Data.AutoIncrement (WithId (..))
 import           PlanningGame.Data.Game          (Games, Vote)
 import           PlanningGame.Data.Id            (Id)
-import           PlanningGame.Data.Player        (Player, PlayerError (..),
-                                                  PlayerId, Players)
+import           PlanningGame.Data.Player        (Player, PlayerId, Players)
 import           PlanningGame.Data.Session       (Session)
 import           PlanningGame.Data.Table         (Table (..), TableError (..),
                                                   TableId, Tables)
 
+import qualified PlanningGame.Data.AutoIncrement as Inc
 import qualified PlanningGame.Data.Game          as Game
 import qualified PlanningGame.Data.Player        as Player
 import qualified PlanningGame.Data.Table         as Table
-import qualified PlanningGame.Data.AutoIncrement as Inc
 
 
 -- | Msg is incomming msg from client
@@ -93,10 +92,10 @@ data Event
     = PlayerJoined (WithId PlayerId Player)
     | PlayerStatusUpdate (WithId PlayerId Player)
     | SyncTableState Table
-    | GameStarted ( Session, Player ) Players Games
+    | GameStarted Players Games
     | VoteAccepted (WithId PlayerId Player)
-    | VotingEnded ( Session, Player ) Players Games
-    | GameEnded ( Session, Player ) Players Games
+    | VotingEnded Players Games
+    | GameEnded Players Games
     | PlayerKicked (WithId PlayerId Player)
 
 
@@ -117,26 +116,26 @@ instance ToJSON Event where
         , "table"        .= table
         , "nextGameName" .= maybe "Task-1" Game.autoNextName (Table.game table)
         ]
-  toJSON (GameStarted dealer players games) =
+  toJSON (GameStarted players games) =
     object
         [ "event" .= Text.pack "GameStarted"
-        , "game"  .= snapshot dealer players games
+        , "game"  .= snapshot players games
         ]
   toJSON (VoteAccepted player) =
     object
         [ "event"  .= Text.pack "VoteAccepted"
         , "player" .= player
         ]
-  toJSON (VotingEnded dealer players games) =
+  toJSON (VotingEnded players games) =
     object
         [ "event"        .= Text.pack "VotingEnded"
-        , "game"         .= snapshot dealer players games
+        , "game"         .= snapshot players games
         , "nextGameName" .= Game.autoNextName games
         ]
-  toJSON (GameEnded dealer players games) =
+  toJSON (GameEnded players games) =
     object
         [ "event" .= Text.pack "GameEnded"
-        , "game"  .= snapshot dealer players games
+        , "game"  .= snapshot players games
         ]
   toJSON (PlayerKicked player) =
     object
@@ -172,25 +171,12 @@ handleStreamMsg session state conn = forever $ do
 
 disconnect :: MVar Table -> Session -> Int -> IO ()
 disconnect state sessionId connId =
-  Concurrent.modifyMVar_ state $ \table@Table { Table.banker=banker' } ->
-    if fst banker' == sessionId then do
-      let updatedTable = table { Table.banker = ( fst banker' , Player.removeConnectionFrom connId $ snd banker' ) }
-      let player = Table.bankerToPlayer $ snd $ banker updatedTable
+  Concurrent.modifyMVar_ state $ \table -> do
+    let updatedTable = table { Table.players = Player.disconnect sessionId connId (players table) }
+    let mPlayer = Player.lookup sessionId $ Table.players updatedTable
 
-      if Player.hasConnection $ Inc.unwrapValue player then
-        pure ()
-
-      else
-        broadcast updatedTable $ PlayerStatusUpdate player
-
-      pure updatedTable
-
-    else do
-      let updatedTable = table { Table.players = Player.disconnect sessionId connId (players table) }
-      let mPlayer = Player.lookup sessionId $ Table.players updatedTable
-
-      maybe mzero (broadcast updatedTable . PlayerStatusUpdate) mPlayer
-      pure updatedTable
+    maybe mzero (broadcast updatedTable . PlayerStatusUpdate) mPlayer
+    pure updatedTable
 
 
 -- @TODO: Add check if session is not already present
@@ -204,26 +190,19 @@ join session tableId name' tables =
     Just mvar -> do
       table <- Concurrent.readMVar mvar
 
-      -- Colision with banker name
-      if Player.name (snd $ banker table) == name then
-        pure $ Left $ PlayerError NameTaken
-
-      else
-        let
-            ePlayers = Player.add session name (players table)
-        in
-        case ePlayers of
+      let ePlayers = Player.add session name (players table)
+      case ePlayers of
           Right ( newPlayers, newPlayer ) ->
             Concurrent.modifyMVar mvar $ \t -> do
-                let updatedTable = t { players = newPlayers }
+              let updatedTable = t { players = newPlayers }
 
-                -- Broadcast to connections
-                broadcast t $ PlayerJoined newPlayer
+              -- Broadcast to connections
+              broadcast t $ PlayerJoined newPlayer
 
-                pure ( updatedTable, Right updatedTable )
+              pure ( updatedTable, Right updatedTable )
 
           Left err ->
-             pure $ Left $ PlayerError err
+            pure $ Left $ PlayerError err
 
     Nothing ->
       pure $ Left TableNotFound
@@ -282,7 +261,7 @@ handleMsg _ session (NewGame name) table
   , Maybe.isNothing (Table.game table) = do
       let game = Game.start name
       let players' = players table
-      broadcast table $ GameStarted (banker table) players' game
+      broadcast table $ GameStarted players' game
       pure $ table { Table.game = Just game }
 
   | not $ Table.isBanker session table =
@@ -298,7 +277,7 @@ handleMsg _ session FinishRound table
       case game table of
         Just games -> do
           let newGames = Game.finishCurrent games
-          broadcast table $ VotingEnded (banker table) (players table) newGames
+          broadcast table $ VotingEnded (players table) newGames
           pure $ table { Table.game = Just newGames }
 
         Nothing ->
@@ -318,7 +297,7 @@ handleMsg _ session (NextRound vote name) table
               -- @TODO: missing err handling
               pure table
             Right newGames -> do
-              broadcast table $ GameStarted (banker table) (players table) newGames
+              broadcast table $ GameStarted (players table) newGames
               pure $ table { Table.game = Just newGames }
         Nothing ->
           -- @TODO: handled non started game
@@ -335,13 +314,13 @@ handleMsg _ session (Vote vote) table =
         Right newGames -> do
           maybe (pure ()) (broadcast table . VoteAccepted)
             $ Player.lookup session
-            $ Table.allPlayers table
+            $ Table.players table
 
           -- Auto end game when all voted
-          if Game.allVoted (Table.allPlayers table) newGames then do
+          if Game.allVoted (Table.players table) newGames then do
             let finishedNewGames = Game.finishCurrent newGames
 
-            broadcast table $ VotingEnded (banker table) (players table) finishedNewGames
+            broadcast table $ VotingEnded (players table) finishedNewGames
             pure $ table { Table.game = Just finishedNewGames }
 
           else
@@ -361,7 +340,7 @@ handleMsg _ session (FinishGame vote) table
       Just games ->
         case Game.complete vote games of
           Right newGames -> do
-            broadcast table $ GameEnded (banker table) (players table) newGames
+            broadcast table $ GameEnded (players table) newGames
             pure $ table { Table.game = Just newGames }
 
           Left _ ->
@@ -382,7 +361,7 @@ handleMsg _ session RestartRound table
       Just g -> do
         let game = Game.restartCurrent g
         let players' = Table.players table
-        broadcast table $ GameStarted (banker table) players' game
+        broadcast table $ GameStarted players' game
         pure $ table { Table.game = Just game }
 
       Nothing ->
@@ -414,10 +393,11 @@ handleMsg _ session (KickPlayer pId) table
       pure table
 
 handleMsg _ session (ChangeName newName) table
-  | Table.isBanker session table = do
-    let updatedPlayer = (\p -> p { Player.name = newName } ) $ snd $ Table.banker table
-    broadcast table $ PlayerStatusUpdate $ Table.bankerToPlayer updatedPlayer
-    pure $ table { banker = ( fst $ Table.banker table, updatedPlayer ) }
+  | Table.isBanker session table = undefined
+
+    -- let updatedPlayer = (\p -> p { Player.name = newName } ) $ snd $ Table.banker table
+    -- broadcast table $ PlayerStatusUpdate $ Table.bankerToPlayer updatedPlayer
+    -- pure $ table { banker = ( Table.banker table, updatedPlayer ) }
 
   | otherwise =
     case Player.changeName session newName $ players table of

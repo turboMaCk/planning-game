@@ -13,7 +13,6 @@ module PlanningGame.Data.Table
   , isActive
   , isBanker
   , lookup
-  , allPlayers
   , assignConnection
   , allConnections
   , sessionByPlayerId
@@ -31,7 +30,6 @@ import           Prelude                         hiding (lookup)
 import qualified Control.Concurrent              as Concurrent
 import qualified Data.Aeson                      as Aeson
 import qualified Data.Map.Strict                 as Map
-import qualified Data.Text                       as Text
 import qualified Data.Time.Clock                 as Clock
 
 import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
@@ -56,7 +54,7 @@ data TableId
 
 data Table = Table
   { tableId   :: Id TableId
-  , banker    :: ( Id SessionId, Player )
+  , banker    :: Id SessionId
   , players   :: Players
   , game      :: Maybe Games
   , createdAt :: UTCTime
@@ -67,12 +65,12 @@ instance ToJSON Table where
   toJSON table =
     Aeson.object
         [ "id"      .= tableId table
-        , "banker"  .= bankerToPlayer (snd $ banker table)
+        , "banker"  .= bankerToPlayer table
         , "players" .= Player.collection (players table)
         , "game"    .=
           case game table of
             Just game ->
-              toJSON $ snapshot (banker table) (players table) game
+              toJSON $ snapshot (players table) game
 
             Nothing ->
               Null
@@ -119,36 +117,27 @@ empty =
 
 
 create :: Session -> Text -> Tables -> IO ( Tables, Either TableError Table )
-create id' name' tables =
-  let
-    name =
-      Text.strip name'
-  in
-  if Text.null name then
-    pure ( tables,  Left $ PlayerError NameEmpty )
+create id' name' tables = do
+  tId <- generateId tables
+  now <- Clock.getCurrentTime
 
-  else do
-    tId <- generateId tables
-    now <- Clock.getCurrentTime
+  case Player.add id' name' Player.empty of
+    Right (players, _) -> do
+      let newTable = Table tId id' players Nothing now
 
-    let banker' = Player.create name
-    let newTable = Table tId ( id', banker' ) Player.empty Nothing now
+      mvarTable <- Concurrent.newMVar newTable
 
-    mvarTable <- Concurrent.newMVar newTable
-
-    pure
-        ( Map.insert tId mvarTable tables
-        , Right newTable
-        )
+      pure
+          ( Map.insert tId mvarTable tables
+          , Right newTable
+          )
+    Left err ->
+      pure ( tables, Left $ PlayerError err )
 
 
 isActive :: Table -> Bool
-isActive Table { banker, players } =
-  bankerOnline || Player.anyOnline players
-
-  where
-    bankerOnline =
-      Player.hasConnection $ snd banker
+isActive Table { players } =
+  Player.anyOnline players
 
 
 getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError (WithId PlayerId Player))
@@ -161,53 +150,30 @@ getPlayer session tableId tables =
     getPlayer' mvar = do
       table <- Concurrent.readMVar mvar
 
-      if fst (banker table) == session then
-        pure $ Right $ bankerToPlayer $ snd $ banker table
-
-      else
-          pure $ maybe (Left PlayerNotFound) Right $
-             Player.lookup session $ players table
+      pure $ maybe (Left PlayerNotFound) Right $
+        Player.lookup session $ players table
 
 
 allConnections :: Table -> [ Connection ]
-allConnections Table { banker, players } =
-  concat $ Player.allConnections (snd banker)
-         : (foldr (\p acc -> Player.allConnections p : acc) [] players)
+allConnections Table { players } =
+   concat $ foldr (\p acc -> Player.allConnections p : acc) [] players
 
 
 assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( WithId PlayerId Player, Int ) )
-assignConnection session conn table@Table { banker, players } =
-    if fst banker == session then
-        let
-          ( updatedBanker, connId ) =
-            Player.addConnectionTo conn $ snd banker
-        in
-        ( table { banker = ( session, updatedBanker ) }
-        , Just ( bankerToPlayer updatedBanker, connId )
-        )
-
-    else
-        let
-          ( updatedPlayers, mPair ) =
-                Player.addConnection session conn players
-        in
-        case mPair of
-            Nothing   -> ( table, Nothing )
-            Just pair -> ( table { players = updatedPlayers }
-                         , Just pair
-                         )
-
-allPlayers :: Table -> Players
-allPlayers table =
-  Player.insert bankerId banker' $ players table
-
-  where
-    (bankerId, banker') = banker table
-
+assignConnection session conn table@Table { players } =
+    let
+        ( updatedPlayers, mPair ) =
+            Player.addConnection session conn players
+    in
+    case mPair of
+        Nothing   -> ( table, Nothing )
+        Just pair -> ( table { players = updatedPlayers }
+                        , Just pair
+                        )
 
 isBanker :: Session -> Table -> Bool
-isBanker session Table { banker=pair } =
-  session == fst pair
+isBanker session Table { banker } =
+  session == banker
 
 
 lookup :: Id TableId -> Tables -> Maybe (MVar Table)
@@ -221,6 +187,9 @@ sessionByPlayerId id' table =
 
 
 -- @TODO: Using Inc.mock hack
-bankerToPlayer :: Player -> WithId PlayerId Player
-bankerToPlayer =
-  Inc.mock 0
+bankerToPlayer :: Table -> WithId PlayerId Player
+bankerToPlayer Table { banker, players } =
+  case Inc.lookup banker players of
+    Just p -> p
+    -- Should not ever happen
+    Nothing -> undefined

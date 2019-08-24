@@ -37,7 +37,7 @@ import qualified Data.Text                       as Text
 
 import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id
-import           PlanningGame.Data.Player        (Player, Players)
+import           PlanningGame.Data.Player        (Players)
 import           PlanningGame.Data.Session       (SessionId)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
@@ -252,8 +252,8 @@ allVotes games =
   <$> finishedGames games
 
 
-playerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Text, [ ( Int, Text, Vote ) ] ) ]
-playerVotes ( bankerId, bankerName ) players' games =
+playerVotes ::  Players -> Games -> [ ( Text, [ ( Int, Text, Vote ) ] ) ]
+playerVotes players games =
   reverse $ (\game@(FinishedGame { name }) -> ( name, playerVotes' game ))
   <$> finishedGames games
 
@@ -270,18 +270,12 @@ playerVotes ( bankerId, bankerName ) players' games =
               )
            ) $ Map.toList $ votes game
 
-    players =
-      Player.insert bankerId bankerName players'
-
 -- @TODO: refactor `playerVotes` vs `playersVotes`
-currentPlayerVotes :: ( Id SessionId, Player ) -> Players -> Games -> [ ( Int, Text, Vote ) ]
-currentPlayerVotes _ _ (FinishedGames _) = []
-currentPlayerVotes ( bankerId, banker ) players (RunningGames _ (RunningGame _ votes _)) =
-  mapMaybe (\(id', vote) -> (\p -> ( Inc.unwrapId p, Player.getName p, vote )) <$> Player.lookup id' allPlayers)
+currentPlayerVotes :: Players -> Games -> [ ( Int, Text, Vote ) ]
+currentPlayerVotes _ (FinishedGames _) = []
+currentPlayerVotes players (RunningGames _ (RunningGame _ votes _)) =
+  mapMaybe (\(id', vote) -> (\p -> ( Inc.unwrapId p, Player.getName p, vote )) <$> Player.lookup id' players)
     $ Map.toList votes
-
-  where
-    allPlayers = Player.insert bankerId banker players
 
 
 allVoted :: Players -> Games -> Bool
