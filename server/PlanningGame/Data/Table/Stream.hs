@@ -392,19 +392,12 @@ handleMsg _ session (KickPlayer pId) table
       -- @TODO: handle forbidden
       pure table
 
-handleMsg _ session (ChangeName newName) table
-  | Table.isDealer session table = undefined
+handleMsg _ session (ChangeName newName) table =
+  case Player.changeName session newName $ players table of
+    Right (Just ( newPlayers, newPlayer )) -> do
+        broadcast table $ PlayerStatusUpdate newPlayer
+        pure $ table { players = newPlayers }
 
-    -- let updatedPlayer = (\p -> p { Player.name = newName } ) $ snd $ Table.banker table
-    -- broadcast table $ PlayerStatusUpdate $ Table.bankerToPlayer updatedPlayer
-    -- pure $ table { banker = ( Table.banker table, updatedPlayer ) }
-
-  | otherwise =
-    case Player.changeName session newName $ players table of
-      Right (Just ( newPlayers, newPlayer )) -> do
-          broadcast table $ PlayerStatusUpdate newPlayer
-          pure $ table { players = newPlayers }
-
-      -- @TODO: handle errors
-      _ ->
-          pure table
+    -- @TODO: handle errors
+    _ ->
+        pure table
