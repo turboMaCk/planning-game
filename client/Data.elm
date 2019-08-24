@@ -160,7 +160,7 @@ getSession msg token =
 
 type alias Table =
     { id : String
-    , banker : Player
+    , dealer : Player
     , players : List Player
     }
 
@@ -169,7 +169,7 @@ tableDecoder : Decoder Table
 tableDecoder =
     Decode.succeed Table
         |> Decode.andMap (Decode.field "id" Decode.string)
-        |> Decode.andMap (Decode.field "banker" playerDecoder)
+        |> Decode.andMap (Decode.field "dealer" playerDecoder)
         |> Decode.andMap (Decode.field "players" <| Decode.list playerDecoder)
 
 

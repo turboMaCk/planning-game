@@ -11,12 +11,12 @@ module PlanningGame.Data.Table
   , create
   , getPlayer
   , isActive
-  , isBanker
+  , isDealer
   , lookup
   , assignConnection
   , allConnections
   , sessionByPlayerId
-  , bankerToPlayer
+  , getDealer
   ) where
 
 import           Control.Concurrent              (MVar)
@@ -54,7 +54,7 @@ data TableId
 
 data Table = Table
   { tableId   :: Id TableId
-  , banker    :: Id SessionId
+  , dealer    :: Id SessionId
   , players   :: Players
   , game      :: Maybe Games
   , createdAt :: UTCTime
@@ -65,7 +65,7 @@ instance ToJSON Table where
   toJSON table =
     Aeson.object
         [ "id"      .= tableId table
-        , "banker"  .= bankerToPlayer table
+        , "dealer"  .= getDealer table
         , "players" .= Player.collection (players table)
         , "game"    .=
           case game table of
@@ -171,9 +171,9 @@ assignConnection session conn table@Table { players } =
                         , Just pair
                         )
 
-isBanker :: Session -> Table -> Bool
-isBanker session Table { banker } =
-  session == banker
+isDealer :: Session -> Table -> Bool
+isDealer session Table { dealer } =
+  session == dealer
 
 
 lookup :: Id TableId -> Tables -> Maybe (MVar Table)
@@ -186,10 +186,10 @@ sessionByPlayerId id' table =
   fst <$> Inc.getById id' (players table)
 
 
--- @TODO: Using Inc.mock hack
-bankerToPlayer :: Table -> WithId PlayerId Player
-bankerToPlayer Table { banker, players } =
-  case Inc.lookup banker players of
+getDealer :: Table -> WithId PlayerId Player
+getDealer Table { dealer, players } =
+  case Inc.lookup dealer players of
     Just p -> p
     -- Should not ever happen
+    -- @TODO: avoidable bottom
     Nothing -> undefined

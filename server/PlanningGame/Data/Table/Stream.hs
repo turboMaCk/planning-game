@@ -257,14 +257,14 @@ handler state session id' conn = do
 -- @TODO: refactor
 handleMsg :: Connection -> Session -> Msg -> Table -> IO Table
 handleMsg _ session (NewGame name) table
-  | Table.isBanker session table
+  | Table.isDealer session table
   , Maybe.isNothing (Table.game table) = do
       let game = Game.start name
       let players' = players table
       broadcast table $ GameStarted players' game
       pure $ table { Table.game = Just game }
 
-  | not $ Table.isBanker session table =
+  | not $ Table.isDealer session table =
       -- @TODO: Handle forbidden action
       pure table
 
@@ -273,7 +273,7 @@ handleMsg _ session (NewGame name) table
       pure table
 
 handleMsg _ session FinishRound table
-  | Table.isBanker session table =
+  | Table.isDealer session table =
       case game table of
         Just games -> do
           let newGames = Game.finishCurrent games
@@ -289,7 +289,7 @@ handleMsg _ session FinishRound table
     pure table
 
 handleMsg _ session (NextRound vote name) table
-  | Table.isBanker session table =
+  | Table.isDealer session table =
       case game table of
         Just games ->
           case Game.nextRound vote name games of
@@ -335,7 +335,7 @@ handleMsg _ session (Vote vote) table =
       pure table
 
 handleMsg _ session (FinishGame vote) table
-  | Table.isBanker session table =
+  | Table.isDealer session table =
     case game table of
       Just games ->
         case Game.complete vote games of
@@ -356,7 +356,7 @@ handleMsg _ session (FinishGame vote) table
       pure table
 
 handleMsg _ session RestartRound table
-  | Table.isBanker session table =
+  | Table.isDealer session table =
     case game table of
       Just g -> do
         let game = Game.restartCurrent g
@@ -373,7 +373,7 @@ handleMsg _ session RestartRound table
       pure table
 
 handleMsg _ session (KickPlayer pId) table
-  | Table.isBanker session table
+  | Table.isDealer session table
     || Table.sessionByPlayerId pId table == Just session = do
       let maybePlayerData = Inc.getById pId $ Table.players table
 
@@ -393,7 +393,7 @@ handleMsg _ session (KickPlayer pId) table
       pure table
 
 handleMsg _ session (ChangeName newName) table
-  | Table.isBanker session table = undefined
+  | Table.isDealer session table = undefined
 
     -- let updatedPlayer = (\p -> p { Player.name = newName } ) $ snd $ Table.banker table
     -- broadcast table $ PlayerStatusUpdate $ Table.bankerToPlayer updatedPlayer
