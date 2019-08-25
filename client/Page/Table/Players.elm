@@ -130,6 +130,7 @@ viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer se
                 , Css.borderRadius <| Css.px 4
                 , Css.marginLeft <| Css.px -6
                 , Css.marginRight <| Css.px -6
+                , Css.marginTop <| Css.px -2
                 ]
         )
         []
