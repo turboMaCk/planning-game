@@ -36,6 +36,7 @@ type alias Model =
     , gameName : Maybe String
     , nextGameName : String
     , newName : Maybe String
+    , focusedPlayer : Maybe Int
     }
 
 
@@ -51,6 +52,7 @@ init token id =
       , gameName = Just ""
       , nextGameName = "Task-1"
       , newName = Nothing
+      , focusedPlayer = Nothing
       }
     , Data.getMe token id Me
     )
@@ -70,6 +72,7 @@ type Msg
     | SetNewName String
     | SaveNewName
     | DiscardNewName
+    | FocusPlayer (Maybe Int)
 
 
 leave : () -> Cmd msg
@@ -212,6 +215,9 @@ update navigationKey msg model =
 
         DiscardNewName ->
             ( { model | newName = Nothing }, Cmd.none )
+
+        FocusPlayer state ->
+            ( { model | focusedPlayer = state }, Cmd.none )
 
 
 
@@ -760,9 +766,12 @@ view model =
 
                                 Overview _ ->
                                     Hidden
-                    , kick = Send << Stream.KickPlayer
+                    , select = FocusPlayer << Just << .id
+                    , deselect = FocusPlayer Nothing
+                    , kickPlayer = Send << Stream.KickPlayer
                     }
                     (amIDealer model)
+                    model.focusedPlayer
                     model.players
                 ]
             ]

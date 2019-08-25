@@ -42,12 +42,13 @@ nameForm { onInput, onSubmit, submitTxt, value, inputId, labelTxt, placeHolder, 
         [ Css.width <| Css.px 300
         , Css.margin2 (Css.px 150) Css.auto
         ]
-        [ Events.onSubmit onSubmit
-        ]
+        [ Events.onSubmit onSubmit ]
         ([ above
          , Html.label [ Attrs.for inputId ] [ Html.text labelTxt ]
          , Html.styled Html.input
-            [ Theme.textField ]
+            [ Theme.textField
+            , Css.display Css.block
+            ]
             [ Events.onInput onInput
             , Attrs.id inputId
             , Attrs.value value
