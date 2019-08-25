@@ -1,7 +1,7 @@
 module Page.Table.Players exposing (PlayerVote(..), view)
 
 import Css
-import Data exposing (Player, Vote)
+import Data exposing (Player, Vote(..))
 import Dict exposing (Dict)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
@@ -14,6 +14,19 @@ type PlayerVote
     = Hidden
     | Unknown
     | Voted Vote
+
+
+fromPlayerVote : PlayerVote -> Vote
+fromPlayerVote v =
+    case v of
+        Hidden ->
+            InfinityPoints
+
+        Unknown ->
+            InfinityPoints
+
+        Voted vote ->
+            vote
 
 
 type alias Config msg =
@@ -106,8 +119,8 @@ concatWhen b xs =
         identity
 
 
-viewPlayer : Config msg -> Bool -> Maybe Int -> Player -> Html msg
-viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer selectedId player =
+viewPlayer : Config msg -> Bool -> Maybe Int -> Maybe Vote -> Player -> Html msg
+viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer selectedId highlightedVote player =
     let
         showKick =
             amIDealer && not (isMe player)
@@ -138,6 +151,8 @@ viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer se
             ([ Css.cursor Css.pointer
              , Css.hover [ Css.textDecoration Css.underline ]
              ]
+                |> concatWhen (Just (fromPlayerVote (toVote player)) == highlightedVote)
+                    [ Css.fontWeight <| Css.bold ]
                 |> concatWhen (isMe player) [ Css.textDecoration Css.underline ]
             )
             [ Events.onClick <|
@@ -180,8 +195,8 @@ viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer se
         ]
 
 
-view : Config msg -> Bool -> Maybe Int -> Dict Int Player -> Html msg
-view config amIDealer selectedId players =
+view : Config msg -> Bool -> Maybe Int -> Maybe Vote -> Dict Int Player -> Html msg
+view config amIDealer selectedId highlightedVote players =
     Html.div []
         [ Html.styled Html.ul
             [ Css.listStyle Css.none
@@ -190,7 +205,7 @@ view config amIDealer selectedId players =
             ]
             []
           <|
-            (List.map (viewPlayer config amIDealer selectedId) <|
+            (List.map (viewPlayer config amIDealer selectedId highlightedVote) <|
                 Dict.values players
             )
         ]

@@ -38,6 +38,7 @@ type alias Model =
     , nextGameName : String
     , newName : Maybe String
     , focusedPlayer : Maybe Int
+    , highlightedVote : Maybe Vote
     }
 
 
@@ -54,6 +55,7 @@ init token id =
       , nextGameName = "Task-1"
       , newName = Nothing
       , focusedPlayer = Nothing
+      , highlightedVote = Nothing
       }
     , Data.getMe token id Me
     )
@@ -74,6 +76,7 @@ type Msg
     | SaveNewName
     | DiscardNewName
     | FocusPlayer (Maybe Int)
+    | HighlightVote (Maybe Vote)
 
 
 leave : () -> Cmd msg
@@ -220,6 +223,9 @@ update navigationKey msg model =
         FocusPlayer state ->
             ( { model | focusedPlayer = state }, Cmd.none )
 
+        HighlightVote state ->
+            ( { model | highlightedVote = state }, Cmd.none )
+
 
 
 -- NoOp
@@ -285,10 +291,13 @@ subscriptions _ =
     Stream.observe Event
 
 
-viewTable : (Vote -> Int) -> Html Msg
-viewTable toCount =
+viewTable : (Vote -> Int) -> (Maybe Vote -> Msg) -> Html Msg
+viewTable toCount hover =
     Html.styled Html.div [ Css.marginLeft <| Css.px -12 ] [] <|
-        Card.table toCount Vote
+        Card.table toCount
+            { click = Vote
+            , hover = hover
+            }
 
 
 viewVoting : Model -> Html Msg
@@ -306,7 +315,7 @@ viewVoting model =
                 Nothing ->
                     1
     in
-    viewTable toCount
+    viewTable toCount (always NoOp)
 
 
 viewPlayerVotes : Dict Int Vote -> Html Msg
@@ -316,7 +325,7 @@ viewPlayerVotes dict =
             Dict.values dict
                 |> List.foldl (\v -> AnyDict.update v (Just << Maybe.unwrap 1 ((+) 1))) (AnyDict.empty Data.voteToInt)
     in
-    viewTable (Maybe.withDefault 0 << flip AnyDict.get votes)
+    viewTable (Maybe.withDefault 0 << flip AnyDict.get votes) HighlightVote
 
 
 nameFieldId : String
@@ -766,6 +775,7 @@ view model =
                     }
                     (amIDealer model)
                     model.focusedPlayer
+                    model.highlightedVote
                     model.players
                 ]
             ]

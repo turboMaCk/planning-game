@@ -47,8 +47,8 @@ cardBackground vote =
     "/svg/card-" ++ name ++ ".svg"
 
 
-view : (Vote -> Int) -> (Vote -> msg) -> Vote -> Html msg
-view toCount msg vote =
+view : (Vote -> Int) -> { click : Vote -> msg, hover : Maybe Vote -> msg } -> Vote -> Html msg
+view toCount msgs vote =
     let
         transitionMs =
             600
@@ -135,7 +135,9 @@ view toCount msg vote =
         , Css.cursor Css.pointer
         , Css.backgroundColor Css.transparent
         ]
-        [ Events.onClick <| msg vote
+        [ Events.onClick <| msgs.click vote
+        , Events.onMouseOver <| msgs.hover <| Just vote
+        , Events.onMouseOut <| msgs.hover Nothing
         , Attrs.class "card"
         ]
     <|
@@ -148,18 +150,18 @@ view toCount msg vote =
             [ singleCard 0 ]
 
 
-table : (Vote -> Int) -> (Vote -> msg) -> List (Html msg)
-table toCount msg =
-    [ view toCount msg OnePoint
-    , view toCount msg TwoPoints
-    , view toCount msg ThreePoints
-    , view toCount msg FivePoints
-    , view toCount msg EightPoints
-    , view toCount msg ThreeteenPoints
-    , view toCount msg TwentyPoints
-    , view toCount msg FortyPoints
-    , view toCount msg HundredPoints
-    , view toCount msg InfinityPoints
+table : (Vote -> Int) -> { click : Vote -> msg, hover : Maybe Vote -> msg } -> List (Html msg)
+table toCount msgs =
+    [ view toCount msgs OnePoint
+    , view toCount msgs TwoPoints
+    , view toCount msgs ThreePoints
+    , view toCount msgs FivePoints
+    , view toCount msgs EightPoints
+    , view toCount msgs ThreeteenPoints
+    , view toCount msgs TwentyPoints
+    , view toCount msgs FortyPoints
+    , view toCount msgs HundredPoints
+    , view toCount msgs InfinityPoints
     , GCss.global
         [ GCss.selector ".card:hover .inner-card"
             [ Css.transforms
