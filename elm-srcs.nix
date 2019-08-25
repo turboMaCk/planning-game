@@ -25,6 +25,11 @@
         version = "4.0.0";
       };
 
+      "turboMaCk/any-dict" = {
+        sha256 = "1zj4qfj25c7521fkf4h3mb1drsrgska1lgqajasyjnf88qkrykgg";
+        version = "1.1.0";
+      };
+
       "elm/browser" = {
         sha256 = "1zlmx672glg7fdgkvh5jm47y85pv7pdfr5mkhg6x7ar6k000vyka";
         version = "1.0.1";
@@ -68,11 +73,6 @@
       "elm/html" = {
         sha256 = "1n3gpzmpqqdsldys4ipgyl1zacn0kbpc3g4v3hdpiyfjlgh8bf3k";
         version = "1.0.0";
-      };
-
-      "turboMaCk/any-dict" = {
-        sha256 = "09kz24cb42wbl5acps38ci7lvm261w8alnz6s7x57aycl00w3w11";
-        version = "1.0.1";
       };
 
       "rtfeldman/elm-hex" = {

@@ -8,11 +8,12 @@ import Component
 import Css
 import Data exposing (ApiError, Game(..), Player, TableError(..), Vote(..))
 import Dict exposing (Dict)
+import Dict.Any as AnyDict exposing (AnyDict)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
 import Maybe.Extra as Maybe
-import Page.Table.Card as Card exposing (Side(..))
+import Page.Table.Card as Card
 import Page.Table.Players as Players exposing (PlayerVote(..))
 import Page.Table.Stream as Stream exposing (Event(..), StreamError)
 import Set
@@ -284,45 +285,38 @@ subscriptions _ =
     Stream.observe Event
 
 
-viewTable : (Vote -> Side) -> Html Msg
-viewTable toSide =
+viewTable : (Vote -> Int) -> Html Msg
+viewTable toCount =
     Html.styled Html.div [ Css.marginLeft <| Css.px -12 ] [] <|
-        Card.table toSide Vote
+        Card.table toCount Vote
 
 
 viewVoting : Model -> Html Msg
 viewVoting model =
     let
-        toSide vote =
+        toCount vote =
             case model.myVote of
                 Just myVote ->
                     if vote == myVote then
-                        Front
+                        1
 
                     else
-                        Back
+                        0
 
                 Nothing ->
-                    Front
+                    1
     in
-    viewTable toSide
+    viewTable toCount
 
 
 viewPlayerVotes : Dict Int Vote -> Html Msg
 viewPlayerVotes dict =
     let
-        voteSet =
+        votes =
             Dict.values dict
-                |> AnySet.fromList Data.voteToInt
-
-        toSide vote =
-            if AnySet.member vote voteSet then
-                Front
-
-            else
-                Back
+                |> List.foldl (\v -> AnyDict.update v (Just << Maybe.unwrap 1 ((+) 1))) (AnyDict.empty Data.voteToInt)
     in
-    viewTable toSide
+    viewTable (Maybe.withDefault 0 << flip AnyDict.get votes)
 
 
 nameFieldId : String
