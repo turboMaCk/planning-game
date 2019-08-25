@@ -1,10 +1,5 @@
 {
 
-      "turboMaCk/any-set" = {
-        sha256 = "1dlxjyizpwfq1lqgpkldnfk1nzmpa0hv4ww8mszmmsqvkfgviamw";
-        version = "1.0.0";
-      };
-
       "GlobalWebIndex/cmd-extra" = {
         sha256 = "0w6d4bjcx4awcnk7wzq4xyn3wfb3q42cn5xi86mawlaanxgpg15g";
         version = "1.1.1";
