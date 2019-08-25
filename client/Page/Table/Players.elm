@@ -161,14 +161,20 @@ viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer se
                         , Css.fontSize <| Css.px 11
                         , Css.marginTop <| Css.px 4
                         ]
-                        [ Events.onClick <| kickPlayer player]
+                        [ Events.onClick <| kickPlayer player ]
                         [ Html.text "kick out" ]
 
                   else
                     Html.styled Html.small
                         [ Css.fontSize <| Css.px 11 ]
                         []
-                        [ Html.text "Dealer can't be kicked out" ]
+                        [ Html.text <|
+                            if amIDealer then
+                                "Dealer can't be kicked out"
+
+                            else
+                                "Only delaer can kick our players"
+                        ]
                 ]
 
           else
