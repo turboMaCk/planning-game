@@ -20,7 +20,9 @@ type alias Config msg =
     { isMe : Player -> Bool
     , isDealer : Player -> Bool
     , toVote : Player -> PlayerVote
-    , kick : Player -> msg
+    , select : Player -> msg
+    , deselect : msg
+    , kickPlayer : Player -> msg
     }
 
 
@@ -95,47 +97,91 @@ onlineIndicator isActive =
         ]
 
 
-viewPlayer : Config msg -> Bool -> Player -> Html msg
-viewPlayer { isMe, toVote, kick, isDealer } amIDealer player =
+concatWhen : Bool -> List a -> List a -> List a
+concatWhen b xs =
+    if b then
+        List.append xs
+
+    else
+        identity
+
+
+viewPlayer : Config msg -> Bool -> Maybe Int -> Player -> Html msg
+viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer selectedId player =
     let
         showKick =
             amIDealer && not (isMe player)
+
+        isSelected =
+            Just player.id == selectedId
     in
     Html.styled Html.li
-        [ Css.listStyle Css.none
-        , Css.margin4 Css.zero Css.zero (Css.px 6) Css.zero
-        , Css.fontWeight <| Css.int 200
-        , Css.overflow Css.hidden
-        , Css.textOverflow Css.ellipsis
-        , if isMe player then
-            Css.textDecoration Css.underline
+        ([ Css.listStyle Css.none
+         , Css.marginBottom <| Css.px 6
+         , Css.fontWeight <| Css.int 200
+         , Css.overflow Css.hidden
+         , Css.textOverflow Css.ellipsis
+         ]
+            |> concatWhen isSelected
+                [ Css.padding3 (Css.px 2) (Css.px 6) <| Css.px 6
+                , Css.backgroundColor Theme.values.lightBackground
+                , Css.borderRadius <| Css.px 4
+                , Css.marginLeft <| Css.px -6
+                , Css.marginRight <| Css.px -6
+                , Css.marginTop <| Css.px -2
+                ]
+        )
+        []
+        [ onlineIndicator player.isConnected
+        , dealerIndicator <| isDealer player
+        , Html.styled Html.span
+            ([ Css.cursor Css.pointer
+             , Css.hover [ Css.textDecoration Css.underline ]
+             ]
+                |> concatWhen (isMe player) [ Css.textDecoration Css.underline ]
+            )
+            [ Events.onClick <|
+                if isSelected then
+                    deselect
 
-          else
-            Css.property "foo" "bar"
-        , if showKick then
-            Css.hover
-                [ Css.textDecoration Css.lineThrough
-                , Css.cursor Css.pointer
+                else
+                    select player
+            ]
+            [ Html.text player.name ]
+        , voteIndicator <| toVote player
+        , if isSelected then
+            Html.styled Html.div
+                []
+                []
+                [ if showKick then
+                    Html.styled Html.button
+                        [ Theme.secondaryBtn
+                        , Css.fontSize <| Css.px 11
+                        , Css.marginTop <| Css.px 4
+                        ]
+                        [ Events.onClick <| kickPlayer player ]
+                        [ Html.text "kick out" ]
+
+                  else
+                    Html.styled Html.small
+                        [ Css.fontSize <| Css.px 11 ]
+                        []
+                        [ Html.text <|
+                            if amIDealer then
+                                "Dealer can't be kicked out"
+
+                            else
+                                "Only delaer can kick our players"
+                        ]
                 ]
 
           else
-            Css.hover []
-        ]
-        (if showKick then
-            [ Events.onClick <| kick player ]
-
-         else
-            []
-        )
-        [ onlineIndicator player.isConnected
-        , dealerIndicator <| isDealer player
-        , Html.text player.name
-        , voteIndicator <| toVote player
+            Html.text ""
         ]
 
 
-view : Config msg -> Bool -> Dict Int Player -> Html msg
-view config amIDealer players =
+view : Config msg -> Bool -> Maybe Int -> Dict Int Player -> Html msg
+view config amIDealer selectedId players =
     Html.div []
         [ Html.styled Html.ul
             [ Css.listStyle Css.none
@@ -144,7 +190,7 @@ view config amIDealer players =
             ]
             []
           <|
-            (List.map (viewPlayer config amIDealer) <|
+            (List.map (viewPlayer config amIDealer selectedId) <|
                 Dict.values players
             )
         ]

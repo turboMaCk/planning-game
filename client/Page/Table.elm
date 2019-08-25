@@ -36,6 +36,7 @@ type alias Model =
     , gameName : Maybe String
     , nextGameName : String
     , newName : Maybe String
+    , focusedPlayer : Maybe Int
     }
 
 
@@ -51,6 +52,7 @@ init token id =
       , gameName = Just ""
       , nextGameName = "Task-1"
       , newName = Nothing
+      , focusedPlayer = Nothing
       }
     , Data.getMe token id Me
     )
@@ -70,6 +72,7 @@ type Msg
     | SetNewName String
     | SaveNewName
     | DiscardNewName
+    | FocusPlayer (Maybe Int)
 
 
 leave : () -> Cmd msg
@@ -212,6 +215,9 @@ update navigationKey msg model =
 
         DiscardNewName ->
             ( { model | newName = Nothing }, Cmd.none )
+
+        FocusPlayer state ->
+            ( { model | focusedPlayer = state }, Cmd.none )
 
 
 
@@ -676,7 +682,10 @@ viewPlayerSetName me newName =
 viewMe : Model -> Html Msg
 viewMe { me, dealer, newName, players } =
     Html.styled Html.div
-        [ Css.margin2 (Css.px 20) Css.zero ]
+        [ Css.margin2 (Css.px 20) Css.zero
+        , Css.paddingBottom <| Css.px 20
+        , Css.borderBottom3 (Css.px 2) Css.dotted <| Css.hex "c0c0c0c0"
+        ]
         []
         [ Html.styled Html.span
             [ Css.fontWeight <| Css.int 400
@@ -689,22 +698,30 @@ viewMe { me, dealer, newName, players } =
             Html.text ""
 
           else
-            Html.styled Html.a
-                [ Css.fontSize <| Css.px 12
-                , Css.fontWeight <| Css.int 400
-                , Css.textDecoration Css.underline
-                , Css.cursor Css.pointer
-                , Css.color Theme.values.primaryColor
+            Html.styled Html.div
+                [ Css.display Css.block
+                , Css.margin4 (Css.px 12) Css.zero (Css.px -12) Css.zero
+                , Css.textAlign Css.center
                 ]
-                (Maybe.unwrap []
-                    (List.singleton
-                        << Events.onClick
-                        << Send
-                        << Stream.KickPlayer
+                []
+                [ Html.styled Html.a
+                    [ Css.display Css.inlineBlock
+                    , Css.fontSize <| Css.px 14
+                    , Css.fontWeight <| Css.int 400
+                    , Css.color Theme.values.primaryColor
+                    , Css.textDecoration Css.underline
+                    , Css.cursor Css.pointer
+                    ]
+                    (Maybe.unwrap []
+                        (List.singleton
+                            << Events.onClick
+                            << Send
+                            << Stream.KickPlayer
+                        )
+                        (Maybe.andThen (flip Dict.get players) me)
                     )
-                    (Maybe.andThen (flip Dict.get players) me)
-                )
-                [ Html.text "Leave table" ]
+                    [ Html.text "Leave table" ]
+                ]
         ]
 
 
@@ -749,9 +766,12 @@ view model =
 
                                 Overview _ ->
                                     Hidden
-                    , kick = Send << Stream.KickPlayer
+                    , select = FocusPlayer << Just << .id
+                    , deselect = FocusPlayer Nothing
+                    , kickPlayer = Send << Stream.KickPlayer
                     }
                     (amIDealer model)
+                    model.focusedPlayer
                     model.players
                 ]
             ]
