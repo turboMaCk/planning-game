@@ -26,6 +26,7 @@ values =
     , secondaryColor = Css.hex "#3280ff"
     , darkColor = Css.hex "#000000"
     , lightColor = Css.hex "#ffffff"
+    , lightBackground = Css.hex "#d6e5ff"
     , greenColor = Css.hex "#8fdb41"
     }
 
@@ -141,7 +142,7 @@ textField =
         , Css.outline Css.zero
         , Css.fontWeight <| Css.int 700
         , Css.borderBottom3 (Css.px 3) Css.solid values.secondaryColor
-        , Css.backgroundColor <| Css.hex "#d6e5ff"
+        , Css.backgroundColor values.lightBackground
         , Css.pseudoElement "placeholder"
             [ Css.color values.darkColor
             , Css.fontWeight <| Css.int 400

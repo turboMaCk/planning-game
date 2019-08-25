@@ -124,9 +124,7 @@ viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer se
          ]
             |> concatWhen isSelected
                 [ Css.padding3 (Css.px 2) (Css.px 6) <| Css.px 6
-
-                -- @TODO: use variable
-                , Css.backgroundColor <| Css.hex "#d6e5ff"
+                , Css.backgroundColor Theme.values.lightBackground
                 , Css.borderRadius <| Css.px 4
                 , Css.marginLeft <| Css.px -6
                 , Css.marginRight <| Css.px -6
