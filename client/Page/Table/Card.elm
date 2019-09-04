@@ -1,6 +1,6 @@
 module Page.Table.Card exposing (table)
 
-import Css
+import Css exposing (Style)
 import Css.Global as GCss
 import Css.Transitions as Transitions
 import Data exposing (Vote(..))
@@ -47,8 +47,8 @@ cardBackground vote =
     "/svg/card-" ++ name ++ ".svg"
 
 
-view : (Vote -> Int) -> { click : Vote -> msg, hover : Maybe Vote -> msg } -> Vote -> Html msg
-view toCount msgs vote =
+cardStyle : Int -> Vote -> Style
+cardStyle i vote =
     let
         transitionMs =
             600
@@ -56,7 +56,7 @@ view toCount msgs vote =
         radius =
             Css.px 12
 
-        cardStyles =
+        mixin =
             Css.batch
                 [ Css.property "content" "''"
                 , Css.display Css.block
@@ -71,54 +71,55 @@ view toCount msgs vote =
                 , Css.backgroundSize2 Css.auto <| Css.pct 100
                 , Css.backgroundPosition Css.center
                 ]
+    in
+    Css.batch
+        [ Css.position Css.absolute
+        , Css.top Css.zero
+        , Css.left <| Css.px (2 * toFloat i)
+        , Css.width <| Css.pct 100
+        , Css.height <| Css.pct 100
+        , Css.transformStyle Css.preserve3d
+        , Css.borderRadius radius
+        , Transitions.transition
+            [ Transitions.textShadow transitionMs
+            , Transitions.transform transitionMs
+            ]
+        , Css.before <|
+            [ mixin
+            , Css.backgroundImage <| Css.url <| cardBackground vote
+            , Css.zIndex <| Css.int 2
+            , Css.transform <| Css.rotateY <| Css.deg 0
+            ]
+        , Css.after <|
+            [ mixin
+            , Css.backgroundImage <| Css.url <| "/svg/card-cover.svg"
+            , Css.transform <| Css.rotateY <| Css.deg -180
+            ]
+        ]
 
-        singleCard i =
+
+view : (Vote -> Int) -> { click : Vote -> msg, hover : Maybe Vote -> msg } -> Vote -> Html msg
+view toCount msgs vote =
+    let
+        front i =
             Html.styled Html.div
-                [ Css.position Css.absolute
-                , Css.top Css.zero
-                , Css.left <| Css.px (2 * toFloat i)
-                , Css.width <| Css.pct 100
-                , Css.height <| Css.pct 100
-                , Css.transformStyle Css.preserve3d
-                , Css.boxShadow4
-                    (Css.px <|
-                        if toCount vote > 0 then
-                            -1
-
-                        else
-                            1
-                    )
-                    (Css.px -1)
-                    (Css.px 5)
-                  <|
-                    Css.rgba 0 0 0 0.3
+                [ cardStyle i vote
+                , Css.boxShadow4 (Css.px -1) (Css.px -1) (Css.px 5) <| Css.rgba 0 0 0 0.3
                 , Css.transforms
                     [ Css.rotateY <|
-                        Css.deg <|
-                            if toCount vote > 0 then
-                                0
-
-                            else
-                                180
+                        Css.deg 0
                     , Css.rotateZ <|
                         Css.deg (toFloat i * 2)
                     ]
-                , Css.borderRadius radius
-                , Transitions.transition
-                    [ Transitions.textShadow transitionMs
-                    , Transitions.transform transitionMs
-                    ]
-                , Css.before <|
-                    [ cardStyles
-                    , Css.backgroundImage <| Css.url <| cardBackground vote
-                    , Css.zIndex <| Css.int 2
-                    , Css.transform <| Css.rotateY <| Css.deg 0
-                    ]
-                , Css.after <|
-                    [ cardStyles
-                    , Css.backgroundImage <| Css.url <| "/svg/card-cover.svg"
-                    , Css.transform <| Css.rotateY <| Css.deg -180
-                    ]
+                ]
+                [ Attrs.class "inner-card" ]
+                []
+
+        back i =
+            Html.styled Html.div
+                [ cardStyle i vote
+                , Css.boxShadow4 (Css.px 1) (Css.px -1) (Css.px 5) <| Css.rgba 0 0 0 0.3
+                , Css.transforms [ Css.rotateY <| Css.deg 180 ]
                 ]
                 [ Attrs.class "inner-card" ]
                 []
@@ -141,10 +142,13 @@ view toCount msgs vote =
         , Attrs.class "card"
         ]
     <|
-        List.indexedMap (\i _ -> singleCard i) <|
-            List.range 1 <|
-                max 1 <|
+        if toCount vote > 0 then
+            List.indexedMap (\i _ -> front i) <|
+                List.range 1 <|
                     min (toCount vote) 5
+
+        else
+            [ back 0 ]
 
 
 table : (Vote -> Int) -> { click : Vote -> msg, hover : Maybe Vote -> msg } -> List (Html msg)
