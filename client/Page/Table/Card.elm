@@ -106,10 +106,8 @@ view toCount msgs vote =
                 [ cardStyle i vote
                 , Css.boxShadow4 (Css.px -1) (Css.px -1) (Css.px 5) <| Css.rgba 0 0 0 0.3
                 , Css.transforms
-                    [ Css.rotateY <|
-                        Css.deg 0
-                    , Css.rotateZ <|
-                        Css.deg (toFloat i * 2)
+                    [ Css.rotateY <| Css.deg 0
+                    , Css.rotateZ <| Css.deg (toFloat i * 2)
                     ]
                 ]
                 [ Attrs.class "inner-card" ]
