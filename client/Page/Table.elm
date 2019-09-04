@@ -38,6 +38,7 @@ type alias Model =
     , newName : Maybe String
     , focusedPlayer : Maybe Int
     , highlightedVote : Maybe Vote
+    , newCurrentGameName : Maybe String
     }
 
 
@@ -55,6 +56,7 @@ init token id =
       , newName = Nothing
       , focusedPlayer = Nothing
       , highlightedVote = Nothing
+      , newCurrentGameName = Nothing
       }
     , Data.getMe token id Me
     )
@@ -76,6 +78,9 @@ type Msg
     | DiscardNewName
     | FocusPlayer (Maybe Int)
     | HighlightVote (Maybe Vote)
+    | SetNewCurrentGameName String
+    | SaveNewCurrentGameName
+    | DiscardNewCurrentGameName
 
 
 leave : () -> Cmd msg
@@ -224,6 +229,16 @@ update navigationKey msg model =
 
         HighlightVote state ->
             ( { model | highlightedVote = state }, Cmd.none )
+
+        SetNewCurrentGameName name ->
+            ( { model | newCurrentGameName = Just name }, Cmd.none )
+
+        SaveNewCurrentGameName ->
+            Debug.log "todo" <|
+                ( model, Cmd.none )
+
+        DiscardNewCurrentGameName ->
+            ( { model | newCurrentGameName = Nothing }, Cmd.none )
 
 
 
@@ -545,8 +560,8 @@ viewGame model =
     Html.styled Html.div [ Css.width <| Css.px 835 ] [] inner
 
 
-viewCurrentGame : Game -> Html msg
-viewCurrentGame game =
+viewCurrentGame : Maybe String -> Game -> Html Msg
+viewCurrentGame newName game =
     let
         headlineStyle =
             Css.batch
@@ -568,7 +583,33 @@ viewCurrentGame game =
                     ]
                     []
                     [ Html.text "Estimating task:" ]
-                , Html.text name
+                , case newName of
+                    Nothing ->
+                        Html.div [ Events.onClick <| SetNewCurrentGameName "" ] [ Html.text name ]
+
+                    Just value ->
+                        Html.form [ Events.onSubmit SaveNewCurrentGameName ]
+                            [ Html.styled Html.input
+                                [ Theme.textField ]
+                                [ Events.onInput SetNewCurrentGameName
+                                , Attrs.value value
+                                , Attrs.id editNameFieldId
+                                ]
+                                []
+                            , Html.styled Html.button
+                                [ Theme.primaryBtn
+                                , Css.display Css.inlineBlock
+                                , Css.marginRight <| Css.px 6
+                                ]
+                                [ Attrs.type_ "submit" ]
+                                [ Html.text "save" ]
+                            , Html.styled Html.button
+                                [ Theme.secondaryBtn
+                                , Css.display Css.inlineBlock
+                                ]
+                                [ Attrs.type_ "button", Events.onClick DiscardNewCurrentGameName ]
+                                [ Html.text "cancel" ]
+                            ]
                 ]
     in
     case game of
@@ -737,10 +778,9 @@ view model =
             []
             [ viewGame model
             , Html.styled Html.aside
-                [ Css.width <| Css.px 250
-                ]
+                [ Css.width <| Css.px 250 ]
                 []
-                [ viewCurrentGame model.game
+                [ viewCurrentGame model.newCurrentGameName model.game
                 , viewPointsSoFar model.game
                 , viewMe model
                 , Players.view
