@@ -16,7 +16,7 @@
             "elm-community/json-extra": "4.0.0",
             "elm-community/maybe-extra": "5.0.0",
             "rtfeldman/elm-css": "16.0.0",
-            "turboMaCk/any-set": "1.0.0"
+            "turboMaCk/any-dict": "1.1.0"
         },
         "indirect": {
             "Skinney/murmur3": "2.0.8",
@@ -27,8 +27,7 @@
             "elm/time": "1.0.0",
             "elm/virtual-dom": "1.0.2",
             "rtfeldman/elm-hex": "1.0.0",
-            "rtfeldman/elm-iso8601-date-strings": "1.1.2",
-            "turboMaCk/any-dict": "1.0.1"
+            "rtfeldman/elm-iso8601-date-strings": "1.1.2"
         }
     },
     "test-dependencies": {

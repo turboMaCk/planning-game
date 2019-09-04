@@ -1,10 +1,5 @@
 {
 
-      "turboMaCk/any-set" = {
-        sha256 = "1dlxjyizpwfq1lqgpkldnfk1nzmpa0hv4ww8mszmmsqvkfgviamw";
-        version = "1.0.0";
-      };
-
       "GlobalWebIndex/cmd-extra" = {
         sha256 = "0w6d4bjcx4awcnk7wzq4xyn3wfb3q42cn5xi86mawlaanxgpg15g";
         version = "1.1.1";
@@ -23,6 +18,11 @@
       "elm-community/basics-extra" = {
         sha256 = "02f5c0lhw6lrxdpmn09jpfhd45sbn7mr95hwrfyilx5yfrqa4z15";
         version = "4.0.0";
+      };
+
+      "turboMaCk/any-dict" = {
+        sha256 = "1zj4qfj25c7521fkf4h3mb1drsrgska1lgqajasyjnf88qkrykgg";
+        version = "1.1.0";
       };
 
       "elm/browser" = {
@@ -68,11 +68,6 @@
       "elm/html" = {
         sha256 = "1n3gpzmpqqdsldys4ipgyl1zacn0kbpc3g4v3hdpiyfjlgh8bf3k";
         version = "1.0.0";
-      };
-
-      "turboMaCk/any-dict" = {
-        sha256 = "09kz24cb42wbl5acps38ci7lvm261w8alnz6s7x57aycl00w3w11";
-        version = "1.0.1";
       };
 
       "rtfeldman/elm-hex" = {

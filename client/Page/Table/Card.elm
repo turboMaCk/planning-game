@@ -1,17 +1,12 @@
-module Page.Table.Card exposing (Side(..), table)
+module Page.Table.Card exposing (table)
 
-import Css
+import Css exposing (Style)
 import Css.Global as GCss
 import Css.Transitions as Transitions
 import Data exposing (Vote(..))
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
-
-
-type Side
-    = Front
-    | Back
 
 
 cardBackground : Vote -> String
@@ -52,8 +47,8 @@ cardBackground vote =
     "/svg/card-" ++ name ++ ".svg"
 
 
-view : (Vote -> Side) -> (Vote -> msg) -> Vote -> Html msg
-view toSide msg vote =
+cardStyle : Int -> Vote -> Style
+cardStyle i vote =
     let
         transitionMs =
             600
@@ -61,7 +56,7 @@ view toSide msg vote =
         radius =
             Css.px 12
 
-        cardStyles =
+        mixin =
             Css.batch
                 [ Css.property "content" "''"
                 , Css.display Css.block
@@ -77,8 +72,59 @@ view toSide msg vote =
                 , Css.backgroundPosition Css.center
                 ]
     in
+    Css.batch
+        [ Css.position Css.absolute
+        , Css.top Css.zero
+        , Css.left <| Css.px (2 * toFloat i)
+        , Css.width <| Css.pct 100
+        , Css.height <| Css.pct 100
+        , Css.transformStyle Css.preserve3d
+        , Css.borderRadius radius
+        , Transitions.transition
+            [ Transitions.textShadow transitionMs
+            , Transitions.transform transitionMs
+            ]
+        , Css.before <|
+            [ mixin
+            , Css.backgroundImage <| Css.url <| cardBackground vote
+            , Css.zIndex <| Css.int 2
+            , Css.transform <| Css.rotateY <| Css.deg 0
+            ]
+        , Css.after <|
+            [ mixin
+            , Css.backgroundImage <| Css.url <| "/svg/card-cover.svg"
+            , Css.transform <| Css.rotateY <| Css.deg -180
+            ]
+        ]
+
+
+view : (Vote -> Int) -> { click : Vote -> msg, hover : Maybe Vote -> msg } -> Vote -> Html msg
+view toCount msgs vote =
+    let
+        front i =
+            Html.styled Html.div
+                [ cardStyle i vote
+                , Css.boxShadow4 (Css.px -1) (Css.px -1) (Css.px 5) <| Css.rgba 0 0 0 0.3
+                , Css.transforms
+                    [ Css.rotateY <| Css.deg 0
+                    , Css.rotateZ <| Css.deg (toFloat i * 2)
+                    ]
+                ]
+                [ Attrs.class "inner-card" ]
+                []
+
+        back i =
+            Html.styled Html.div
+                [ cardStyle i vote
+                , Css.boxShadow4 (Css.px 1) (Css.px -1) (Css.px 5) <| Css.rgba 0 0 0 0.3
+                , Css.transforms [ Css.rotateY <| Css.deg 180 ]
+                ]
+                [ Attrs.class "inner-card" ]
+                []
+    in
     Html.styled Html.button
-        [ Css.transform <| Css.perspective 1000
+        [ Css.position Css.relative
+        , Css.transform <| Css.perspective 1000
         , Css.width <| Css.px 144
         , Css.height <| Css.px 224
         , Css.margin <| Css.px 12
@@ -88,68 +134,33 @@ view toSide msg vote =
         , Css.cursor Css.pointer
         , Css.backgroundColor Css.transparent
         ]
-        [ Events.onClick <| msg vote
+        [ Events.onClick <| msgs.click vote
+        , Events.onMouseOver <| msgs.hover <| Just vote
+        , Events.onMouseOut <| msgs.hover Nothing
         , Attrs.class "card"
         ]
-        [ Html.styled Html.div
-            [ Css.position Css.relative
-            , Css.width <| Css.pct 100
-            , Css.height <| Css.pct 100
-            , Css.transformStyle Css.preserve3d
-            , Css.boxShadow4
-                (Css.px <|
-                    if toSide vote == Front then
-                        -1
+    <|
+        if toCount vote > 0 then
+            List.map (\i -> front i) <|
+                List.range 0 <|
+                    min (toCount vote - 1) 4
 
-                    else
-                        1
-                )
-                (Css.px -1)
-                (Css.px 5)
-              <|
-                Css.rgba 0 0 0 0.3
-            , Css.transform <|
-                Css.rotateY <|
-                    Css.deg <|
-                        if toSide vote == Front then
-                            0
-
-                        else
-                            180
-            , Css.borderRadius radius
-            , Transitions.transition
-                [ Transitions.textShadow transitionMs
-                , Transitions.transform transitionMs
-                ]
-            , Css.before <|
-                [ cardStyles
-                , Css.backgroundImage <| Css.url <| cardBackground vote
-                , Css.zIndex <| Css.int 2
-                , Css.transform <| Css.rotateY <| Css.deg 0
-                ]
-            , Css.after <|
-                [ cardStyles
-                , Css.backgroundImage <| Css.url <| "/svg/card-cover.svg"
-                , Css.transform <| Css.rotateY <| Css.deg -180
-                ]
-            ]
-            [ Attrs.class "inner-card" ]
-            []
-        ]
+        else
+            [ back 0 ]
 
 
-table : (Vote -> Side) -> (Vote -> msg) -> List (Html msg)
-table toSide msg =
-    [ view toSide msg OnePoint
-    , view toSide msg TwoPoints
-    , view toSide msg ThreePoints
-    , view toSide msg FivePoints
-    , view toSide msg EightPoints
-    , view toSide msg ThreeteenPoints
-    , view toSide msg TwentyPoints
-    , view toSide msg FortyPoints
-    , view toSide msg HundredPoints
-    , view toSide msg InfinityPoints
+table : (Vote -> Int) -> { click : Vote -> msg, hover : Maybe Vote -> msg } -> List (Html msg)
+table toCount msgs =
+    [ view toCount msgs OnePoint
+    , view toCount msgs TwoPoints
+    , view toCount msgs ThreePoints
+    , view toCount msgs FivePoints
+    , view toCount msgs EightPoints
+    , view toCount msgs ThreeteenPoints
+    , view toCount msgs TwentyPoints
+    , view toCount msgs FortyPoints
+    , view toCount msgs HundredPoints
+    , view toCount msgs InfinityPoints
     , GCss.global
         [ GCss.selector ".card:hover .inner-card"
             [ Css.transforms
