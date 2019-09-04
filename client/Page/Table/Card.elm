@@ -143,9 +143,9 @@ view toCount msgs vote =
         ]
     <|
         if toCount vote > 0 then
-            List.indexedMap (\i _ -> front i) <|
-                List.range 1 <|
-                    min (toCount vote) 5
+            List.map (\i -> front i) <|
+                List.range 0 <|
+                    min (toCount vote - 1) 4
 
         else
             [ back 0 ]
