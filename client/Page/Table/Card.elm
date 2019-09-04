@@ -141,13 +141,10 @@ view toCount msgs vote =
         , Attrs.class "card"
         ]
     <|
-        if toCount vote > 0 then
-            List.indexedMap (\i _ -> singleCard i) <|
-                List.range 1 <|
+        List.indexedMap (\i _ -> singleCard i) <|
+            List.range 1 <|
+                max 1 <|
                     min (toCount vote) 5
-
-        else
-            [ singleCard 0 ]
 
 
 table : (Vote -> Int) -> { click : Vote -> msg, hover : Maybe Vote -> msg } -> List (Html msg)
