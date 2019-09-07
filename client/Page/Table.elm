@@ -220,7 +220,7 @@ update navigationKey msg model =
 
         SaveNewName ->
             { model | newName = Nothing }
-                |> Cmd.with (Maybe.unwrap Cmd.none (\name -> Stream.sendMsg <| Stream.ChangeName name) model.newName)
+                |> Cmd.with (Maybe.unwrap Cmd.none (Stream.sendMsg << Stream.ChangeName) model.newName)
 
         DiscardNewName ->
             ( { model | newName = Nothing }, Cmd.none )
@@ -239,8 +239,12 @@ update navigationKey msg model =
             ( { model | newCurrentGameName = Just name }, Cmd.none )
 
         SaveNewCurrentGameName ->
-            Debug.log "todo" <|
-                ( model, Cmd.none )
+            { model | newCurrentGameName = Nothing }
+                |> Cmd.with
+                    (Maybe.unwrap Cmd.none
+                        (Stream.sendMsg << Stream.RenameCurrentRound)
+                        model.newCurrentGameName
+                    )
 
         DiscardNewCurrentGameName ->
             ( { model | newCurrentGameName = Nothing }, Cmd.none )
@@ -303,6 +307,9 @@ handleEvent navigationKey event model =
               else
                 Cmd.none
             )
+
+        CurrentGameChanged game ->
+            ( { model | game = game }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
