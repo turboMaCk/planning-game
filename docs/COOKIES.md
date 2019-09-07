@@ -18,7 +18,7 @@ This is the list of cookies used by the application:
 
 | Name            | value type | Expiration | Usage                                                               |
 | --------------- | ---------- | ---------- | ------------------------------------------------------------------- |
-| cookiesApproved | Boolean    | 1 day      | Persists state of confirmation of cookies usage                     |
+| cookiesApproved | Boolean    | 30 days    | Persists state for confirmation of cookies usage                    |
 | sessionId       | String     | never      | Stores session id used to match browser to player in scope of table |
 
 Implementation can be reviewed in [init.js](../public/init.js)

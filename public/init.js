@@ -53,7 +53,7 @@
     });
 
     app.ports.cookiesNoticeConfirmed.subscribe(function () {
-        cookie.write(CONFIRMATION_COOKIE, true, 1);
+        cookie.write(CONFIRMATION_COOKIE, true, 30);
     });
 
     app.ports.connect.subscribe(function (tableId) {
