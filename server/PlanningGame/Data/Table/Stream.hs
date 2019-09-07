@@ -49,6 +49,7 @@ data Msg
   | RestartRound
   | KickPlayer Int
   | ChangeName Text
+  | RenameCurrentRound Text
 
 
 instance FromJSON Msg where
@@ -81,6 +82,9 @@ instance FromJSON Msg where
          "ChangeName" ->
            ChangeName <$> (v .: "name")
 
+         "RenameCurrentRound" ->
+           RenameCurrentRound <$> (v .: "name")
+
          _ ->
            mzero
 
@@ -97,6 +101,7 @@ data Event
     | VotingEnded Players Games
     | GameEnded Players Games
     | PlayerKicked (WithId PlayerId Player)
+    | CurrentGameChanged Players Games
 
 
 instance ToJSON Event where
@@ -141,6 +146,11 @@ instance ToJSON Event where
     object
         [ "event"  .= Text.pack "PlayerKicked"
         , "player" .= player
+        ]
+  toJSON (CurrentGameChanged players game) =
+    object
+        [ "event" .= Text.pack "CurrentGameChanged"
+        , "game"  .= snapshot players game
         ]
 
 
@@ -404,3 +414,17 @@ handleMsg _ session (ChangeName newName) table =
     -- @TODO: handle errors
     _ ->
         pure table
+
+handleMsg _ session (RenameCurrentRound newName) table
+  | Table.isDealer session table =
+      case Game.renameCurrent newName <$> Table.game table of
+        Just game -> do
+          broadcast table $ CurrentGameChanged (Table.players table) game
+          pure $ table { game = Just game }
+
+        Nothing ->
+          -- @TODO: handle errors
+          pure table
+  | otherwise =
+    -- @TODO: handle forbidden
+    pure table

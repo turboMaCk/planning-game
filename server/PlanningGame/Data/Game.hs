@@ -22,6 +22,7 @@ module PlanningGame.Data.Game
   , allVoted
   , restartCurrent
   , removePlayerVotes
+  , renameCurrent
   ) where
 
 import           Control.Monad                   (mzero)
@@ -302,3 +303,14 @@ removePlayerVotes sesId games' =
 
     finished games =
       map (\g -> g { votes = filterVotes $ votes g }) games
+
+renameCurrent :: Text -> Games -> Games
+renameCurrent _ g@(FinishedGames _) = g
+renameCurrent newName' original@(RunningGames finished' (RunningGame _ votes locked)) =
+  if Text.null newName then
+    original
+  else
+    RunningGames finished' $ RunningGame newName votes locked
+
+  where
+    newName = Text.strip newName'

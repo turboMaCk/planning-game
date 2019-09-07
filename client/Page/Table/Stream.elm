@@ -60,6 +60,7 @@ type Event
     | VotingEnded Game String
     | GameEnded Game
     | PlayerKicked Player
+    | CurrentGameChanged Game
 
 
 eventField : String -> (a -> Event) -> Decoder a -> Decoder Event
@@ -101,6 +102,7 @@ eventDecoder =
             |> eventField "VotingEnded" identity
         , eventField "GameEnded" GameEnded <| Decode.field "game" Data.gameDecoder
         , eventField "PlayerKicked" PlayerKicked <| Decode.field "player" Data.playerDecoder
+        , eventField "CurrentGameChanged" CurrentGameChanged <| Decode.field "game" Data.gameDecoder
         ]
 
 
@@ -132,6 +134,7 @@ type Msg
     | Restart
     | KickPlayer Player
     | ChangeName String
+    | RenameCurrentRound String
 
 
 encodeMsg : Msg -> Value
@@ -179,6 +182,12 @@ encodeMsg msg =
         ChangeName newName ->
             Encode.object
                 [ ( "msg", Encode.string "ChangeName" )
+                , ( "name", Encode.string newName )
+                ]
+
+        RenameCurrentRound newName ->
+            Encode.object
+                [ ( "msg", Encode.string "RenameCurrentRound" )
                 , ( "name", Encode.string newName )
                 ]
 

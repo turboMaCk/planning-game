@@ -8,7 +8,7 @@ import Component
 import Css
 import Data exposing (ApiError, Game(..), Player, TableError(..), Vote(..))
 import Dict exposing (Dict)
-import Dict.Any as AnyDict exposing (AnyDict)
+import Dict.Any as AnyDict
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
@@ -38,6 +38,7 @@ type alias Model =
     , newName : Maybe String
     , focusedPlayer : Maybe Int
     , highlightedVote : Maybe Vote
+    , newCurrentGameName : Maybe String
     }
 
 
@@ -55,6 +56,7 @@ init token id =
       , newName = Nothing
       , focusedPlayer = Nothing
       , highlightedVote = Nothing
+      , newCurrentGameName = Nothing
       }
     , Data.getMe token id Me
     )
@@ -76,6 +78,10 @@ type Msg
     | DiscardNewName
     | FocusPlayer (Maybe Int)
     | HighlightVote (Maybe Vote)
+    | EditCurrentGameName
+    | SetNewCurrentGameName String
+    | SaveNewCurrentGameName
+    | DiscardNewCurrentGameName
 
 
 leave : () -> Cmd msg
@@ -214,7 +220,7 @@ update navigationKey msg model =
 
         SaveNewName ->
             { model | newName = Nothing }
-                |> Cmd.with (Maybe.unwrap Cmd.none (\name -> Stream.sendMsg <| Stream.ChangeName name) model.newName)
+                |> Cmd.with (Maybe.unwrap Cmd.none (Stream.sendMsg << Stream.ChangeName) model.newName)
 
         DiscardNewName ->
             ( { model | newName = Nothing }, Cmd.none )
@@ -224,6 +230,24 @@ update navigationKey msg model =
 
         HighlightVote state ->
             ( { model | highlightedVote = state }, Cmd.none )
+
+        EditCurrentGameName ->
+            { model | newCurrentGameName = Just "" }
+                |> Cmd.with (Task.attempt (always NoOp) <| Dom.focus currentGameNameFieldId)
+
+        SetNewCurrentGameName name ->
+            ( { model | newCurrentGameName = Just name }, Cmd.none )
+
+        SaveNewCurrentGameName ->
+            { model | newCurrentGameName = Nothing }
+                |> Cmd.with
+                    (Maybe.unwrap Cmd.none
+                        (Stream.sendMsg << Stream.RenameCurrentRound)
+                        model.newCurrentGameName
+                    )
+
+        DiscardNewCurrentGameName ->
+            ( { model | newCurrentGameName = Nothing }, Cmd.none )
 
 
 
@@ -283,6 +307,9 @@ handleEvent navigationKey event model =
               else
                 Cmd.none
             )
+
+        CurrentGameChanged game ->
+            ( { model | game = game }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -545,8 +572,13 @@ viewGame model =
     Html.styled Html.div [ Css.width <| Css.px 835 ] [] inner
 
 
-viewCurrentGame : Game -> Html msg
-viewCurrentGame game =
+currentGameNameFieldId : String
+currentGameNameFieldId =
+    "curent-game-field-name-id"
+
+
+viewCurrentGame : Bool -> Maybe String -> Game -> Html Msg
+viewCurrentGame canEdit newName game =
     let
         headlineStyle =
             Css.batch
@@ -558,7 +590,7 @@ viewCurrentGame game =
             Html.styled Html.h2
 
         showName name =
-            headline [ headlineStyle ]
+            headline [ headlineStyle, Css.fontSize Css.inherit ]
                 []
                 [ Html.styled Html.span
                     [ Css.fontWeight <| Css.int 200
@@ -568,7 +600,42 @@ viewCurrentGame game =
                     ]
                     []
                     [ Html.text "Estimating task:" ]
-                , Html.text name
+                , case newName of
+                    Nothing ->
+                        Html.styled Html.div
+                            [ Css.fontSize <| Css.px 27 ]
+                            [ Events.onClick <|
+                                if canEdit then
+                                    EditCurrentGameName
+
+                                else
+                                    NoOp
+                            ]
+                            [ Html.text name ]
+
+                    Just value ->
+                        Html.form [ Events.onSubmit SaveNewCurrentGameName ]
+                            [ Html.styled Html.input
+                                [ Theme.textField ]
+                                [ Events.onInput SetNewCurrentGameName
+                                , Attrs.value value
+                                , Attrs.id currentGameNameFieldId
+                                ]
+                                []
+                            , Html.styled Html.button
+                                [ Theme.primaryBtn
+                                , Css.display Css.inlineBlock
+                                , Css.marginRight <| Css.px 6
+                                ]
+                                [ Attrs.type_ "submit" ]
+                                [ Html.text "save" ]
+                            , Html.styled Html.button
+                                [ Theme.secondaryBtn
+                                , Css.display Css.inlineBlock
+                                ]
+                                [ Attrs.type_ "button", Events.onClick DiscardNewCurrentGameName ]
+                                [ Html.text "cancel" ]
+                            ]
                 ]
     in
     case game of
@@ -737,10 +804,9 @@ view model =
             []
             [ viewGame model
             , Html.styled Html.aside
-                [ Css.width <| Css.px 250
-                ]
+                [ Css.width <| Css.px 250 ]
                 []
-                [ viewCurrentGame model.game
+                [ viewCurrentGame (amIDealer model) model.newCurrentGameName model.game
                 , viewPointsSoFar model.game
                 , viewMe model
                 , Players.view
