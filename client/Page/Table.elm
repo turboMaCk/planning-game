@@ -8,7 +8,7 @@ import Component
 import Css
 import Data exposing (ApiError, Game(..), Player, TableError(..), Vote(..))
 import Dict exposing (Dict)
-import Dict.Any as AnyDict exposing (AnyDict)
+import Dict.Any as AnyDict
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
 import Html.Styled.Events as Events
@@ -78,6 +78,7 @@ type Msg
     | DiscardNewName
     | FocusPlayer (Maybe Int)
     | HighlightVote (Maybe Vote)
+    | EditCurrentGameName
     | SetNewCurrentGameName String
     | SaveNewCurrentGameName
     | DiscardNewCurrentGameName
@@ -229,6 +230,10 @@ update navigationKey msg model =
 
         HighlightVote state ->
             ( { model | highlightedVote = state }, Cmd.none )
+
+        EditCurrentGameName ->
+            { model | newCurrentGameName = Just "" }
+                |> Cmd.with (Task.attempt (always NoOp) <| Dom.focus currentGameNameFieldId)
 
         SetNewCurrentGameName name ->
             ( { model | newCurrentGameName = Just name }, Cmd.none )
@@ -560,8 +565,13 @@ viewGame model =
     Html.styled Html.div [ Css.width <| Css.px 835 ] [] inner
 
 
-viewCurrentGame : Maybe String -> Game -> Html Msg
-viewCurrentGame newName game =
+currentGameNameFieldId : String
+currentGameNameFieldId =
+    "curent-game-field-name-id"
+
+
+viewCurrentGame : Bool -> Maybe String -> Game -> Html Msg
+viewCurrentGame canEdit newName game =
     let
         headlineStyle =
             Css.batch
@@ -573,7 +583,7 @@ viewCurrentGame newName game =
             Html.styled Html.h2
 
         showName name =
-            headline [ headlineStyle ]
+            headline [ headlineStyle, Css.fontSize Css.inherit ]
                 []
                 [ Html.styled Html.span
                     [ Css.fontWeight <| Css.int 200
@@ -585,7 +595,16 @@ viewCurrentGame newName game =
                     [ Html.text "Estimating task:" ]
                 , case newName of
                     Nothing ->
-                        Html.div [ Events.onClick <| SetNewCurrentGameName "" ] [ Html.text name ]
+                        Html.styled Html.div
+                            [ Css.fontSize <| Css.px 27 ]
+                            [ Events.onClick <|
+                                if canEdit then
+                                    EditCurrentGameName
+
+                                else
+                                    NoOp
+                            ]
+                            [ Html.text name ]
 
                     Just value ->
                         Html.form [ Events.onSubmit SaveNewCurrentGameName ]
@@ -593,7 +612,7 @@ viewCurrentGame newName game =
                                 [ Theme.textField ]
                                 [ Events.onInput SetNewCurrentGameName
                                 , Attrs.value value
-                                , Attrs.id editNameFieldId
+                                , Attrs.id currentGameNameFieldId
                                 ]
                                 []
                             , Html.styled Html.button
@@ -780,7 +799,7 @@ view model =
             , Html.styled Html.aside
                 [ Css.width <| Css.px 250 ]
                 []
-                [ viewCurrentGame model.newCurrentGameName model.game
+                [ viewCurrentGame (amIDealer model) model.newCurrentGameName model.game
                 , viewPointsSoFar model.game
                 , viewMe model
                 , Players.view
