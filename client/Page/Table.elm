@@ -603,7 +603,19 @@ viewCurrentGame canEdit newName game =
                 , case newName of
                     Nothing ->
                         Html.styled Html.div
-                            [ Css.fontSize <| Css.px 27 ]
+                            [ Css.fontSize <| Css.px 27
+                            , Css.position Css.relative
+                            , Css.hover
+                                [ Css.before <|
+                                    if canEdit then
+                                        [ Theme.stickyLabel
+                                        , Css.property "content" "'Edit name'"
+                                        ]
+
+                                    else
+                                        []
+                                ]
+                            ]
                             [ Events.onClick <|
                                 if canEdit then
                                     EditCurrentGameName
@@ -732,14 +744,8 @@ viewPlayerSetName me newName =
                     , Css.fontWeight <| Css.int 200
                     , Css.hover
                         [ Css.before
-                            [ Css.property "content" "'Edit name'"
-                            , Css.position Css.absolute
-                            , Css.fontSize <| Css.px 11
-                            , Css.color <| Theme.values.secondaryColor
-                            , Css.backgroundColor <| Css.hex "ffffff"
-                            , Css.top <| Css.pct 100
-                            , Css.textDecoration Css.underline
-                            , Css.marginTop <| Css.px -2
+                            [ Theme.stickyLabel
+                            , Css.property "content" "'Edit name'"
                             ]
                         ]
                     ]

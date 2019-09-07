@@ -8,6 +8,7 @@ module Theme exposing
     , primaryBtn
     , secondaryBtn
     , shaking
+    , stickyLabel
     , textField
     , values
     )
@@ -214,4 +215,18 @@ shaking rot =
         [ Css.animationName keyframes
         , Css.animationDuration <| Css.ms 5000
         , Css.property "animation-iteration-count" "infinite"
+        ]
+
+
+stickyLabel : Style
+stickyLabel =
+    Css.batch
+        [ Css.position Css.absolute
+        , Css.fontSize <| Css.px 11
+        , Css.color <| values.secondaryColor
+        , Css.backgroundColor <| Css.hex "ffffff"
+        , Css.top <| Css.pct 100
+        , Css.textDecoration Css.underline
+        , Css.marginTop <| Css.px -2
+        , Css.fontWeight <| Css.int 200
         ]
