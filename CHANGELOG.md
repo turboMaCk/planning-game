@@ -1,5 +1,11 @@
 # Revision history for planning-game
 
+## 0.2.1 -- 2019-09-07
+
+* **FEATURE:** Indicate count and highlight authors of votes
+* **FEATURE:** Allow dealer to rename current game
+* **CHORE:** Increase expiraction of cookies agreement cookie from 1 to 30 days
+
 ## 0.2.0 -- 2019-08-25
 
 * **BUGFIX:** Allow multiple connections for user (was disconnecting 2nd+ connection by mistake)
