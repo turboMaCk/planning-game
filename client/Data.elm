@@ -228,7 +228,12 @@ createTable session msg name =
     Http.request
         { method = "POST"
         , url = Url.absolute [ "tables" ] []
-        , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
+        , body =
+            Http.jsonBody <|
+                Encode.object
+                    [ ( "name", Encode.string name )
+                    , ( "isActive", Encode.bool True )
+                    ]
         , expect = expectJson msg tableErrorDecoder tableDecoder
         , headers = [ Http.header "Authorization" <| "Bearer " ++ session.id ]
         , timeout = Nothing
@@ -257,6 +262,7 @@ type alias Player =
     { id : Int
     , name : String
     , isConnected : Bool
+    , isActive : Bool
     }
 
 
@@ -266,6 +272,7 @@ playerDecoder =
         |> Decode.andMap (Decode.field "id" Decode.int)
         |> Decode.andMap (Decode.field "name" Decode.string)
         |> Decode.andMap (Decode.field "connected" Decode.bool)
+        |> Decode.andMap (Decode.field "isActive" Decode.bool)
 
 
 getMe : String -> String -> (Result (ApiError TableError) Player -> msg) -> Cmd msg
@@ -463,6 +470,7 @@ isRoundFinished game =
         _ ->
             False
 
+
 playerPointsDictDecoder : Decoder (Dict Int Vote)
 playerPointsDictDecoder =
     let
@@ -473,6 +481,7 @@ playerPointsDictDecoder =
     in
     Decode.list itemDecoder
         |> Decode.map Dict.fromList
+
 
 roundPointsDictDecoder : Decoder (Dict String Vote)
 roundPointsDictDecoder =
