@@ -85,16 +85,16 @@ server state = status
       pure . SessionJSON . unHeaderAuth
 
     createTableHandler :: (HeaderAuth Session) -> PlayerInfo -> Handler Table
-    createTableHandler (HeaderAuth session) PlayerInfo { name } = do
+    createTableHandler (HeaderAuth session) PlayerInfo { name, isActive } = do
       res <- liftIO $ Concurrent.modifyMVar (State.tables state)
-                $ Table.create session name
+                $ Table.create session name isActive
 
       either Error.respond pure res
 
     joinTableHandler :: (HeaderAuth Session) -> Id TableId -> PlayerInfo -> Handler Table
-    joinTableHandler (HeaderAuth session) id' PlayerInfo { name } = do
+    joinTableHandler (HeaderAuth session) id' PlayerInfo { name, isActive } = do
       tables <- liftIO $ Concurrent.readMVar (State.tables state)
-      tableRes <- liftIO $ TableStream.join session id' name tables
+      tableRes <- liftIO $ TableStream.join session id' name isActive tables
 
       either Error.respond pure tableRes
 

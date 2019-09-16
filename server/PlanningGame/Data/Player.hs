@@ -49,10 +49,17 @@ import qualified PlanningGame.Data.AutoIncrement as Inc
 data PlayerId
 
 
+data PlayerStatus
+  = Active
+  | Idle
+  deriving (Eq)
+
+
 data Player = Player
   { name              :: Text
   -- @TODO: autoincrement can be maybe utilized here as well
   , playerConnections :: IntMap Connection
+  , status            :: PlayerStatus
   }
 
 
@@ -61,11 +68,12 @@ instance Show Player where
 
 
 instance ToJSON (WithId PlayerId Player) where
-  toJSON (WithId id' player@(Player { name })) =
+  toJSON (WithId id' player@(Player { name, status })) =
     Aeson.object
-        [ "id" .= toJSON id'
-        , "name" .= name
+        [ "id"        .= toJSON id'
+        , "name"      .= name
         , "connected" .= hasConnection player
+        , "isActive"  .= toJSON (status == Active)
         ]
 
 
@@ -88,9 +96,9 @@ instance Error PlayerError where
   toReadable NameEmpty = "Name can't be empty."
 
 
-create :: Text -> Player
-create n =
-  Player n IntMap.empty
+create :: Text -> Bool -> Player
+create n isActive =
+  Player n IntMap.empty (if isActive then Active else Idle)
 
 
 getName :: WithId PlayerId Player -> Text
@@ -103,8 +111,8 @@ nameTaken name' players =
     Inc.filter ((==) name' . name) players
 
 
-add :: Session -> Text -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
-add sesId' name' players
+add :: Session -> Text -> Bool -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
+add sesId' name' isActive players
   | Text.null name =
     Left NameEmpty
 
@@ -112,7 +120,7 @@ add sesId' name' players
     Left NameTaken
 
   | otherwise =
-    Right $ Inc.insert sesId' (create name) players
+    Right $ Inc.insert sesId' (create name isActive) players
 
   where
     name = Text.strip name'

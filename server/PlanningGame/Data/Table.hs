@@ -116,12 +116,12 @@ empty =
 -- Basic Operations
 
 
-create :: Session -> Text -> Tables -> IO ( Tables, Either TableError Table )
-create id' name' tables = do
+create :: Session -> Text -> Bool -> Tables -> IO ( Tables, Either TableError Table )
+create id' name' isActive' tables = do
   tId <- generateId tables
   now <- Clock.getCurrentTime
 
-  case Player.add id' name' Player.empty of
+  case Player.add id' name' isActive' Player.empty of
     Right (players, _) -> do
       let newTable = Table tId id' players Nothing now
 

@@ -9,10 +9,12 @@ import           Data.Text        (Text)
 
 
 data PlayerInfo = PlayerInfo
-  { name :: Text
+  { name     :: Text
+  , isActive :: Bool
   }
   deriving (Eq, Show)
 
 instance FromJSON PlayerInfo where
   parseJSON (Object v) = PlayerInfo <$> (v .: "name")
+                            <*> (v .: "isActive")
   parseJSON _          = mzero

@@ -190,8 +190,8 @@ disconnect state sessionId connId =
 
 
 -- @TODO: Add check if session is not already present
-join :: Session -> Id TableId -> Text -> Tables -> IO ( Either TableError Table )
-join session tableId name' tables =
+join :: Session -> Id TableId -> Text -> Bool -> Tables -> IO ( Either TableError Table )
+join session tableId name' isActive tables =
   let
     name =
       Text.strip name'
@@ -200,7 +200,7 @@ join session tableId name' tables =
     Just mvar -> do
       table <- Concurrent.readMVar mvar
 
-      let ePlayers = Player.add session name (players table)
+      let ePlayers = Player.add session name isActive (players table)
       case ePlayers of
           Right ( newPlayers, newPlayer ) ->
             Concurrent.modifyMVar mvar $ \t -> do
