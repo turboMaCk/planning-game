@@ -15,6 +15,7 @@ data PlayerInfo = PlayerInfo
   deriving (Eq, Show)
 
 instance FromJSON PlayerInfo where
-  parseJSON (Object v) = PlayerInfo <$> (v .: "name")
+  parseJSON (Object v) = PlayerInfo
+                            <$> (v .: "name")
                             <*> (v .: "isActive")
   parseJSON _          = mzero
