@@ -196,6 +196,6 @@ getDealer Table { dealer, players } =
     Nothing -> undefined
 
 
-updatePlayer :: Session -> (Player -> Maybe Player) -> Table -> Table
-updatePlayer session f table@(Table { players }) =
+updatePlayer :: (Player -> Maybe Player) -> Session -> Table -> Table
+updatePlayer f session table@(Table { players }) =
   table { players = Inc.update f session players }

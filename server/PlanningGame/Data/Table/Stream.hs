@@ -28,7 +28,8 @@ import           PlanningGame.Api.GameSnapshot   (snapshot)
 import           PlanningGame.Data.AutoIncrement (WithId (..))
 import           PlanningGame.Data.Game          (Games, Vote)
 import           PlanningGame.Data.Id            (Id)
-import           PlanningGame.Data.Player        (Player, PlayerId, Players)
+import           PlanningGame.Data.Player        (Player, PlayerId,
+                                                  PlayerStatus (..), Players)
 import           PlanningGame.Data.Session       (Session)
 import           PlanningGame.Data.Table         (Table (..), TableError (..),
                                                   TableId, Tables)
@@ -50,6 +51,7 @@ data Msg
   | KickPlayer Int
   | ChangeName Text
   | RenameCurrentRound Text
+  | ChangeStatus PlayerStatus
 
 
 instance FromJSON Msg where
@@ -428,3 +430,9 @@ handleMsg _ session (RenameCurrentRound newName) table
   | otherwise =
     -- @TODO: handle forbidden
     pure table
+
+handleMsg _ session (ChangeStatus status) table = do
+  let newTable = Table.updatePlayer (\p -> Just $ p { Player.status = status }) session table
+
+  -- broadcast newTable $ PlayerStatusUpdate p
+  pure newTable

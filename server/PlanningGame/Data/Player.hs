@@ -27,7 +27,9 @@ module PlanningGame.Data.Player
   , anyOnline
   ) where
 
-import           Data.Aeson.Types                (ToJSON (..), (.=))
+import           Control.Monad                   (mzero)
+import           Data.Aeson.Types                (FromJSON (..), ToJSON (..), Value(..),
+                                                  (.=))
 import           Data.Bifunctor                  (second)
 import           Data.IntMap.Strict              (IntMap)
 import           Data.Text                       (Text)
@@ -53,7 +55,21 @@ data PlayerId
 data PlayerStatus
   = Active
   | Idle
-  deriving (Eq)
+  deriving (Eq, Show)
+
+
+instance FromJSON PlayerStatus where
+  parseJSON (String str) =
+    case str of
+      "active" -> pure Active
+      "idle"   -> pure Idle
+      _        -> mzero
+  parseJSON _ = mzero
+
+
+instance ToJSON PlayerStatus where
+  toJSON Active = "active"
+  toJSON Idle   = "idle"
 
 
 data Player = Player
