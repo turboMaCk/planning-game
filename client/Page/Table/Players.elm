@@ -153,6 +153,7 @@ viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer se
                 |> concatWhen (Just (fromPlayerVote (toVote player)) == highlightedVote)
                     [ Css.fontWeight <| Css.bold ]
                 |> concatWhen (isMe player) [ Css.textDecoration Css.underline ]
+                |> concatWhen (not player.isActive) [ Css.color <| Css.hex "949494" ]
             )
             [ Events.onClick <|
                 if isSelected then

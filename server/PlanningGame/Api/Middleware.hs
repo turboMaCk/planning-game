@@ -55,7 +55,7 @@ static =
 
 indexView :: Html
 indexView =
-  Html.docTypeHtml ! Attrs.lang "en_EN" $ do
+  Html.docTypeHtml ! Attrs.lang "en" $ do
     Html.head $ do
       Html.title "Planning Game"
 
