@@ -17,6 +17,7 @@ module PlanningGame.Data.Table
   , allConnections
   , sessionByPlayerId
   , getDealer
+  , updatePlayer
   ) where
 
 import           Control.Concurrent              (MVar)
@@ -161,15 +162,15 @@ allConnections Table { players } =
 
 assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( WithId PlayerId Player, Int ) )
 assignConnection session conn table@Table { players } =
-    let
-        ( updatedPlayers, mPair ) =
-            Player.addConnection session conn players
-    in
+  let
+    ( updatedPlayers, mPair ) =
+      Player.addConnection session conn players
+  in
     case mPair of
-        Nothing   -> ( table, Nothing )
-        Just pair -> ( table { players = updatedPlayers }
-                     , Just pair
-                     )
+      Nothing   -> ( table, Nothing )
+      Just pair -> ( table { players = updatedPlayers }
+                   , Just pair
+                   )
 
 isDealer :: Session -> Table -> Bool
 isDealer session Table { dealer } =
@@ -193,3 +194,8 @@ getDealer Table { dealer, players } =
     -- Should not ever happen
     -- @TODO: avoidable bottom
     Nothing -> undefined
+
+
+updatePlayer :: Session -> (Player -> Maybe Player) -> Table -> Table
+updatePlayer session f table@(Table { players }) =
+  table { players = Inc.update f session players }

@@ -12,6 +12,7 @@ module PlanningGame.Data.AutoIncrement
   , filter
   , null
   , alter
+  , update
   ) where
 
 import           Data.Aeson.Types (ToJSON (..))
@@ -120,3 +121,12 @@ alter f k (Incremental i map) =
   where
     g Nothing               = WithId (IncId i) <$> f Nothing
     g (Just (WithId id' v)) = WithId id' <$> f (Just v)
+
+
+update :: Ord k => (v -> Maybe v) -> k -> Incremental i k v -> Incremental i k v
+update f k (Incremental i map) =
+  Incremental i $ Map.update g k map
+
+  where
+    g (WithId id' val) =
+      WithId id' <$> f val

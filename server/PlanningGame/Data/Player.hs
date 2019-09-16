@@ -4,6 +4,7 @@
 
 module PlanningGame.Data.Player
   ( Player(..)
+  , PlayerStatus(..)
   , PlayerId
   , Players
   , PlayerError(..)
