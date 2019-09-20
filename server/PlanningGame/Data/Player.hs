@@ -113,9 +113,9 @@ instance Error PlayerError where
   toReadable NameEmpty = "Name can't be empty."
 
 
-create :: Text -> Bool -> Player
-create n isActive =
-  Player n IntMap.empty (if isActive then Active else Idle)
+create :: Text -> PlayerStatus -> Player
+create n status =
+  Player n IntMap.empty status
 
 
 getName :: WithId PlayerId Player -> Text
@@ -128,8 +128,8 @@ nameTaken name' players =
     Inc.filter ((==) name' . name) players
 
 
-add :: Session -> Text -> Bool -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
-add sesId' name' isActive players
+add :: Session -> Text -> PlayerStatus -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
+add sesId' name' status players
   | Text.null name =
     Left NameEmpty
 
@@ -137,7 +137,7 @@ add sesId' name' isActive players
     Left NameTaken
 
   | otherwise =
-    Right $ Inc.insert sesId' (create name isActive) players
+    Right $ Inc.insert sesId' (create name status) players
 
   where
     name = Text.strip name'

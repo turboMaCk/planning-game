@@ -234,7 +234,7 @@ createTable session msg name =
             Http.jsonBody <|
                 Encode.object
                     [ ( "name", Encode.string name )
-                    , ( "isActive", Encode.bool True )
+                    , ( "status", encodePlayerStatus Active )
                     ]
         , expect = expectJson msg tableErrorDecoder tableDecoder
         , headers = [ Http.header "Authorization" <| "Bearer " ++ session.id ]
@@ -248,7 +248,12 @@ joinTable id session msg name =
     Http.request
         { method = "POST"
         , url = Url.absolute [ "tables", id, "join" ] []
-        , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
+        , body =
+            Http.jsonBody <|
+                Encode.object
+                    [ ( "name", Encode.string name )
+                    , ( "status", encodePlayerStatus Active )
+                    ]
         , expect = expectJson msg tableErrorDecoder tableDecoder
         , headers = [ Http.header "Authorization" <| "Bearer " ++ session.id ]
         , timeout = Nothing

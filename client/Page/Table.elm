@@ -759,6 +759,16 @@ viewMe { me, dealer, newName, players } =
     let
         mePlayer =
             Maybe.andThen (flip Dict.get players) me
+
+        active =
+            Maybe.map .status mePlayer == Just Active
+
+        footerItem =
+            Css.batch
+                [ Css.display Css.block
+                , Css.fontSize <| Css.px 14
+                , Css.margin4 (Css.px 12) Css.zero (Css.px -12) Css.zero
+                ]
     in
     Html.styled Html.div
         [ Css.margin2 (Css.px 20) Css.zero
@@ -773,17 +783,28 @@ viewMe { me, dealer, newName, players } =
             []
             [ Html.text "Playing as:" ]
         , viewPlayerSetName mePlayer newName
-        , Html.a
+        , Html.styled Html.a
+            [ footerItem
+            , Css.color Theme.values.darkColor
+            , Css.fontWeight <| Css.int 200
+            ]
             [ Events.onClick <|
                 Send <|
                     Stream.ChangeStatus <|
-                        if Maybe.map .status mePlayer == Just Active then
+                        if active then
                             Idle
 
                         else
                             Active
             ]
-            [ Html.text "change status" ]
+            [ Theme.toggle active
+            , Html.text <|
+                if active then
+                    "Stop voting"
+
+                else
+                    "Start voting"
+            ]
         , if me == dealer then
             Html.text ""
 

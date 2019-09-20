@@ -63,7 +63,7 @@ genContext state =
 
 
 server :: ServerState -> Server Api
-server state = status
+server state = statusApi
            :<|> createSession
            :<|> getSession
            :<|> createTableHandler
@@ -72,8 +72,8 @@ server state = status
            :<|> streamTableHandler
 
   where
-    status :: Handler Text
-    status = pure "OK"
+    statusApi :: Handler Text
+    statusApi = pure "OK"
 
     createSession :: Handler SessionJSON
     createSession =
@@ -85,16 +85,16 @@ server state = status
       pure . SessionJSON . unHeaderAuth
 
     createTableHandler :: (HeaderAuth Session) -> PlayerInfo -> Handler Table
-    createTableHandler (HeaderAuth session) PlayerInfo { name, isActive } = do
+    createTableHandler (HeaderAuth session) PlayerInfo { name, status } = do
       res <- liftIO $ Concurrent.modifyMVar (State.tables state)
-                $ Table.create session name isActive
+                $ Table.create session name status
 
       either Error.respond pure res
 
     joinTableHandler :: (HeaderAuth Session) -> Id TableId -> PlayerInfo -> Handler Table
-    joinTableHandler (HeaderAuth session) id' PlayerInfo { name, isActive } = do
+    joinTableHandler (HeaderAuth session) id' PlayerInfo { name, status } = do
       tables <- liftIO $ Concurrent.readMVar (State.tables state)
-      tableRes <- liftIO $ TableStream.join session id' name isActive tables
+      tableRes <- liftIO $ TableStream.join session id' name status tables
 
       either Error.respond pure tableRes
 

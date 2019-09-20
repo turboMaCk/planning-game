@@ -40,7 +40,8 @@ import           PlanningGame.Data.AutoIncrement (WithId)
 import           PlanningGame.Data.Game          (GameError, Games)
 import           PlanningGame.Data.Id            (Id (..), generateId)
 import           PlanningGame.Data.Player        (Player (..), PlayerError (..),
-                                                  PlayerId, Players)
+                                                  PlayerId, PlayerStatus,
+                                                  Players)
 import           PlanningGame.Data.Session       (Session, SessionId)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
@@ -117,12 +118,12 @@ empty =
 -- Basic Operations
 
 
-create :: Session -> Text -> Bool -> Tables -> IO ( Tables, Either TableError Table )
-create id' name' isActive' tables = do
+create :: Session -> Text -> PlayerStatus -> Tables -> IO ( Tables, Either TableError Table )
+create id' name' status' tables = do
   tId <- generateId tables
   now <- Clock.getCurrentTime
 
-  case Player.add id' name' isActive' Player.empty of
+  case Player.add id' name' status' Player.empty of
     Right (players, _) -> do
       let newTable = Table tId id' players Nothing now
 
@@ -190,7 +191,7 @@ sessionByPlayerId id' table =
 getDealer :: Table -> WithId PlayerId Player
 getDealer Table { dealer, players } =
   case Inc.lookup dealer players of
-    Just p -> p
+    Just p  -> p
     -- Should not ever happen
     -- @TODO: avoidable bottom
     Nothing -> undefined
