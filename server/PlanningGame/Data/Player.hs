@@ -90,7 +90,7 @@ instance ToJSON (WithId PlayerId Player) where
         [ "id"        .= toJSON id'
         , "name"      .= name
         , "connected" .= hasConnection player
-        , "isActive"  .= toJSON (status == Active)
+        , "status"    .= toJSON status
         ]
 
 

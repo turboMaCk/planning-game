@@ -437,6 +437,7 @@ handleMsg _ session (ChangeStatus status) table = do
   case Player.lookup session $ Table.players newTable of
     Just newPlayer ->
       broadcast table $ PlayerStatusUpdate newPlayer
+
     Nothing ->
       pure ()
 

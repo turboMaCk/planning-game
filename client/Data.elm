@@ -2,6 +2,7 @@ module Data exposing
     ( ApiError
     , Game(..)
     , Player
+    , PlayerStatus(..)
     , Session
     , Table
     , TableError(..)
@@ -258,11 +259,33 @@ joinTable id session msg name =
 -- Player
 
 
+type PlayerStatus
+    = Active
+    | Idle
+
+
+playerStatusDecoder : Decoder PlayerStatus
+playerStatusDecoder =
+    Decode.string
+        |> Decode.andThen
+            (\s ->
+                case s of
+                    "active" ->
+                        Decode.succeed Active
+
+                    "idle" ->
+                        Decode.succeed Idle
+
+                    _ ->
+                        Decode.fail <| "Unknown status " ++ s
+            )
+
+
 type alias Player =
     { id : Int
     , name : String
     , isConnected : Bool
-    , isActive : Bool
+    , status : PlayerStatus
     }
 
 
@@ -272,7 +295,7 @@ playerDecoder =
         |> Decode.andMap (Decode.field "id" Decode.int)
         |> Decode.andMap (Decode.field "name" Decode.string)
         |> Decode.andMap (Decode.field "connected" Decode.bool)
-        |> Decode.andMap (Decode.field "isActive" Decode.bool)
+        |> Decode.andMap (Decode.field "status" playerStatusDecoder)
 
 
 getMe : String -> String -> (Result (ApiError TableError) Player -> msg) -> Cmd msg
