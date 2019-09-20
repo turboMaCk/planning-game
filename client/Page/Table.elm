@@ -359,6 +359,33 @@ nameFieldId =
     "game-name-field"
 
 
+viewBigLabel : Bool -> String -> List (Html msg) -> Html msg
+viewBigLabel shake txt under =
+    Html.styled Html.div
+        [ Css.displayFlex
+        , Css.flexDirection Css.column
+        , Css.height <| Css.px 400
+        , Css.maxHeight <| Css.pct 100
+        , Css.justifyContent Css.center
+        , Css.alignItems Css.center
+        ]
+        []
+        [ Html.styled Html.span
+            [ Theme.highlight
+            , Css.fontSize <| Css.px 40
+            , Css.marginBottom <| Css.px 10
+            , if shake then
+                Theme.shaking 5
+
+              else
+                Css.batch []
+            ]
+            []
+            [ Html.text txt ]
+        , Html.styled Html.div [ Css.fontWeight <| Css.int 200 ] [] under
+        ]
+
+
 viewSetName : Model -> Html Msg
 viewSetName model =
     let
@@ -409,22 +436,7 @@ viewSetName model =
             }
 
     else
-        Html.styled Html.div
-            [ Css.displayFlex
-            , Css.height <| Css.px 400
-            , Css.maxHeight <| Css.pct 100
-            , Css.justifyContent Css.center
-            , Css.alignItems Css.center
-            ]
-            []
-            [ Html.styled Html.span
-                [ Theme.highlight
-                , Theme.shaking 5
-                , Css.fontSize <| Css.px 40
-                ]
-                []
-                [ Html.text "Wait till game starts..." ]
-            ]
+        viewBigLabel True "Wait till game starts..." []
 
 
 viewOverviewTable : Dict Int { p | name : String } -> { b | playerVotes : List ( String, Dict Int Vote ), results : Dict String Vote } -> Html msg
@@ -524,21 +536,43 @@ viewGame model =
 
                 Voting _ ->
                     let
-                        shake =
-                            model.myVote == Nothing
+                        amIVoting =
+                            Maybe.andThen (flip Dict.get model.players) model.me
+                                |> Maybe.unwrap False ((==) Active << .status)
                     in
-                    [ Theme.highlightedHeading shake [ Html.text "Pick your card!" ]
-                    , viewVoting model
-                    , Html.br [] []
-                    , if amIDealer model then
-                        Html.styled Html.button
-                            [ Theme.secondaryBtn ]
-                            [ Events.onClick <| Send Stream.FinishRound ]
-                            [ Html.text "Finish Round" ]
+                    (if amIVoting then
+                        let
+                            shake =
+                                model.myVote == Nothing
+                        in
+                        [ Theme.highlightedHeading shake [ Html.text "Pick your card!" ]
+                        , viewVoting model
+                        , Html.br [] []
+                        ]
 
-                      else
-                        Html.text ""
-                    ]
+                     else
+                        [ Theme.highlightedHeading False [ Html.text "Wait for the voting to end" ]
+                        , viewBigLabel False
+                            "You're not voting!"
+                            [ Html.text "Wait for active players to finish their voting or "
+                            , Html.styled Html.a
+                                [ Css.fontWeight <| Css.int 400, Css.textDecoration Css.underline ]
+                                [ Events.onClick <| Send <| Stream.ChangeStatus Active ]
+                                [ Html.text "start voting" ]
+                            , Html.text " yourself."
+                            ]
+                        ]
+                    )
+                        ++ (if amIDealer model then
+                                [ Html.styled Html.button
+                                    [ Theme.secondaryBtn ]
+                                    [ Events.onClick <| Send Stream.FinishRound ]
+                                    [ Html.text "Finish Round" ]
+                                ]
+
+                            else
+                                []
+                           )
 
                 RoundFinished { playerVotes } ->
                     if amIDealer model && model.myVote /= Nothing then

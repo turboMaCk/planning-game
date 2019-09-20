@@ -185,7 +185,9 @@ globalStyles =
         , GCss.button
             [ Css.cursor Css.pointer ]
         , GCss.a
-            [ Css.color values.secondaryColor ]
+            [ Css.color values.secondaryColor
+            , Css.cursor Css.pointer
+            ]
         , GCss.each [ GCss.p, GCss.input, GCss.label ]
             [ Css.fontWeight <| Css.int 200
             , Css.margin2 (Css.px 12) Css.zero
