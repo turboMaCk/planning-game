@@ -434,5 +434,10 @@ handleMsg _ session (RenameCurrentRound newName) table
 handleMsg _ session (ChangeStatus status) table = do
   let newTable = Table.updatePlayer (\p -> Just $ p { Player.status = status }) session table
 
-  -- broadcast newTable $ PlayerStatusUpdate p
+  case Player.lookup session $ Table.players newTable of
+    Just newPlayer ->
+      broadcast table $ PlayerStatusUpdate newPlayer
+    Nothing ->
+      pure ()
+
   pure newTable
