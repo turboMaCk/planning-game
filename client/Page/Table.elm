@@ -767,12 +767,12 @@ viewMe { me, dealer, newName, players } =
             Css.batch
                 [ Css.display Css.block
                 , Css.fontSize <| Css.px 14
-                , Css.margin4 (Css.px 12) Css.zero (Css.px -12) Css.zero
+                , Css.marginTop <| Css.px 12
                 ]
     in
     Html.styled Html.div
         [ Css.margin2 (Css.px 20) Css.zero
-        , Css.paddingBottom <| Css.px 20
+        , Css.paddingBottom <| Css.px 10
         , Css.borderBottom3 (Css.px 2) Css.dotted <| Css.hex "c0c0c0c0"
         ]
         []
@@ -782,7 +782,10 @@ viewMe { me, dealer, newName, players } =
             ]
             []
             [ Html.text "Playing as:" ]
-        , viewPlayerSetName mePlayer newName
+        , Html.styled Html.div
+            [ Css.marginBottom <| Css.px 20 ]
+            []
+            [ viewPlayerSetName mePlayer newName ]
         , Html.styled Html.a
             [ footerItem
             , Css.color Theme.values.darkColor
@@ -810,10 +813,7 @@ viewMe { me, dealer, newName, players } =
 
           else
             Html.styled Html.div
-                [ Css.display Css.block
-                , Css.margin4 (Css.px 12) Css.zero (Css.px -12) Css.zero
-                , Css.textAlign Css.center
-                ]
+                [ footerItem ]
                 []
                 [ Html.styled Html.a
                     [ Css.display Css.inlineBlock
