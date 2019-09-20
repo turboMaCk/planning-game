@@ -17,6 +17,7 @@ module Data exposing
     , getMe
     , getSession
     , isNewGame
+    , isOverview
     , isRoundFinished
     , isVoting
     , joinTable
@@ -505,6 +506,16 @@ isRoundFinished : Game -> Bool
 isRoundFinished game =
     case game of
         RoundFinished _ ->
+            True
+
+        _ ->
+            False
+
+
+isOverview : Game -> Bool
+isOverview game =
+    case game of
+        Overview _ ->
             True
 
         _ ->

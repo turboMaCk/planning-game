@@ -755,7 +755,7 @@ viewPlayerSetName me newName =
 
 
 viewMe : Model -> Html Msg
-viewMe { me, dealer, newName, players } =
+viewMe { me, dealer, newName, players, game } =
     let
         mePlayer =
             Maybe.andThen (flip Dict.get players) me
@@ -786,28 +786,32 @@ viewMe { me, dealer, newName, players } =
             [ Css.marginBottom <| Css.px 20 ]
             []
             [ viewPlayerSetName mePlayer newName ]
-        , Html.styled Html.a
-            [ footerItem
-            , Css.color Theme.values.darkColor
-            , Css.fontWeight <| Css.int 200
-            ]
-            [ Events.onClick <|
-                Send <|
-                    Stream.ChangeStatus <|
-                        if active then
-                            Idle
+        , if Data.isOverview game then
+            Html.text ""
 
-                        else
-                            Active
-            ]
-            [ Theme.toggle active
-            , Html.text <|
-                if active then
-                    "Stop voting"
+          else
+            Html.styled Html.a
+                [ footerItem
+                , Css.color Theme.values.darkColor
+                , Css.fontWeight <| Css.int 200
+                ]
+                [ Events.onClick <|
+                    Send <|
+                        Stream.ChangeStatus <|
+                            if active then
+                                Idle
 
-                else
-                    "Start voting"
-            ]
+                            else
+                                Active
+                ]
+                [ Theme.toggle active
+                , Html.text <|
+                    if active then
+                        "Stop voting"
+
+                    else
+                        "Start voting"
+                ]
         , if me == dealer then
             Html.text ""
 
