@@ -771,7 +771,7 @@ viewMe { me, dealer, newName, players } =
                 ]
     in
     Html.styled Html.div
-        [ Css.margin2 (Css.px 20) Css.zero
+        [ Css.margin3 (Css.px 10) Css.zero (Css.px 20)
         , Css.paddingBottom <| Css.px 10
         , Css.borderBottom3 (Css.px 2) Css.dotted <| Css.hex "c0c0c0c0"
         ]
