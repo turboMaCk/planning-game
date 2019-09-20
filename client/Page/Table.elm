@@ -6,7 +6,7 @@ import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Component
 import Css
-import Data exposing (ApiError, Game(..), Player, TableError(..), Vote(..))
+import Data exposing (ApiError, Game(..), Player, PlayerStatus(..), TableError(..), Vote(..))
 import Dict exposing (Dict)
 import Dict.Any as AnyDict
 import Html.Styled as Html exposing (Html)
@@ -756,6 +756,10 @@ viewPlayerSetName me newName =
 
 viewMe : Model -> Html Msg
 viewMe { me, dealer, newName, players } =
+    let
+        mePlayer =
+            Maybe.andThen (flip Dict.get players) me
+    in
     Html.styled Html.div
         [ Css.margin2 (Css.px 20) Css.zero
         , Css.paddingBottom <| Css.px 20
@@ -768,7 +772,18 @@ viewMe { me, dealer, newName, players } =
             ]
             []
             [ Html.text "Playing as:" ]
-        , viewPlayerSetName (Maybe.andThen (flip Dict.get players) me) newName
+        , viewPlayerSetName mePlayer newName
+        , Html.a
+            [ Events.onClick <|
+                Send <|
+                    Stream.ChangeStatus <|
+                        if Maybe.map .status mePlayer == Just Active then
+                            Idle
+
+                        else
+                            Active
+            ]
+            [ Html.text "change status" ]
         , if me == dealer then
             Html.text ""
 

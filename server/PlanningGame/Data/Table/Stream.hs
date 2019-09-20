@@ -87,6 +87,9 @@ instance FromJSON Msg where
          "RenameCurrentRound" ->
            RenameCurrentRound <$> (v .: "name")
 
+         "ChangeStatus" ->
+           ChangeStatus <$> (v .: "status")
+
          _ ->
            mzero
 
