@@ -2,12 +2,14 @@ module Data exposing
     ( ApiError
     , Game(..)
     , Player
+    , PlayerStatus(..)
     , Session
     , Table
     , TableError(..)
     , Vote(..)
     , createSession
     , createTable
+    , encodePlayerStatus
     , encodeVote
     , errorIs
     , errorMessage
@@ -15,6 +17,7 @@ module Data exposing
     , getMe
     , getSession
     , isNewGame
+    , isOverview
     , isRoundFinished
     , isVoting
     , joinTable
@@ -228,7 +231,12 @@ createTable session msg name =
     Http.request
         { method = "POST"
         , url = Url.absolute [ "tables" ] []
-        , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
+        , body =
+            Http.jsonBody <|
+                Encode.object
+                    [ ( "name", Encode.string name )
+                    , ( "status", encodePlayerStatus Active )
+                    ]
         , expect = expectJson msg tableErrorDecoder tableDecoder
         , headers = [ Http.header "Authorization" <| "Bearer " ++ session.id ]
         , timeout = Nothing
@@ -241,7 +249,12 @@ joinTable id session msg name =
     Http.request
         { method = "POST"
         , url = Url.absolute [ "tables", id, "join" ] []
-        , body = Http.jsonBody <| Encode.object [ ( "name", Encode.string name ) ]
+        , body =
+            Http.jsonBody <|
+                Encode.object
+                    [ ( "name", Encode.string name )
+                    , ( "status", encodePlayerStatus Active )
+                    ]
         , expect = expectJson msg tableErrorDecoder tableDecoder
         , headers = [ Http.header "Authorization" <| "Bearer " ++ session.id ]
         , timeout = Nothing
@@ -253,10 +266,44 @@ joinTable id session msg name =
 -- Player
 
 
+type PlayerStatus
+    = Active
+    | Idle
+
+
+playerStatusDecoder : Decoder PlayerStatus
+playerStatusDecoder =
+    Decode.string
+        |> Decode.andThen
+            (\s ->
+                case s of
+                    "active" ->
+                        Decode.succeed Active
+
+                    "idle" ->
+                        Decode.succeed Idle
+
+                    _ ->
+                        Decode.fail <| "Unknown status " ++ s
+            )
+
+
+encodePlayerStatus : PlayerStatus -> Value
+encodePlayerStatus status =
+    Encode.string <|
+        case status of
+            Active ->
+                "active"
+
+            Idle ->
+                "idle"
+
+
 type alias Player =
     { id : Int
     , name : String
     , isConnected : Bool
+    , status : PlayerStatus
     }
 
 
@@ -266,6 +313,7 @@ playerDecoder =
         |> Decode.andMap (Decode.field "id" Decode.int)
         |> Decode.andMap (Decode.field "name" Decode.string)
         |> Decode.andMap (Decode.field "connected" Decode.bool)
+        |> Decode.andMap (Decode.field "status" playerStatusDecoder)
 
 
 getMe : String -> String -> (Result (ApiError TableError) Player -> msg) -> Cmd msg
@@ -463,6 +511,17 @@ isRoundFinished game =
         _ ->
             False
 
+
+isOverview : Game -> Bool
+isOverview game =
+    case game of
+        Overview _ ->
+            True
+
+        _ ->
+            False
+
+
 playerPointsDictDecoder : Decoder (Dict Int Vote)
 playerPointsDictDecoder =
     let
@@ -473,6 +532,7 @@ playerPointsDictDecoder =
     in
     Decode.list itemDecoder
         |> Decode.map Dict.fromList
+
 
 roundPointsDictDecoder : Decoder (Dict String Vote)
 roundPointsDictDecoder =

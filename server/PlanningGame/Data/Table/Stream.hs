@@ -28,7 +28,8 @@ import           PlanningGame.Api.GameSnapshot   (snapshot)
 import           PlanningGame.Data.AutoIncrement (WithId (..))
 import           PlanningGame.Data.Game          (Games, Vote)
 import           PlanningGame.Data.Id            (Id)
-import           PlanningGame.Data.Player        (Player, PlayerId, Players)
+import           PlanningGame.Data.Player        (Player, PlayerId,
+                                                  PlayerStatus (..), Players)
 import           PlanningGame.Data.Session       (Session)
 import           PlanningGame.Data.Table         (Table (..), TableError (..),
                                                   TableId, Tables)
@@ -50,6 +51,7 @@ data Msg
   | KickPlayer Int
   | ChangeName Text
   | RenameCurrentRound Text
+  | ChangeStatus PlayerStatus
 
 
 instance FromJSON Msg where
@@ -84,6 +86,9 @@ instance FromJSON Msg where
 
          "RenameCurrentRound" ->
            RenameCurrentRound <$> (v .: "name")
+
+         "ChangeStatus" ->
+           ChangeStatus <$> (v .: "status")
 
          _ ->
            mzero
@@ -190,8 +195,8 @@ disconnect state sessionId connId =
 
 
 -- @TODO: Add check if session is not already present
-join :: Session -> Id TableId -> Text -> Tables -> IO ( Either TableError Table )
-join session tableId name' tables =
+join :: Session -> Id TableId -> Text -> PlayerStatus -> Tables -> IO ( Either TableError Table )
+join session tableId name' status tables =
   let
     name =
       Text.strip name'
@@ -200,7 +205,7 @@ join session tableId name' tables =
     Just mvar -> do
       table <- Concurrent.readMVar mvar
 
-      let ePlayers = Player.add session name (players table)
+      let ePlayers = Player.add session name status (players table)
       case ePlayers of
           Right ( newPlayers, newPlayer ) ->
             Concurrent.modifyMVar mvar $ \t -> do
@@ -428,3 +433,15 @@ handleMsg _ session (RenameCurrentRound newName) table
   | otherwise =
     -- @TODO: handle forbidden
     pure table
+
+handleMsg _ session (ChangeStatus status) table = do
+  let newTable = Table.updatePlayer (\p -> Just $ p { Player.status = status }) session table
+
+  case Player.lookup session $ Table.players newTable of
+    Just newPlayer ->
+      broadcast table $ PlayerStatusUpdate newPlayer
+
+    Nothing ->
+      pure ()
+
+  pure newTable

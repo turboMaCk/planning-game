@@ -4,6 +4,7 @@
 
 module PlanningGame.Data.Player
   ( Player(..)
+  , PlayerStatus(..)
   , PlayerId
   , Players
   , PlayerError(..)
@@ -26,7 +27,9 @@ module PlanningGame.Data.Player
   , anyOnline
   ) where
 
-import           Data.Aeson.Types                (ToJSON (..), (.=))
+import           Control.Monad                   (mzero)
+import           Data.Aeson.Types                (FromJSON (..), ToJSON (..), Value(..),
+                                                  (.=))
 import           Data.Bifunctor                  (second)
 import           Data.IntMap.Strict              (IntMap)
 import           Data.Text                       (Text)
@@ -49,10 +52,31 @@ import qualified PlanningGame.Data.AutoIncrement as Inc
 data PlayerId
 
 
+data PlayerStatus
+  = Active
+  | Idle
+  deriving (Eq, Show)
+
+
+instance FromJSON PlayerStatus where
+  parseJSON (String str) =
+    case str of
+      "active" -> pure Active
+      "idle"   -> pure Idle
+      _        -> mzero
+  parseJSON _ = mzero
+
+
+instance ToJSON PlayerStatus where
+  toJSON Active = "active"
+  toJSON Idle   = "idle"
+
+
 data Player = Player
   { name              :: Text
   -- @TODO: autoincrement can be maybe utilized here as well
   , playerConnections :: IntMap Connection
+  , status            :: PlayerStatus
   }
 
 
@@ -61,11 +85,12 @@ instance Show Player where
 
 
 instance ToJSON (WithId PlayerId Player) where
-  toJSON (WithId id' player@(Player { name })) =
+  toJSON (WithId id' player@(Player { name, status })) =
     Aeson.object
-        [ "id" .= toJSON id'
-        , "name" .= name
+        [ "id"        .= toJSON id'
+        , "name"      .= name
         , "connected" .= hasConnection player
+        , "status"    .= toJSON status
         ]
 
 
@@ -88,9 +113,9 @@ instance Error PlayerError where
   toReadable NameEmpty = "Name can't be empty."
 
 
-create :: Text -> Player
-create n =
-  Player n IntMap.empty
+create :: Text -> PlayerStatus -> Player
+create n status =
+  Player n IntMap.empty status
 
 
 getName :: WithId PlayerId Player -> Text
@@ -103,8 +128,8 @@ nameTaken name' players =
     Inc.filter ((==) name' . name) players
 
 
-add :: Session -> Text -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
-add sesId' name' players
+add :: Session -> Text -> PlayerStatus -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
+add sesId' name' status players
   | Text.null name =
     Left NameEmpty
 
@@ -112,7 +137,7 @@ add sesId' name' players
     Left NameTaken
 
   | otherwise =
-    Right $ Inc.insert sesId' (create name) players
+    Right $ Inc.insert sesId' (create name status) players
 
   where
     name = Text.strip name'

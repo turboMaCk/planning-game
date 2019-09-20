@@ -6,7 +6,7 @@ import Browser.Navigation as Navigation exposing (Key)
 import Cmd.Extra as Cmd
 import Component
 import Css
-import Data exposing (ApiError, Game(..), Player, TableError(..), Vote(..))
+import Data exposing (ApiError, Game(..), Player, PlayerStatus(..), TableError(..), Vote(..))
 import Dict exposing (Dict)
 import Dict.Any as AnyDict
 import Html.Styled as Html exposing (Html)
@@ -359,6 +359,33 @@ nameFieldId =
     "game-name-field"
 
 
+viewBigLabel : Bool -> String -> List (Html msg) -> Html msg
+viewBigLabel shake txt under =
+    Html.styled Html.div
+        [ Css.displayFlex
+        , Css.flexDirection Css.column
+        , Css.height <| Css.px 400
+        , Css.maxHeight <| Css.pct 100
+        , Css.justifyContent Css.center
+        , Css.alignItems Css.center
+        ]
+        []
+        [ Html.styled Html.span
+            [ Theme.highlight
+            , Css.fontSize <| Css.px 40
+            , Css.marginBottom <| Css.px 10
+            , if shake then
+                Theme.shaking 5
+
+              else
+                Css.batch []
+            ]
+            []
+            [ Html.text txt ]
+        , Html.styled Html.div [ Css.fontWeight <| Css.int 200 ] [] under
+        ]
+
+
 viewSetName : Model -> Html Msg
 viewSetName model =
     let
@@ -409,22 +436,7 @@ viewSetName model =
             }
 
     else
-        Html.styled Html.div
-            [ Css.displayFlex
-            , Css.height <| Css.px 400
-            , Css.maxHeight <| Css.pct 100
-            , Css.justifyContent Css.center
-            , Css.alignItems Css.center
-            ]
-            []
-            [ Html.styled Html.span
-                [ Theme.highlight
-                , Theme.shaking 5
-                , Css.fontSize <| Css.px 40
-                ]
-                []
-                [ Html.text "Wait till game starts..." ]
-            ]
+        viewBigLabel True "Wait till game starts..." []
 
 
 viewOverviewTable : Dict Int { p | name : String } -> { b | playerVotes : List ( String, Dict Int Vote ), results : Dict String Vote } -> Html msg
@@ -524,21 +536,43 @@ viewGame model =
 
                 Voting _ ->
                     let
-                        shake =
-                            model.myVote == Nothing
+                        amIVoting =
+                            Maybe.andThen (flip Dict.get model.players) model.me
+                                |> Maybe.unwrap False ((==) Active << .status)
                     in
-                    [ Theme.highlightedHeading shake [ Html.text "Pick your card!" ]
-                    , viewVoting model
-                    , Html.br [] []
-                    , if amIDealer model then
-                        Html.styled Html.button
-                            [ Theme.secondaryBtn ]
-                            [ Events.onClick <| Send Stream.FinishRound ]
-                            [ Html.text "Finish Round" ]
+                    (if amIVoting then
+                        let
+                            shake =
+                                model.myVote == Nothing
+                        in
+                        [ Theme.highlightedHeading shake [ Html.text "Pick your card!" ]
+                        , viewVoting model
+                        , Html.br [] []
+                        ]
 
-                      else
-                        Html.text ""
-                    ]
+                     else
+                        [ Theme.highlightedHeading False [ Html.text "Wait for the voting to end" ]
+                        , viewBigLabel False
+                            "You're not voting!"
+                            [ Html.text "Wait for active players to finish their voting or "
+                            , Html.styled Html.a
+                                [ Css.fontWeight <| Css.int 400, Css.textDecoration Css.underline ]
+                                [ Events.onClick <| Send <| Stream.ChangeStatus Active ]
+                                [ Html.text "start voting" ]
+                            , Html.text " yourself."
+                            ]
+                        ]
+                    )
+                        ++ (if amIDealer model then
+                                [ Html.styled Html.button
+                                    [ Theme.secondaryBtn ]
+                                    [ Events.onClick <| Send Stream.FinishRound ]
+                                    [ Html.text "Finish Round" ]
+                                ]
+
+                            else
+                                []
+                           )
 
                 RoundFinished { playerVotes } ->
                     if amIDealer model && model.myVote /= Nothing then
@@ -755,10 +789,24 @@ viewPlayerSetName me newName =
 
 
 viewMe : Model -> Html Msg
-viewMe { me, dealer, newName, players } =
+viewMe { me, dealer, newName, players, game } =
+    let
+        mePlayer =
+            Maybe.andThen (flip Dict.get players) me
+
+        active =
+            Maybe.map .status mePlayer == Just Active
+
+        footerItem =
+            Css.batch
+                [ Css.display Css.block
+                , Css.fontSize <| Css.px 14
+                , Css.marginTop <| Css.px 12
+                ]
+    in
     Html.styled Html.div
-        [ Css.margin2 (Css.px 20) Css.zero
-        , Css.paddingBottom <| Css.px 20
+        [ Css.margin3 (Css.px 10) Css.zero (Css.px 20)
+        , Css.paddingBottom <| Css.px 10
         , Css.borderBottom3 (Css.px 2) Css.dotted <| Css.hex "c0c0c0c0"
         ]
         []
@@ -768,16 +816,42 @@ viewMe { me, dealer, newName, players } =
             ]
             []
             [ Html.text "Playing as:" ]
-        , viewPlayerSetName (Maybe.andThen (flip Dict.get players) me) newName
+        , Html.styled Html.div
+            [ Css.marginBottom <| Css.px 20 ]
+            []
+            [ viewPlayerSetName mePlayer newName ]
+        , if Data.isOverview game then
+            Html.text ""
+
+          else
+            Html.styled Html.a
+                [ footerItem
+                , Css.color Theme.values.darkColor
+                , Css.fontWeight <| Css.int 200
+                ]
+                [ Events.onClick <|
+                    Send <|
+                        Stream.ChangeStatus <|
+                            if active then
+                                Idle
+
+                            else
+                                Active
+                ]
+                [ Theme.toggle active
+                , Html.text <|
+                    if active then
+                        "Stop voting"
+
+                    else
+                        "Start voting"
+                ]
         , if me == dealer then
             Html.text ""
 
           else
             Html.styled Html.div
-                [ Css.display Css.block
-                , Css.margin4 (Css.px 12) Css.zero (Css.px -12) Css.zero
-                , Css.textAlign Css.center
-                ]
+                [ footerItem ]
                 []
                 [ Html.styled Html.a
                     [ Css.display Css.inlineBlock

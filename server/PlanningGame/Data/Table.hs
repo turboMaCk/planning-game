@@ -17,6 +17,7 @@ module PlanningGame.Data.Table
   , allConnections
   , sessionByPlayerId
   , getDealer
+  , updatePlayer
   ) where
 
 import           Control.Concurrent              (MVar)
@@ -39,7 +40,8 @@ import           PlanningGame.Data.AutoIncrement (WithId)
 import           PlanningGame.Data.Game          (GameError, Games)
 import           PlanningGame.Data.Id            (Id (..), generateId)
 import           PlanningGame.Data.Player        (Player (..), PlayerError (..),
-                                                  PlayerId, Players)
+                                                  PlayerId, PlayerStatus,
+                                                  Players)
 import           PlanningGame.Data.Session       (Session, SessionId)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
@@ -116,12 +118,12 @@ empty =
 -- Basic Operations
 
 
-create :: Session -> Text -> Tables -> IO ( Tables, Either TableError Table )
-create id' name' tables = do
+create :: Session -> Text -> PlayerStatus -> Tables -> IO ( Tables, Either TableError Table )
+create id' name' status' tables = do
   tId <- generateId tables
   now <- Clock.getCurrentTime
 
-  case Player.add id' name' Player.empty of
+  case Player.add id' name' status' Player.empty of
     Right (players, _) -> do
       let newTable = Table tId id' players Nothing now
 
@@ -161,15 +163,15 @@ allConnections Table { players } =
 
 assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( WithId PlayerId Player, Int ) )
 assignConnection session conn table@Table { players } =
-    let
-        ( updatedPlayers, mPair ) =
-            Player.addConnection session conn players
-    in
+  let
+    ( updatedPlayers, mPair ) =
+      Player.addConnection session conn players
+  in
     case mPair of
-        Nothing   -> ( table, Nothing )
-        Just pair -> ( table { players = updatedPlayers }
-                     , Just pair
-                     )
+      Nothing   -> ( table, Nothing )
+      Just pair -> ( table { players = updatedPlayers }
+                   , Just pair
+                   )
 
 isDealer :: Session -> Table -> Bool
 isDealer session Table { dealer } =
@@ -189,7 +191,12 @@ sessionByPlayerId id' table =
 getDealer :: Table -> WithId PlayerId Player
 getDealer Table { dealer, players } =
   case Inc.lookup dealer players of
-    Just p -> p
+    Just p  -> p
     -- Should not ever happen
     -- @TODO: avoidable bottom
     Nothing -> undefined
+
+
+updatePlayer :: (Player -> Maybe Player) -> Session -> Table -> Table
+updatePlayer f session table@(Table { players }) =
+  table { players = Inc.update f session players }

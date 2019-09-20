@@ -10,14 +10,17 @@ module Theme exposing
     , shaking
     , stickyLabel
     , textField
+    , toggle
     , values
     )
 
 import Css exposing (Style)
 import Css.Animations as Animations
 import Css.Global as GCss
+import Css.Transitions as Transitions
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
+import Html.Styled.Events as Events
 import Url.Builder as Url
 
 
@@ -182,7 +185,9 @@ globalStyles =
         , GCss.button
             [ Css.cursor Css.pointer ]
         , GCss.a
-            [ Css.color values.secondaryColor ]
+            [ Css.color values.secondaryColor
+            , Css.cursor Css.pointer
+            ]
         , GCss.each [ GCss.p, GCss.input, GCss.label ]
             [ Css.fontWeight <| Css.int 200
             , Css.margin2 (Css.px 12) Css.zero
@@ -230,3 +235,51 @@ stickyLabel =
         , Css.marginTop <| Css.px -2
         , Css.fontWeight <| Css.int 200
         ]
+
+
+toggle : Bool -> Html msg
+toggle active =
+    let
+        height =
+            15
+
+        width =
+            30
+
+        padding =
+            2
+    in
+    Html.styled Html.div
+        [ Css.position Css.relative
+        , Css.display Css.inlineBlock
+        , Css.backgroundColor <| Css.hex "ececec"
+        , Css.margin4 Css.zero (Css.px 3) (Css.px -3) Css.zero
+        , Css.width <| Css.px width
+        , Css.height <| Css.px height
+        , Css.borderRadius <| Css.px (height / 2)
+        , Css.cursor Css.pointer
+        , Css.before
+            [ Css.property "content" "''"
+            , Css.display Css.block
+            , Css.position Css.absolute
+            , Css.width <| Css.px (height - padding * 2)
+            , Css.height <| Css.px (height - padding * 2)
+            , Css.borderRadius <| Css.pct 100
+            , Css.marginTop <| Css.px padding
+            , Css.backgroundColor <|
+                if active then
+                    values.secondaryColor
+
+                else
+                    values.primaryColor
+            , Css.left <|
+                if active then
+                    Css.px padding
+
+                else
+                    Css.px (width - height + padding)
+            , Transitions.transition [ Transitions.left 500, Transitions.background 250 ]
+            ]
+        ]
+        []
+        []

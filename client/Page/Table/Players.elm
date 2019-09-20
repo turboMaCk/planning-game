@@ -1,7 +1,7 @@
 module Page.Table.Players exposing (PlayerVote(..), view)
 
 import Css
-import Data exposing (Player, Vote(..))
+import Data exposing (Player, PlayerStatus(..), Vote(..))
 import Dict exposing (Dict)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attrs
@@ -153,6 +153,7 @@ viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer se
                 |> concatWhen (Just (fromPlayerVote (toVote player)) == highlightedVote)
                     [ Css.fontWeight <| Css.bold ]
                 |> concatWhen (isMe player) [ Css.textDecoration Css.underline ]
+                |> concatWhen (player.status == Idle) [ Css.color <| Css.hex "949494" ]
             )
             [ Events.onClick <|
                 if isSelected then
