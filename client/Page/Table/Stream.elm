@@ -8,7 +8,7 @@ port module Page.Table.Stream exposing
     , sendMsg
     )
 
-import Data exposing (Game, Player, Table, Vote)
+import Data exposing (Game, Player, PlayerStatus(..), Table, Vote)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra as Decode
 import Json.Encode as Encode exposing (Value)
@@ -135,6 +135,7 @@ type Msg
     | KickPlayer Player
     | ChangeName String
     | RenameCurrentRound String
+    | ChangeStatus PlayerStatus
 
 
 encodeMsg : Msg -> Value
@@ -189,6 +190,12 @@ encodeMsg msg =
             Encode.object
                 [ ( "msg", Encode.string "RenameCurrentRound" )
                 , ( "name", Encode.string newName )
+                ]
+
+        ChangeStatus status ->
+            Encode.object
+                [ ( "msg", Encode.string "ChangeStatus" )
+                , ( "status", Data.encodePlayerStatus status )
                 ]
 
 

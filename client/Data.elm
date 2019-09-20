@@ -9,6 +9,7 @@ module Data exposing
     , Vote(..)
     , createSession
     , createTable
+    , encodePlayerStatus
     , encodeVote
     , errorIs
     , errorMessage
@@ -279,6 +280,17 @@ playerStatusDecoder =
                     _ ->
                         Decode.fail <| "Unknown status " ++ s
             )
+
+
+encodePlayerStatus : PlayerStatus -> Value
+encodePlayerStatus status =
+    Encode.string <|
+        case status of
+            Active ->
+                "active"
+
+            Idle ->
+                "idle"
 
 
 type alias Player =
