@@ -37,9 +37,8 @@ import qualified Data.Set                        as Set
 import qualified Data.Text                       as Text
 
 import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
-import           PlanningGame.Data.Id
-import           PlanningGame.Data.Player        (Players)
-import           PlanningGame.Data.Session       (SessionId)
+import           PlanningGame.Data.Player        (Players, PlayerStatus(Active))
+import           PlanningGame.Data.Session       (Session)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
 import qualified PlanningGame.Data.Player        as Player
@@ -108,12 +107,12 @@ instance FromJSON Vote where
 
 -- @TODO: named members
 data RunningGame =
-  RunningGame Text (Map (Id SessionId) Vote) Bool
+  RunningGame Text (Map Session Vote) Bool
 
 
 data FinishedGame =
   FinishedGame
-    { votes       :: Map (Id SessionId) Vote
+    { votes       :: Map Session Vote
     , winningVote :: Vote
     , name        :: Text
     }
@@ -191,7 +190,7 @@ start name =
   RunningGames [] $ newGame (getName name $ FinishedGames [])
 
 
-addVote :: Id SessionId -> Vote -> Games -> Either GameError Games
+addVote :: Session -> Vote -> Games -> Either GameError Games
 addVote _ _ (FinishedGames _)                                          = Left GameFinished
 addVote sId vote (RunningGames past (RunningGame name votes isLocked)) =
   if isLocked then
@@ -200,7 +199,7 @@ addVote sId vote (RunningGames past (RunningGame name votes isLocked)) =
     Right $ RunningGames past $ RunningGame name updatedVotes False
 
   where
-    updatedVotes :: Map (Id SessionId) Vote
+    updatedVotes :: Map Session Vote
     updatedVotes =
       Map.insert sId vote votes
 
@@ -285,10 +284,10 @@ allVoted players (RunningGames _ (RunningGame _ votes _ )) =
 
   where
     sessionIds =
-      fst <$> Player.toList players
+      fst <$> (Prelude.filter (\(_, p) -> Player.status p == Active) $ Player.toList players)
 
 
-removePlayerVotes :: Id SessionId -> Games -> Games
+removePlayerVotes :: Session -> Games -> Games
 removePlayerVotes sesId games' =
   case games' of
     FinishedGames games ->
