@@ -15,6 +15,7 @@ module PlanningGame.Api
 import           Control.Concurrent              (MVar)
 import           Control.Monad.IO.Class          (MonadIO, liftIO)
 import           Data.Text                       (Text)
+import           Network.Wai.Middleware.Static   (CacheContainer)
 import           Servant
 import           Servant.API.WebSocket           (WebSocket)
 
@@ -110,7 +111,7 @@ server state = statusApi
       liftIO $ TableStream.handler (State.tables state) session id' conn
 
 
-app :: ServerState -> Application
-app state = Middleware.static $
+app :: CacheContainer -> ServerState -> Application
+app caching state = Middleware.static caching $
     serveWithContext api (genContext $ State.sessions state) $
     server state
