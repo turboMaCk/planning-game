@@ -2,7 +2,7 @@ let
   config = {
     packageOverrides = pkgs: rec {
       elm =
-        import ./client.nix {};
+        import ./nix/client.nix {};
 
       # Build docker container
       # Using staticaly liked version
@@ -23,12 +23,12 @@ let
         pkgs.haskellPackages.override {
           overrides = haskellPackagesNew: haskellPackagesOld: rec {
             planningGame =
-              haskellPackagesNew.callPackage ./server.nix {};
+              haskellPackagesNew.callPackage ./nix/server.nix {};
 
             # statically liked version (used for docker)
             planningGame-mini =
               pkgs.haskell.lib.justStaticExecutables
-              (haskellPackagesNew.callPackage ./server.nix {});
+              (haskellPackagesNew.callPackage ./nix/server.nix {});
           };
         };
     };
