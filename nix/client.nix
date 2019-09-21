@@ -48,7 +48,7 @@ let
       '';
     };
 in mkDerivation {
-  name = "elm-app-0.1.0";
+  name = "planngin-game-client-0.3.0";
   srcs = ./elm-srcs.nix;
   src = ../.;
   targets = ["Main"];
