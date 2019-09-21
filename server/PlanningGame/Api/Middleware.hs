@@ -110,4 +110,4 @@ indexView =
     title, description :: AttributeValue
     description = "Planning tool for remote teams."
     title       = "Planning Game"
-    addRev str  = str <> "?rev-" <> $(gitHash)
+    addRev str  = str <> "?rev=" <> $(gitHash)
