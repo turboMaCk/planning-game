@@ -6,7 +6,7 @@
 mkDerivation {
   pname = "planning-game";
   version = "0.2.1";
-  src = ./.;
+  src = ../.;
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [
