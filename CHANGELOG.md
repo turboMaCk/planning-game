@@ -1,6 +1,6 @@
 # Revision history for planning-game
 
-## 0.3.0 -- 2019-09-21
+## 0.3.0 -- 2019-09-22
 
 * **FEATURE:** Player statuses / Non voting players
 * **FEATURE:** Player leave confirmation
