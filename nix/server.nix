@@ -1,5 +1,5 @@
 { mkDerivation, aeson, base, blaze-html, blaze-markup, bytestring
-, containers, cookie, gitrev, http-types, mtl, random, servant
+, containers, cookie, http-types, mtl, random, servant
 , servant-server, servant-websockets, stdenv, text, time, wai
 , wai-extra, wai-middleware-static, warp, websockets
 }:
@@ -11,7 +11,7 @@ mkDerivation {
   isExecutable = true;
   executableHaskellDepends = [
     aeson base blaze-html blaze-markup bytestring containers cookie
-    gitrev http-types mtl random servant servant-server
+    http-types mtl random servant servant-server
     servant-websockets text time wai wai-extra wai-middleware-static
     warp websockets
   ];

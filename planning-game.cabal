@@ -33,6 +33,7 @@ executable planning-game
                      , PlanningGame.Data.Game
                      , PlanningGame.GarbageCollector
                      , PlanningGame.State
+                     , Paths_planning_game
   hs-source-dirs:      server
   -- other-extensions:
   build-depends:       base             >= 4 && < 5
@@ -55,7 +56,6 @@ executable planning-game
                      , time
                      , blaze-html
                      , blaze-markup
-                     , gitrev
   -- hs-source-dirs:
   default-language:    Haskell2010
   ghc-options: -Wcompat "-with-rtsopts=-T -I1" -Wall

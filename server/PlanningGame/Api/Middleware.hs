@@ -4,13 +4,14 @@
 module PlanningGame.Api.Middleware (static) where
 
 import           Data.Maybe                    (fromMaybe)
-import           Development.GitRev            (gitHash)
+import           Data.Version                  (showVersion)
 import           Network.HTTP.Types            (status200)
 import           Network.Wai                   (Middleware, Response,
                                                 requestHeaders, responseLBS)
 import           Network.Wai.Middleware.Static (CacheContainer, addBase,
                                                 staticPolicy')
 import           Network.Wai.Parse             (parseHttpAccept)
+import           Paths_planning_game           (version)
 import           Text.Blaze                    (AttributeValue)
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import           Text.Blaze.Html5              (Html, (!))
@@ -110,4 +111,4 @@ indexView =
     title, description :: AttributeValue
     description = "Planning tool for remote teams."
     title       = "Planning Game"
-    addRev str  = str <> "?rev=" <> $(gitHash)
+    addRev str  = Html.stringValue $ str <> "?v=" <> showVersion version
