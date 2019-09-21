@@ -39,6 +39,7 @@ type alias Model =
     , focusedPlayer : Maybe Int
     , highlightedVote : Maybe Vote
     , newCurrentGameName : Maybe String
+    , leaveConfirmation : Bool
     }
 
 
@@ -57,6 +58,7 @@ init token id =
       , focusedPlayer = Nothing
       , highlightedVote = Nothing
       , newCurrentGameName = Nothing
+      , leaveConfirmation = False
       }
     , Data.getMe token id Me
     )
@@ -82,6 +84,7 @@ type Msg
     | SetNewCurrentGameName String
     | SaveNewCurrentGameName
     | DiscardNewCurrentGameName
+    | ToggleLeave
 
 
 leave : () -> Cmd msg
@@ -248,6 +251,11 @@ update navigationKey msg model =
 
         DiscardNewCurrentGameName ->
             ( { model | newCurrentGameName = Nothing }, Cmd.none )
+
+        ToggleLeave ->
+            ( { model | leaveConfirmation = not model.leaveConfirmation }
+            , Cmd.none
+            )
 
 
 
@@ -788,7 +796,7 @@ viewPlayerSetName me newName =
 
 
 viewMe : Model -> Html Msg
-viewMe { me, dealer, newName, players, game } =
+viewMe { me, dealer, newName, players, game, leaveConfirmation } =
     let
         mePlayer =
             Maybe.andThen (flip Dict.get players) me
@@ -852,23 +860,67 @@ viewMe { me, dealer, newName, players, game } =
             Html.styled Html.div
                 [ footerItem ]
                 []
-                [ Html.styled Html.a
-                    [ Css.display Css.inlineBlock
-                    , Css.fontSize <| Css.px 14
-                    , Css.fontWeight <| Css.int 400
-                    , Css.color Theme.values.primaryColor
-                    , Css.textDecoration Css.underline
-                    , Css.cursor Css.pointer
-                    ]
-                    (Maybe.unwrap []
-                        (List.singleton
-                            << Events.onClick
-                            << Send
-                            << Stream.KickPlayer
-                        )
-                        (Maybe.andThen (flip Dict.get players) me)
+                [ Html.styled
+                    Html.div
+                    (if leaveConfirmation then
+                        [ Theme.selectedBox
+                        , Css.backgroundColor Theme.values.lightRedBackground
+                        ]
+
+                     else
+                        []
                     )
-                    [ Html.text "Leave table" ]
+                    []
+                    [ Html.styled Html.a
+                        [ Css.display Css.inlineBlock
+                        , Css.fontSize <| Css.px 14
+                        , Css.fontWeight <| Css.int 400
+                        , Css.color <|
+                            if leaveConfirmation then
+                                Theme.values.darkColor
+
+                            else
+                                Theme.values.primaryColor
+                        , Css.textDecoration Css.underline
+                        , Css.cursor Css.pointer
+                        ]
+                        [ Events.onClick ToggleLeave ]
+                        [ Html.text "Leave table" ]
+                    , if leaveConfirmation then
+                        Html.div []
+                            [ Html.styled Html.div
+                                [ Css.fontWeight <| Css.int 200
+                                , Css.marginTop <| Css.px 4
+                                , Css.fontSize <| Css.px 12
+                                ]
+                                []
+                                [ Html.text "This action will remove all your votes." ]
+                            , Html.styled Html.button
+                                [ Theme.secondaryBtn
+                                , Css.fontSize <| Css.px 11
+                                , Css.marginTop <| Css.px 4
+                                ]
+                                (Maybe.unwrap []
+                                    (List.singleton
+                                        << Events.onClick
+                                        << Send
+                                        << Stream.KickPlayer
+                                    )
+                                    (Maybe.andThen (flip Dict.get players) me)
+                                )
+                                [ Html.text "Proceed Anyway" ]
+                            , Html.styled Html.button
+                                [ Theme.primaryBtn
+                                , Css.fontSize <| Css.px 11
+                                , Css.marginTop <| Css.px 4
+                                ]
+                                [ Events.onClick ToggleLeave ]
+                                [ Html.text "Cancel" ]
+                            ]
+
+                      else
+                        Html.text ""
+                    ]
                 ]
         ]
 

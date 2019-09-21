@@ -165,9 +165,7 @@ viewPlayer { isMe, toVote, select, deselect, kickPlayer, isDealer } amIDealer se
             [ Html.text player.name ]
         , voteIndicator <| toVote player
         , if isSelected then
-            Html.styled Html.div
-                []
-                []
+            Html.div []
                 [ if showKick then
                     Html.styled Html.button
                         [ Theme.secondaryBtn

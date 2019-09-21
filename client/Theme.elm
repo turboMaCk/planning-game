@@ -7,6 +7,7 @@ module Theme exposing
     , pill
     , primaryBtn
     , secondaryBtn
+    , selectedBox
     , shaking
     , stickyLabel
     , textField
@@ -31,6 +32,7 @@ values =
     , darkColor = Css.hex "#000000"
     , lightColor = Css.hex "#ffffff"
     , lightBackground = Css.hex "#d6e5ff"
+    , lightRedBackground = Css.hex "#ffd6e5"
     , greenColor = Css.hex "#8fdb41"
     }
 
@@ -283,3 +285,14 @@ toggle active =
         ]
         []
         []
+
+
+selectedBox : Style
+selectedBox =
+    Css.batch
+        [ Css.padding3 (Css.px 2) (Css.px 6) <| Css.px 6
+        , Css.borderRadius <| Css.px 4
+        , Css.marginLeft <| Css.px -6
+        , Css.marginRight <| Css.px -6
+        , Css.marginTop <| Css.px -2
+        ]
