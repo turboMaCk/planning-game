@@ -551,8 +551,7 @@ viewGame model =
                         ]
 
                      else
-                        [ Theme.highlightedHeading False [ Html.text "Wait for the voting to end" ]
-                        , viewBigLabel False
+                        [ viewBigLabel False
                             "You're not voting!"
                             [ Html.text "Wait for active players to finish their voting or "
                             , Html.styled Html.a

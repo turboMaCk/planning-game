@@ -1,12 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module PlanningGame.Api.Middleware (static) where
 
 import           Data.Maybe                    (fromMaybe)
+import           Development.GitRev            (gitHash)
 import           Network.HTTP.Types            (status200)
 import           Network.Wai                   (Middleware, Response,
                                                 requestHeaders, responseLBS)
-import           Network.Wai.Middleware.Static (addBase, staticPolicy)
+import           Network.Wai.Middleware.Static (CacheContainer, addBase,
+                                                staticPolicy')
 import           Network.Wai.Parse             (parseHttpAccept)
 import           Text.Blaze                    (AttributeValue)
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
@@ -43,14 +46,14 @@ index application request respond
               ]
 
 
-public :: Middleware
-public =
-  staticPolicy $ addBase "public"
+public :: CacheContainer -> Middleware
+public caching =
+  staticPolicy' caching $ addBase "public"
 
 
-static :: Middleware
-static =
-  public . index
+static :: CacheContainer -> Middleware
+static caching =
+  public caching . index
 
 
 indexView :: Html
@@ -98,12 +101,13 @@ indexView =
 
     Html.body $ do
       Html.script ""
-        ! Attrs.src "/app.js"
+        ! Attrs.src (addRev "/app.js")
 
       Html.script ""
-        ! Attrs.src "/init.js"
+        ! Attrs.src (addRev "/init.js")
 
   where
     title, description :: AttributeValue
     description = "Planning tool for remote teams."
     title       = "Planning Game"
+    addRev str  = str <> "?rev=" <> $(gitHash)
