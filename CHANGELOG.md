@@ -2,8 +2,8 @@
 
 ## 0.3.0 -- 2019-09-21
 
-* **FEATURE:** Player leave confirmation
 * **FEATURE:** Player statuses / Non voting players
+* **FEATURE:** Player leave confirmation
 * **CHORE:** Improve client chaching related stuff
 * **CHORE:** Minifying elm/javascript
 
