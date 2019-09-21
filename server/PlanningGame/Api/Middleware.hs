@@ -11,7 +11,7 @@ import           Network.Wai                   (Middleware, Response,
 import           Network.Wai.Middleware.Static (CacheContainer, addBase,
                                                 staticPolicy')
 import           Network.Wai.Parse             (parseHttpAccept)
-import           Paths_planning_game            (version)
+import           Paths_planning_game           (version)
 import           Text.Blaze                    (AttributeValue)
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import           Text.Blaze.Html5              (Html, (!))
