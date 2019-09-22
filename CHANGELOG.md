@@ -1,5 +1,12 @@
 # Revision history for planning-game
 
+## 0.3.0 -- 2019-09-22
+
+* **FEATURE:** Player statuses / Non voting players
+* **FEATURE:** Player leave confirmation
+* **CHORE:** Improve client chaching related stuff
+* **CHORE:** Minifying elm/javascript
+
 ## 0.2.1 -- 2019-09-07
 
 * **FEATURE:** Indicate count and highlight authors of votes

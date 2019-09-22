@@ -57,8 +57,8 @@
     });
 
     app.ports.connect.subscribe(function (tableId) {
-        const proto = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-        const host = window.location.host;
+        var proto = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+        var host = window.location.host;
         var ws = new WebSocket(proto + host + '/tables/' + tableId + '/stream');
 
         ws.onerror = function () {
