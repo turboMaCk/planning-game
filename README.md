@@ -15,8 +15,8 @@
 
 Simple voting poker implementation build with efficiency,
 flexibility and easy deployment in mind.
-Enabling remote teams to effectively identify complexities
-and weak points of requirements in collaborative way.
+Enabling remote teams to effectively identify complexity
+and unclear requirements in collaborative way.
 
 ## Quick Start
 
