@@ -2,6 +2,6 @@ dist/
 elm-stuff/
 /result*
 /serve
-/public/app.js
+/public/*.js
 dist-newstyle/
 .stack-work/
