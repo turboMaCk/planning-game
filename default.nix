@@ -1,8 +1,17 @@
 let
+  nixpkgs =
+    # nixpkgs 19.03 as of 19/08
+    (import <nixpkgs> {}).fetchFromGitHub {
+      owner = "NixOS";
+      repo = "nixpkgs-channels";
+      rev = "67135fbcc5d5d28390c127ef519b09a362ef2466";
+      sha256 = "00591607zmn1hfjs4959ksh164b0gjqwkvbrc4anx6da8xmhfcc2";
+    };
+
   config = {
     packageOverrides = pkgs: rec {
       elm =
-        import ./nix/client.nix {};
+        import ./nix/client.nix { inherit nixpkgs; };
 
       # Build docker container
       # Using staticaly liked version
@@ -34,14 +43,7 @@ let
     };
   };
 
-  pkgs =
-    # nixpkgs 19.03 as of 19/08
-    import ((import <nixpkgs> {}).fetchFromGitHub {
-        owner = "NixOS";
-        repo = "nixpkgs-channels";
-        rev = "67135fbcc5d5d28390c127ef519b09a362ef2466";
-        sha256 = "00591607zmn1hfjs4959ksh164b0gjqwkvbrc4anx6da8xmhfcc2";
-    }) { inherit config; };
+  pkgs = import nixpkgs { inherit config; };
 in
   with pkgs;
   rec {
