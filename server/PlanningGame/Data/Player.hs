@@ -114,8 +114,8 @@ instance Error PlayerError where
 
 
 create :: Text -> PlayerStatus -> Player
-create n status =
-  Player n IntMap.empty status
+create n =
+  Player n IntMap.empty
 
 
 getName :: WithId PlayerId Player -> Text
@@ -211,7 +211,7 @@ addConnection id' conn players =
 
 
 removeConnectionFrom :: Int -> Player -> Player
-removeConnectionFrom index player@(Player { playerConnections }) =
+removeConnectionFrom index player@Player { playerConnections } =
   player { playerConnections = IntMap.delete index playerConnections }
 
 
