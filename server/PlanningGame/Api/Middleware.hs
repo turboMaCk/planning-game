@@ -102,7 +102,7 @@ indexView =
 
     Html.body $ do
       Html.script ""
-        ! Attrs.src (addRev "/app.js")
+        ! Attrs.src (addRev "/Main.min.js")
 
       Html.script ""
         ! Attrs.src (addRev "/init.js")
