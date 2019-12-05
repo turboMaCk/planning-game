@@ -39,6 +39,10 @@ let
                 | uglifyjs --mangle --output=$out/${module}.min.${extension}
           ''}
         '') targets)}
+
+        # Custom stuff
+        cp -r public $out
+        cp $out/Main.min.js $out/public/Main.min.js
       '';
     };
 in mkDerivation {
