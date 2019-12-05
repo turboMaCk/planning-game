@@ -1,5 +1,5 @@
-{ nixpkgs ? import <nixpkgs> }:
 let
+  nixpkgs-system = import <nixpkgs> {};
   nixpkgs =
     # nixpkgs 19.03 as of 19/08
     (import <nixpkgs> {}).fetchFromGitHub {
@@ -12,7 +12,7 @@ let
   config = {
     packageOverrides = pkgs: rec {
       elm =
-        import ./nix/client.nix { inherit nixpkgs; };
+        import ./nix/client.nix {};
 
       # Build docker container
       # Using staticaly liked version
@@ -53,7 +53,11 @@ in
     client = elm;
     docker = docker-container;
     shell  = mkShell {
-      inputsFrom = [ server.env client ];
-      buildInputs = [ haskellPackages.ghcid elmPackages.elm haskellPackages.hlint ];
+      inputsFrom = [ server.env ];
+      buildInputs = [
+        haskellPackages.ghcid
+        nixpkgs-system.elmPackages.elm
+        haskellPackages.hlint
+      ];
     };
   }

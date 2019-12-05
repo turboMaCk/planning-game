@@ -11,7 +11,7 @@ let
     , name
     , srcdir ? "./src"
     , targets ? []
-    , versionsDat ? ./versions.dat
+    , registryDat ? ./registry.dat
     , outputJavaScript ? false
     }:
     stdenv.mkDerivation {
@@ -22,7 +22,8 @@ let
 
       buildPhase = pkgs.elmPackages.fetchElmDeps {
         elmPackages = import srcs;
-        inherit versionsDat;
+        elmVersion = "0.19.1";
+        inherit registryDat;
       };
 
       installPhase = let
@@ -42,11 +43,11 @@ let
 
         # Custom stuff
         cp -r public $out
-        cp $out/Main.min.js $out/public/Main.min.js
+        mv $out/Main.min.js $out/public
       '';
     };
 in mkDerivation {
-  name = "planning-game-client-0.3.0";
+  name = "elm-app-0.1.0";
   srcs = ./elm-srcs.nix;
   src = ../.;
   targets = ["Main"];
