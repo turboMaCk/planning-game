@@ -1,3 +1,4 @@
+{ pkgs ? import <nixpkgs> {} }:
 let
   nixpkgs =
     # nixpkgs 19.03 as of 19/08
@@ -11,7 +12,7 @@ let
   config = {
     packageOverrides = pkgs: rec {
       elm =
-        import ./nix/client.nix { inherit nixpkgs; };
+        import ./nix/client.nix { inherit pkgs; };
 
       # Build docker container
       # Using staticaly liked version

@@ -1,9 +1,5 @@
-{ nixpkgs ? <nixpkgs>
-, config ? {}
-}:
-
-with (import nixpkgs config);
-
+{ pkgs }:
+with pkgs;
 let
   nodePackages = import ./node-composition.nix {};
 
