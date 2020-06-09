@@ -8,7 +8,7 @@
     <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">
         <img src="https://img.shields.io/badge/license-AGPLv3-brightgreen.svg" alt="AGPLv3">
     <a>
-    <p><a href="https://planning-game.com">planning-game.com</a></p>
+    <p><a href="http://planning-game.com">planning-game.com</a></p>
 </div>
 
 ![screenshot](docs/screenshot.png)
@@ -20,7 +20,9 @@ and unclear requirements in collaborative way.
 
 ## Quick Start
 
-Use free hosted service at [planning-game.com](https://planning-game.com)
+Use free hosted service at [planning-game.com](http://planning-game.com)
+
+> HTTPS version is temporarily unavailable due to technical difficulties.
 
 Run locally:
 
