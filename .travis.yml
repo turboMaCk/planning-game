@@ -1,5 +1,5 @@
 language: nix
-nix: 2.1.3
+nix: 2.3.7
 
 before_install:
   - nix-channel --add https://nixos.org/channels/nixos-19.03 nixpkgs

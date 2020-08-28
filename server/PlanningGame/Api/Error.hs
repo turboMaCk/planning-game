@@ -14,9 +14,9 @@ import           Control.Monad.Error.Class (MonadError)
 import           Data.Aeson.Types          (ToJSON (..), (.=))
 import           Data.Text                 (Text)
 import           GHC.Generics              (Generic)
-import           Servant                   (ServantErr, err401, err403, err404,
-                                            err409, err422, errBody, errHeaders,
-                                            throwError)
+import           Servant                   (throwError)
+import           Servant.Server            (ServerError, err401, err403, err404,
+                                            err409, err422, errBody, errHeaders)
 
 import qualified Data.Aeson                as Aeson
 import qualified Data.Text                 as Text
@@ -54,7 +54,7 @@ instance (Show a, Error a) => ToJSON (WrapError a) where
       ]
 
 
-respond :: ( Show a, Error a) => MonadError ServantErr m => a -> m b
+respond :: ( Show a, Error a) => MonadError ServerError m => a -> m b
 respond res =
   throwError $ err
     { errBody = Aeson.encode $ toJSON (WrapError res)

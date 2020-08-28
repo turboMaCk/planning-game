@@ -1,11 +1,11 @@
 let
   nixpkgs =
-    # nixpkgs 19.03 as of 19/08
+    # updated 28/08/20
     (import <nixpkgs> {}).fetchFromGitHub {
       owner = "NixOS";
       repo = "nixpkgs-channels";
-      rev = "67135fbcc5d5d28390c127ef519b09a362ef2466";
-      sha256 = "00591607zmn1hfjs4959ksh164b0gjqwkvbrc4anx6da8xmhfcc2";
+      rev = "c59ea8b8a0e7f927e7291c14ea6cd1bd3a16ff38";
+      sha256 = "1ak7jqx94fjhc68xh1lh35kh3w3ndbadprrb762qgvcfb8351x8v";
     };
 
   config = {
@@ -21,6 +21,7 @@ let
       docker-container =
         pkgs.dockerTools.buildImage {
           name = "planning-game";
+          tag = "latest";
           extraCommands = ''
             ln -s ${haskellPackages.planningGame-mini}/bin/planning-game ./planning-game
             cp -r ${elm}/public ./public
