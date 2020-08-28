@@ -18,7 +18,7 @@ let
       inherit name src;
 
       buildInputs = [ elmPackages.elm ]
-        ++ lib.optional outputJavaScript nodePackages_10_x.uglify-js;
+        ++ lib.optional outputJavaScript nodePackages.uglify-js;
 
       buildPhase = pkgs.elmPackages.fetchElmDeps {
         elmPackages = import srcs;
@@ -37,16 +37,16 @@ let
           ${lib.optionalString outputJavaScript ''
             echo "minifying ${elmfile module}"
             uglifyjs $out/${module}.${extension} --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' \
-                | uglifyjs --mangle --output=$out/${module}.min.${extension}
+                | uglifyjs --mangle --output $out/${module}.min.${extension}
           ''}
         '') targets)}
       '';
     };
 in mkDerivation {
-  name = "elm-app-0.1.0";
+  name = "planning-game-client-0.3.0";
   srcs = ./elm-srcs.nix;
-  src = ./.;
+  src = ../.;
   targets = ["Main"];
-  srcdir = "../client";
+  srcdir = "./client";
   outputJavaScript = true;
 }
