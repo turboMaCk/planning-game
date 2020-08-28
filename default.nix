@@ -21,6 +21,7 @@ let
       docker-container =
         pkgs.dockerTools.buildImage {
           name = "planning-game";
+          tag = "latest";
           extraCommands = ''
             ln -s ${haskellPackages.planningGame-mini}/bin/planning-game ./planning-game
             cp -r ${elm}/public ./public

@@ -40,7 +40,12 @@ let
                 | uglifyjs --mangle --output $out/${module}.min.${extension}
           ''}
         '') targets)}
+
+        # copy assets
+        cp -r public $out/public
+        mv $out/Main.min.js $out/public/app.js
       '';
+
     };
 in mkDerivation {
   name = "planning-game-client-0.3.0";
