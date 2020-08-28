@@ -5,55 +5,48 @@
 with (import nixpkgs config);
 
 let
-  nodePackages = import ./node-composition.nix {};
-
   mkDerivation =
     { srcs ? ./elm-srcs.nix
     , src
     , name
     , srcdir ? "./src"
     , targets ? []
-    , versionsDat ? ./versions.dat
+    , registryDat ? ./registry.dat
+    , outputJavaScript ? false
     }:
     stdenv.mkDerivation {
       inherit name src;
 
-      buildInputs = [ elmPackages.elm nodePackages.uglify-js ];
+      buildInputs = [ elmPackages.elm ]
+        ++ lib.optional outputJavaScript nodePackages_10_x.uglify-js;
 
       buildPhase = pkgs.elmPackages.fetchElmDeps {
         elmPackages = import srcs;
-        inherit versionsDat;
+        elmVersion = "0.19.1";
+        inherit registryDat;
       };
 
       installPhase = let
         elmfile = module: "${srcdir}/${builtins.replaceStrings ["."] ["/"] module}.elm";
+        extension = if outputJavaScript then "js" else "html";
       in ''
         mkdir -p $out/share/doc
-        cp -r public $out/public
         ${lib.concatStrings (map (module: ''
-          js="app.js"
-          min=$out/"public/app.js"
-
           echo "compiling ${elmfile module}"
-          elm make ${elmfile module} --output $js --docs $out/share/doc/${module}.json --optimize
-
-          uglifyjs $js \
-            --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' \
-            | uglifyjs --mangle --output=$min
-
-          echo "Compiled size:$(cat $js | wc -c) bytes  ($js)"
-          echo "Minified size:$(cat $min | wc -c) bytes  ($min)"
-          echo "Gzipped size: $(cat $min | gzip -c | wc -c) bytes"
-
-          uglifyjs ${srcdir}/init.js --compress | uglifyjs --mangle --output=$out/public/init.js
-
+          elm make ${elmfile module} --output $out/${module}.${extension} --docs $out/share/doc/${module}.json
+          ${lib.optionalString outputJavaScript ''
+            echo "minifying ${elmfile module}"
+            uglifyjs $out/${module}.${extension} --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' \
+                | uglifyjs --mangle --output=$out/${module}.min.${extension}
+          ''}
         '') targets)}
       '';
     };
 in mkDerivation {
-  name = "planning-game-client-0.3.0";
+  name = "elm-app-0.1.0";
   srcs = ./elm-srcs.nix;
-  src = ../.;
+  src = ./.;
   targets = ["Main"];
-  srcdir = "./client";
+  srcdir = "../client";
+  outputJavaScript = true;
 }
