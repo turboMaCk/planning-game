@@ -16,6 +16,7 @@ import           Text.Blaze                    (AttributeValue)
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import           Text.Blaze.Html5              (Html, (!))
 
+import qualified Network.Wai.Middleware.Static as Static
 import qualified Text.Blaze                    as Blaze
 import qualified Text.Blaze.Html5              as Html
 import qualified Text.Blaze.Html5.Attributes   as Attrs
@@ -49,7 +50,7 @@ index application request respond
 
 public :: CacheContainer -> Middleware
 public caching =
-  staticPolicyWithOptions caching $ addBase "public"
+  staticPolicyWithOptions (Static.defaultOptions { Static.cacheContainer = caching }) $ addBase "public"
 
 
 static :: CacheContainer -> Middleware
