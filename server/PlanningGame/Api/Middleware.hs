@@ -50,7 +50,8 @@ index application request respond
 
 public :: CacheContainer -> Middleware
 public caching =
-  staticPolicyWithOptions (Static.defaultOptions { Static.cacheContainer = caching }) $ addBase "public"
+  staticPolicyWithOptions (Static.defaultOptions { Static.cacheContainer = caching })
+  $ addBase "public"
 
 
 static :: CacheContainer -> Middleware

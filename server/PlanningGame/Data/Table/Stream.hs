@@ -247,18 +247,17 @@ handler state session id' conn = do
                 flip Exception.finally (disconnect tableState session connId) $ do
 
                     -- 3.2 Ping Thread
-                    WS.forkPingThread conn 30
+                    WS.withPingThread conn 30 mzero $ do
+                        -- 3.3 Broadcast join event
+                        if Player.numberOfConnections (Inc.unwrapValue player) == 1 then do
+                            table' <- Concurrent.readMVar tableState
+                            broadcast table' $ PlayerStatusUpdate player
 
-                    -- 3.3 Broadcast join event
-                    if Player.numberOfConnections (Inc.unwrapValue player) == 1 then do
-                        table' <- Concurrent.readMVar tableState
-                        broadcast table' $ PlayerStatusUpdate player
+                        else
+                            pure ()
 
-                    else
-                        pure ()
-
-                    -- 3.4 Delegate to Msg handler
-                    handleStreamMsg session tableState conn
+                        -- 3.4 Delegate to Msg handler
+                        handleStreamMsg session tableState conn
 
             Nothing -> do
                 -- @TODO: player doesn't exist (session is not a member)
