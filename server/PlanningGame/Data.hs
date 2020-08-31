@@ -3,7 +3,6 @@ module PlanningGame.Data
     , Game.Games
     , Table.Tables
     , Table.Table
-    , Table.TableId
     , Player.Players
     , Player.Player
     , Session.Sessions

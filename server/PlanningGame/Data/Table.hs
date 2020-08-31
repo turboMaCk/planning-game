@@ -5,7 +5,6 @@
 module PlanningGame.Data.Table
   ( Table(..)
   , Tables
-  , TableId
   , TableError(..)
   , empty
   , create
@@ -50,11 +49,8 @@ import qualified PlanningGame.Data.Player        as Player
 -- Types
 
 
-data TableId
-
-
 data Table = Table
-  { tableId   :: Id TableId
+  { tableId   :: Id Table
   , dealer    :: Id SessionId
   , players   :: Players
   , game      :: Maybe Games
@@ -79,7 +75,7 @@ instance ToJSON Table where
 
 
 type Tables =
-  Map (Id TableId) (MVar Table)
+  Map (Id Table) (MVar Table)
 
 
 data TableError
@@ -141,7 +137,7 @@ isActive Table { players } =
   Player.anyOnline players
 
 
-getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError (WithId Player))
+getPlayer :: Session -> Id Table -> Tables -> IO (Either TableError (WithId Player))
 getPlayer session tableId tables =
   maybe (pure $ Left TableNotFound) getPlayer' $
     Map.lookup tableId tables
@@ -177,7 +173,7 @@ isDealer session Table { dealer } =
   session == dealer
 
 
-lookup :: Id TableId -> Tables -> Maybe (MVar Table)
+lookup :: Id Table -> Tables -> Maybe (MVar Table)
 lookup =
   Map.lookup
 
