@@ -28,7 +28,7 @@ import qualified Web.Cookie                       as Cookie
 
 import           PlanningGame.Api.Error           (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id             (Id (..))
-import           PlanningGame.Data.Session        (Session, SessionId, Sessions)
+import           PlanningGame.Data.Session        (Session, Sessions)
 
 import qualified PlanningGame.Api.Error           as Error
 import qualified PlanningGame.Data.Session        as Session
@@ -48,7 +48,7 @@ instance Error AuthorizationError where
   toReadable SessionIdMissing = "Session required."
 
 
-lookupSession :: MVar Sessions -> Id SessionId -> Handler Session
+lookupSession :: MVar Sessions -> Session -> Handler Session
 lookupSession state' sId = do
   state <- liftIO $ Concurrent.readMVar state'
 
@@ -62,7 +62,7 @@ maybeToEither e =
   maybe (Left e) Right
 
 
-handler :: (Request -> Maybe (Id SessionId)) -> (Session -> a) -> MVar Sessions -> Request -> Handler a
+handler :: (Request -> Maybe Session) -> (Session -> a) -> MVar Sessions -> Request -> Handler a
 handler getSessionId construct state req =
     either Error.respond (\id' -> construct <$> lookupSession state id') $
         maybeToEither SessionIdMissing $ getSessionId req
@@ -81,7 +81,7 @@ type SessionHeaderAuth =
 
 -- | This function takes extract session id from header value
 -- Correct format is `Bearer xxxx` where xxxx is a SessionId itself
-parseAuthorizationHeader :: ByteString -> Maybe (Id SessionId)
+parseAuthorizationHeader :: ByteString -> Maybe Session
 parseAuthorizationHeader headerVal =
   Id <$> ByteString.stripPrefix "Bearer " headerVal
 
@@ -89,7 +89,7 @@ parseAuthorizationHeader headerVal =
 authHeaderHandler :: MVar Sessions -> AuthHandler Request (HeaderAuth Session)
 authHeaderHandler = mkAuthHandler . handler get HeaderAuth
   where
-    get :: Request -> Maybe (Id SessionId)
+    get :: Request -> Maybe Session
     get req =
         parseAuthorizationHeader
             =<< lookup "Authorization" (Wai.requestHeaders req)
@@ -113,7 +113,7 @@ type SessionCookieAuth =
 authCookieHandler :: MVar Sessions -> AuthHandler Request (CookieAuth Session)
 authCookieHandler = mkAuthHandler . handler get CookieAuth
   where
-    get :: Request -> Maybe (Id SessionId)
+    get :: Request -> Maybe Session
     get req = Id <$>
         (lookup "sessionId" . Cookie.parseCookies
             =<< lookup "Cookie" (Wai.requestHeaders req))

@@ -5,7 +5,6 @@
 module PlanningGame.Data.Player
   ( Player(..)
   , PlayerStatus(..)
-  , PlayerId
   , Players
   , PlayerError(..)
   , create
@@ -43,13 +42,9 @@ import qualified Network.WebSockets              as WS
 
 import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
 import           PlanningGame.Data.AutoIncrement (Incremental, WithId (..))
-import           PlanningGame.Data.Id            (Id)
-import           PlanningGame.Data.Session       (Session, SessionId)
+import           PlanningGame.Data.Session       (Session)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
-
-
-data PlayerId
 
 
 data PlayerStatus
@@ -84,7 +79,7 @@ instance Show Player where
    show Player { name } = "Name: " <> show name
 
 
-instance ToJSON (WithId PlayerId Player) where
+instance ToJSON (WithId Player) where
   toJSON (WithId id' player@(Player { name, status })) =
     Aeson.object
         [ "id"        .= toJSON id'
@@ -95,8 +90,7 @@ instance ToJSON (WithId PlayerId Player) where
 
 
 type Players =
-  Incremental PlayerId (Id SessionId) Player
-  -- Map (Id SessionId) Player
+  Incremental Session Player
 
 
 data PlayerError
@@ -118,7 +112,7 @@ create n =
   Player n IntMap.empty
 
 
-getName :: WithId PlayerId Player -> Text
+getName :: WithId Player -> Text
 getName = name . Inc.unwrapValue
 
 
@@ -128,7 +122,7 @@ nameTaken name' players =
     Inc.filter ((==) name' . name) players
 
 
-add :: Session -> Text -> PlayerStatus -> Players -> Either PlayerError ( Players, WithId PlayerId Player )
+add :: Session -> Text -> PlayerStatus -> Players -> Either PlayerError ( Players, WithId Player )
 add sesId' name' status players
   | Text.null name =
     Left NameEmpty
@@ -145,7 +139,7 @@ add sesId' name' status players
 
 --- @TODO: using Maybe because PlayerNotfound is already part of TableError
 --- Probably need to to rething error handling types because of this case
-changeName :: Session -> Text -> Players -> Either PlayerError (Maybe ( Players, WithId PlayerId Player ))
+changeName :: Session -> Text -> Players -> Either PlayerError (Maybe ( Players, WithId Player ))
 changeName session name' players
   | Text.null name =
     Left NameEmpty
@@ -191,7 +185,7 @@ numberOfConnections Player { playerConnections } =
   IntMap.size playerConnections
 
 
-addConnection :: Session -> Connection -> Players -> ( Players, Maybe ( WithId PlayerId Player, Int ) )
+addConnection :: Session -> Connection -> Players -> ( Players, Maybe ( WithId Player, Int ) )
 addConnection id' conn players =
   case Inc.lookup id' players of
     Just player ->
@@ -215,7 +209,7 @@ removeConnectionFrom index player@Player { playerConnections } =
   player { playerConnections = IntMap.delete index playerConnections }
 
 
-disconnect :: Id SessionId -> Int -> Players -> Players
+disconnect :: Session -> Int -> Players -> Players
 disconnect sessionId index =
   Inc.alter (fmap $ removeConnectionFrom index) sessionId
 
@@ -230,28 +224,28 @@ allConnections Player { playerConnections } =
   snd <$> IntMap.toList playerConnections
 
 
-kick :: Id SessionId -> Players -> Players
+kick :: Session -> Players -> Players
 kick =
   Inc.delete
 
 
-lookup :: Id SessionId -> Players -> Maybe (WithId PlayerId Player)
+lookup :: Session -> Players -> Maybe (WithId Player)
 lookup =
   Inc.lookup
 
 
 -- TODO: review
-insert :: Id SessionId -> Player -> Players -> Players
+insert :: Session -> Player -> Players -> Players
 insert i p =
   fst . Inc.insert i p
 
 
-toList :: Players -> [ (Id SessionId, Player) ]
+toList :: Players -> [ (Session, Player) ]
 toList ps =
   second Inc.unwrapValue <$> Inc.assocs ps
 
 
-collection :: Players -> [ WithId PlayerId Player ]
+collection :: Players -> [ WithId Player ]
 collection players =
   snd <$> Inc.assocs players
 

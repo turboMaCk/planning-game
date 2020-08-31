@@ -3,7 +3,6 @@
 
 module PlanningGame.Data.Session
   ( Session
-  , SessionId
   , Sessions
   , SessionError(..)
   , SessionJSON(..)
@@ -22,6 +21,7 @@ import           PlanningGame.Api.Error (Error (..), ErrorType (..))
 import           PlanningGame.Data.Id   (Id, generateId)
 
 
+-- | Void like type for usage in tagged id
 data SessionId
 
 

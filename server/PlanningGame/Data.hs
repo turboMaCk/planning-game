@@ -3,13 +3,10 @@ module PlanningGame.Data
     , Game.Games
     , Table.Tables
     , Table.Table
-    , Table.TableId
     , Player.Players
-    , Player.PlayerId
     , Player.Player
     , Session.Sessions
     , Session.Session
-    , Session.SessionId
     , Session.SessionJSON (..)
     ) where
 

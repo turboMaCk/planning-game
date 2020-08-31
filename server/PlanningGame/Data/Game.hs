@@ -252,7 +252,7 @@ allVotes games =
   <$> finishedGames games
 
 
-playerVotes ::  Players -> Games -> [ ( Text, [ ( Int, Vote ) ] ) ]
+playerVotes :: Players -> Games -> [ ( Text, [ ( Int, Vote ) ] ) ]
 playerVotes players games =
   reverse $ (\game@(FinishedGame { name }) -> ( name, playerVotes' game ))
   <$> finishedGames games

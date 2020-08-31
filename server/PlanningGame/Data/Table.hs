@@ -5,7 +5,6 @@
 module PlanningGame.Data.Table
   ( Table(..)
   , Tables
-  , TableId
   , TableError(..)
   , empty
   , create
@@ -40,9 +39,8 @@ import           PlanningGame.Data.AutoIncrement (WithId)
 import           PlanningGame.Data.Game          (GameError, Games)
 import           PlanningGame.Data.Id            (Id (..), generateId)
 import           PlanningGame.Data.Player        (Player (..), PlayerError (..),
-                                                  PlayerId, PlayerStatus,
-                                                  Players)
-import           PlanningGame.Data.Session       (Session, SessionId)
+                                                  PlayerStatus, Players)
+import           PlanningGame.Data.Session       (Session)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
 import qualified PlanningGame.Data.Player        as Player
@@ -51,12 +49,9 @@ import qualified PlanningGame.Data.Player        as Player
 -- Types
 
 
-data TableId
-
-
 data Table = Table
-  { tableId   :: Id TableId
-  , dealer    :: Id SessionId
+  { tableId   :: Id Table
+  , dealer    :: Session
   , players   :: Players
   , game      :: Maybe Games
   , createdAt :: UTCTime
@@ -80,7 +75,7 @@ instance ToJSON Table where
 
 
 type Tables =
-  Map (Id TableId) (MVar Table)
+  Map (Id Table) (MVar Table)
 
 
 data TableError
@@ -142,13 +137,13 @@ isActive Table { players } =
   Player.anyOnline players
 
 
-getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError (WithId PlayerId Player))
+getPlayer :: Session -> Id Table -> Tables -> IO (Either TableError (WithId Player))
 getPlayer session tableId tables =
   maybe (pure $ Left TableNotFound) getPlayer' $
     Map.lookup tableId tables
 
   where
-    getPlayer' :: MVar Table -> IO (Either TableError (WithId PlayerId Player))
+    getPlayer' :: MVar Table -> IO (Either TableError (WithId Player))
     getPlayer' mvar = do
       table <- Concurrent.readMVar mvar
 
@@ -161,7 +156,7 @@ allConnections Table { players } =
    concat $ foldr (\p acc -> Player.allConnections p : acc) [] players
 
 
-assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( WithId PlayerId Player, Int ) )
+assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( WithId Player, Int ) )
 assignConnection session conn table@Table { players } =
   let
     ( updatedPlayers, mPair ) =
@@ -178,17 +173,17 @@ isDealer session Table { dealer } =
   session == dealer
 
 
-lookup :: Id TableId -> Tables -> Maybe (MVar Table)
+lookup :: Id Table -> Tables -> Maybe (MVar Table)
 lookup =
   Map.lookup
 
 
-sessionByPlayerId :: Int -> Table -> Maybe (Id SessionId)
+sessionByPlayerId :: Int -> Table -> Maybe Session
 sessionByPlayerId id' table =
   fst <$> Inc.getById id' (players table)
 
 
-getDealer :: Table -> WithId PlayerId Player
+getDealer :: Table -> WithId Player
 getDealer Table { dealer, players } =
   case Inc.lookup dealer players of
     Just p  -> p

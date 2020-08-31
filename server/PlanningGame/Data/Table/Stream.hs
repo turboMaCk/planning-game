@@ -28,11 +28,11 @@ import           PlanningGame.Api.GameSnapshot   (snapshot)
 import           PlanningGame.Data.AutoIncrement (WithId (..))
 import           PlanningGame.Data.Game          (Games, Vote)
 import           PlanningGame.Data.Id            (Id)
-import           PlanningGame.Data.Player        (Player, PlayerId,
-                                                  PlayerStatus (..), Players)
+import           PlanningGame.Data.Player        (Player, PlayerStatus (..),
+                                                  Players)
 import           PlanningGame.Data.Session       (Session)
 import           PlanningGame.Data.Table         (Table (..), TableError (..),
-                                                  TableId, Tables)
+                                                  Tables)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
 import qualified PlanningGame.Data.Game          as Game
@@ -98,14 +98,14 @@ instance FromJSON Msg where
 
 -- | Event is outgoing event to clients
 data Event
-    = PlayerJoined (WithId PlayerId Player)
-    | PlayerStatusUpdate (WithId PlayerId Player)
+    = PlayerJoined (WithId Player)
+    | PlayerStatusUpdate (WithId Player)
     | SyncTableState Table
     | GameStarted Players Games
-    | VoteAccepted (WithId PlayerId Player)
+    | VoteAccepted (WithId Player)
     | VotingEnded Players Games
     | GameEnded Players Games
-    | PlayerKicked (WithId PlayerId Player)
+    | PlayerKicked (WithId Player)
     | CurrentGameChanged Players Games
 
 
@@ -195,7 +195,7 @@ disconnect state sessionId connId =
 
 
 -- @TODO: Add check if session is not already present
-join :: Session -> Id TableId -> Text -> PlayerStatus -> Tables -> IO ( Either TableError Table )
+join :: Session -> Id Table -> Text -> PlayerStatus -> Tables -> IO ( Either TableError Table )
 join session tableId name' status tables =
   let
     name =
@@ -223,7 +223,7 @@ join session tableId name' status tables =
       pure $ Left TableNotFound
 
 
-handler :: MVar Tables -> Session -> Id TableId -> Connection -> IO ()
+handler :: MVar Tables -> Session -> Id Table -> Connection -> IO ()
 handler state session id' conn = do
   tables <- Concurrent.readMVar state
   let mTable = Table.lookup id' tables
