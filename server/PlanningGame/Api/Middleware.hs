@@ -9,13 +9,14 @@ import           Network.HTTP.Types            (status200)
 import           Network.Wai                   (Middleware, Response,
                                                 requestHeaders, responseLBS)
 import           Network.Wai.Middleware.Static (CacheContainer, addBase,
-                                                staticPolicy')
+                                                staticPolicyWithOptions)
 import           Network.Wai.Parse             (parseHttpAccept)
 import           Paths_planning_game           (version)
 import           Text.Blaze                    (AttributeValue)
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import           Text.Blaze.Html5              (Html, (!))
 
+import qualified Network.Wai.Middleware.Static as Static
 import qualified Text.Blaze                    as Blaze
 import qualified Text.Blaze.Html5              as Html
 import qualified Text.Blaze.Html5.Attributes   as Attrs
@@ -49,7 +50,8 @@ index application request respond
 
 public :: CacheContainer -> Middleware
 public caching =
-  staticPolicy' caching $ addBase "public"
+  staticPolicyWithOptions (Static.defaultOptions { Static.cacheContainer = caching })
+  $ addBase "public"
 
 
 static :: CacheContainer -> Middleware
