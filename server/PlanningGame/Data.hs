@@ -7,7 +7,6 @@ module PlanningGame.Data
     , Player.Player
     , Session.Sessions
     , Session.Session
-    , Session.SessionId
     , Session.SessionJSON (..)
     ) where
 

@@ -42,8 +42,7 @@ import qualified Network.WebSockets              as WS
 
 import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
 import           PlanningGame.Data.AutoIncrement (Incremental, WithId (..))
-import           PlanningGame.Data.Id            (Id)
-import           PlanningGame.Data.Session       (Session, SessionId)
+import           PlanningGame.Data.Session       (Session)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
 
@@ -91,8 +90,7 @@ instance ToJSON (WithId Player) where
 
 
 type Players =
-  Incremental (Id SessionId) Player
-  -- Map (Id SessionId) Player
+  Incremental Session Player
 
 
 data PlayerError
@@ -211,7 +209,7 @@ removeConnectionFrom index player@Player { playerConnections } =
   player { playerConnections = IntMap.delete index playerConnections }
 
 
-disconnect :: Id SessionId -> Int -> Players -> Players
+disconnect :: Session -> Int -> Players -> Players
 disconnect sessionId index =
   Inc.alter (fmap $ removeConnectionFrom index) sessionId
 
@@ -226,23 +224,23 @@ allConnections Player { playerConnections } =
   snd <$> IntMap.toList playerConnections
 
 
-kick :: Id SessionId -> Players -> Players
+kick :: Session -> Players -> Players
 kick =
   Inc.delete
 
 
-lookup :: Id SessionId -> Players -> Maybe (WithId Player)
+lookup :: Session -> Players -> Maybe (WithId Player)
 lookup =
   Inc.lookup
 
 
 -- TODO: review
-insert :: Id SessionId -> Player -> Players -> Players
+insert :: Session -> Player -> Players -> Players
 insert i p =
   fst . Inc.insert i p
 
 
-toList :: Players -> [ (Id SessionId, Player) ]
+toList :: Players -> [ (Session, Player) ]
 toList ps =
   second Inc.unwrapValue <$> Inc.assocs ps
 
