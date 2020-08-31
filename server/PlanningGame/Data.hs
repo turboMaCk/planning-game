@@ -5,7 +5,6 @@ module PlanningGame.Data
     , Table.Table
     , Table.TableId
     , Player.Players
-    , Player.PlayerId
     , Player.Player
     , Session.Sessions
     , Session.Session

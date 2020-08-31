@@ -47,7 +47,7 @@ type Api = "status"                                :> Get  '[JSON] Text
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "join"
                      :> ReqBody '[JSON] PlayerInfo :> Post '[JSON] Table
       :<|> "tables"  :> AuthProtect "header"       :> Capture "tableid" (Id TableId)  :> "me"
-                                                   :> Get '[JSON] (WithId PlayerId Player)
+                                                   :> Get '[JSON] (WithId Player)
       :<|> "tables"  :> AuthProtect "cookie"       :> Capture "tableid" (Id TableId)  :> "stream" :> WebSocket
 
 
@@ -99,7 +99,7 @@ server state = statusApi
 
       either Error.respond pure tableRes
 
-    meHandler :: (HeaderAuth Session) -> Id TableId -> Handler (WithId PlayerId Player)
+    meHandler :: (HeaderAuth Session) -> Id TableId -> Handler (WithId Player)
     meHandler (HeaderAuth session) tableId = do
       ts <- liftIO $ Concurrent.readMVar (State.tables state)
       playerRes <- liftIO $ Table.getPlayer session tableId ts

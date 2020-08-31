@@ -28,8 +28,8 @@ import           PlanningGame.Api.GameSnapshot   (snapshot)
 import           PlanningGame.Data.AutoIncrement (WithId (..))
 import           PlanningGame.Data.Game          (Games, Vote)
 import           PlanningGame.Data.Id            (Id)
-import           PlanningGame.Data.Player        (Player, PlayerId,
-                                                  PlayerStatus (..), Players)
+import           PlanningGame.Data.Player        (Player, PlayerStatus (..),
+                                                  Players)
 import           PlanningGame.Data.Session       (Session)
 import           PlanningGame.Data.Table         (Table (..), TableError (..),
                                                   TableId, Tables)
@@ -98,14 +98,14 @@ instance FromJSON Msg where
 
 -- | Event is outgoing event to clients
 data Event
-    = PlayerJoined (WithId PlayerId Player)
-    | PlayerStatusUpdate (WithId PlayerId Player)
+    = PlayerJoined (WithId Player)
+    | PlayerStatusUpdate (WithId Player)
     | SyncTableState Table
     | GameStarted Players Games
-    | VoteAccepted (WithId PlayerId Player)
+    | VoteAccepted (WithId Player)
     | VotingEnded Players Games
     | GameEnded Players Games
-    | PlayerKicked (WithId PlayerId Player)
+    | PlayerKicked (WithId Player)
     | CurrentGameChanged Players Games
 
 

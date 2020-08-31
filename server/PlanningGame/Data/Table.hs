@@ -40,8 +40,7 @@ import           PlanningGame.Data.AutoIncrement (WithId)
 import           PlanningGame.Data.Game          (GameError, Games)
 import           PlanningGame.Data.Id            (Id (..), generateId)
 import           PlanningGame.Data.Player        (Player (..), PlayerError (..),
-                                                  PlayerId, PlayerStatus,
-                                                  Players)
+                                                  PlayerStatus, Players)
 import           PlanningGame.Data.Session       (Session, SessionId)
 
 import qualified PlanningGame.Data.AutoIncrement as Inc
@@ -142,13 +141,13 @@ isActive Table { players } =
   Player.anyOnline players
 
 
-getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError (WithId PlayerId Player))
+getPlayer :: Session -> Id TableId -> Tables -> IO (Either TableError (WithId Player))
 getPlayer session tableId tables =
   maybe (pure $ Left TableNotFound) getPlayer' $
     Map.lookup tableId tables
 
   where
-    getPlayer' :: MVar Table -> IO (Either TableError (WithId PlayerId Player))
+    getPlayer' :: MVar Table -> IO (Either TableError (WithId Player))
     getPlayer' mvar = do
       table <- Concurrent.readMVar mvar
 
@@ -161,7 +160,7 @@ allConnections Table { players } =
    concat $ foldr (\p acc -> Player.allConnections p : acc) [] players
 
 
-assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( WithId PlayerId Player, Int ) )
+assignConnection :: Session -> Connection -> Table -> ( Table, Maybe ( WithId Player, Int ) )
 assignConnection session conn table@Table { players } =
   let
     ( updatedPlayers, mPair ) =
@@ -188,7 +187,7 @@ sessionByPlayerId id' table =
   fst <$> Inc.getById id' (players table)
 
 
-getDealer :: Table -> WithId PlayerId Player
+getDealer :: Table -> WithId Player
 getDealer Table { dealer, players } =
   case Inc.lookup dealer players of
     Just p  -> p
