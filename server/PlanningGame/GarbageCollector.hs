@@ -50,7 +50,7 @@ gcTables state minDeltaMin now =
 
 
 start :: ServerState -> Int -> Integer -> IO ()
-start (ServerState { tables }) frequency tableMinLife = do
+start ServerState { tables } frequency tableMinLife = do
   putStrLn $ "GC will run every " <> show frequency <> "th minute."
 
   forever $ do

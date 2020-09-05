@@ -100,7 +100,7 @@ server state = statusApi
       either Error.respond pure tableRes
 
     meHandler :: HeaderAuth Session -> Id Table -> Handler (WithId Player)
-    meHandler HeaderAuth session tableId = do
+    meHandler (HeaderAuth session) tableId = do
       ts <- liftIO $ Concurrent.readMVar (State.tables state)
       playerRes <- liftIO $ Table.getPlayer session tableId ts
 
