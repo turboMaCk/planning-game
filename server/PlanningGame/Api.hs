@@ -57,7 +57,6 @@ api = Proxy
 
 -- Server
 
-
 genContext :: MVar Sessions -> Context (SessionHeaderAuth : SessionCookieAuth ': '[])
 genContext state =
   authHeaderHandler state :. authCookieHandler state :. EmptyContext

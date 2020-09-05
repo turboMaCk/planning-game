@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
 
 module PlanningGame.Api.Middleware (static) where
 
@@ -32,10 +31,10 @@ index application request respond
   where
     respondWithIndex :: Bool
     respondWithIndex
-      | "Upgrade" `lookup` (requestHeaders request) == Just "websocket" = False
+      | "Upgrade" `lookup` requestHeaders request == Just "websocket" = False
       | otherwise =
-        fromMaybe False $ (elem "text/html" . parseHttpAccept) <$>
-        "Accept" `lookup ` (requestHeaders request)
+        Just True == (elem "text/html" . parseHttpAccept <$>
+            "Accept" `lookup ` requestHeaders request)
 
     indexRes :: Response
     indexRes =
