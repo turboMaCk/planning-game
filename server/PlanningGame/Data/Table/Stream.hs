@@ -125,36 +125,36 @@ instance ToJSON Event where
         , "table"        .= table
         , "nextGameName" .= maybe "Task-1" Game.autoNextName (Table.game table)
         ]
-  toJSON (GameStarted players games) =
+  toJSON (GameStarted players' games) =
     object
         [ "event" .= Text.pack "GameStarted"
-        , "game"  .= snapshot players games
+        , "game"  .= snapshot players' games
         ]
   toJSON (VoteAccepted player) =
     object
         [ "event"  .= Text.pack "VoteAccepted"
         , "player" .= player
         ]
-  toJSON (VotingEnded players games) =
+  toJSON (VotingEnded players' games) =
     object
         [ "event"        .= Text.pack "VotingEnded"
-        , "game"         .= snapshot players games
+        , "game"         .= snapshot players' games
         , "nextGameName" .= Game.autoNextName games
         ]
-  toJSON (GameEnded players games) =
+  toJSON (GameEnded players' games) =
     object
         [ "event" .= Text.pack "GameEnded"
-        , "game"  .= snapshot players games
+        , "game"  .= snapshot players' games
         ]
   toJSON (PlayerKicked player) =
     object
         [ "event"  .= Text.pack "PlayerKicked"
         , "player" .= player
         ]
-  toJSON (CurrentGameChanged players game) =
+  toJSON (CurrentGameChanged players' game') =
     object
         [ "event" .= Text.pack "CurrentGameChanged"
-        , "game"  .= snapshot players game
+        , "game"  .= snapshot players' game'
         ]
 
 
@@ -195,12 +195,12 @@ disconnect state sessionId connId =
 
 -- @TODO: Add check if session is not already present
 join :: Session -> Id Table -> Text -> PlayerStatus -> Tables -> IO ( Either TableError Table )
-join session tableId name' status tables =
+join session tableId' name' status tables =
   let
     name =
       Text.strip name'
   in
-  case Table.lookup tableId tables of
+  case Table.lookup tableId' tables of
     Just mvar -> do
       table <- Concurrent.readMVar mvar
 
@@ -272,10 +272,10 @@ handleMsg :: Connection -> Session -> Msg -> Table -> IO Table
 handleMsg _ session (NewGame name) table
   | Table.isDealer session table
   , Maybe.isNothing (Table.game table) = do
-      let game = Game.start name
+      let game' = Game.start name
       let players' = players table
-      broadcast table $ GameStarted players' game
-      pure $ table { Table.game = Just game }
+      broadcast table $ GameStarted players' game'
+      pure $ table { Table.game = Just game' }
 
   | not $ Table.isDealer session table =
       -- @TODO: Handle forbidden action
@@ -324,8 +324,8 @@ handleMsg _ session (NextRound vote name) table
 
 handleMsg _ session (Vote vote) table =
   case game table of
-    Just game ->
-      case Game.addVote session vote game of
+    Just game' ->
+      case Game.addVote session vote game' of
         Right newGames -> do
           maybe mzero (broadcast table . VoteAccepted)
             $ Player.lookup session
@@ -374,10 +374,10 @@ handleMsg _ session RestartRound table
   | Table.isDealer session table =
     case game table of
       Just g -> do
-        let game = Game.restartCurrent g
+        let game' = Game.restartCurrent g
         let players' = Table.players table
-        broadcast table $ GameStarted players' game
-        pure $ table { Table.game = Just game }
+        broadcast table $ GameStarted players' game'
+        pure $ table { Table.game = Just game' }
 
       Nothing ->
         -- @TODO: handle err
@@ -421,9 +421,9 @@ handleMsg _ session (ChangeName newName) table =
 handleMsg _ session (RenameCurrentRound newName) table
   | Table.isDealer session table =
       case Game.renameCurrent newName <$> Table.game table of
-        Just game -> do
-          broadcast table $ CurrentGameChanged (Table.players table) game
-          pure $ table { game = Just game }
+        Just game' -> do
+          broadcast table $ CurrentGameChanged (Table.players table) game'
+          pure $ table { game = Just game' }
 
         Nothing ->
           -- @TODO: handle errors
