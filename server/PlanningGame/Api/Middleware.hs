@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
 
 module PlanningGame.Api.Middleware (static) where
 
-import           Data.Maybe                    (fromMaybe)
 import           Data.Version                  (showVersion)
 import           Network.HTTP.Types            (status200)
 import           Network.Wai                   (Middleware, Response,
@@ -32,10 +30,10 @@ index application request respond
   where
     respondWithIndex :: Bool
     respondWithIndex
-      | "Upgrade" `lookup` (requestHeaders request) == Just "websocket" = False
+      | "Upgrade" `lookup` requestHeaders request == Just "websocket" = False
       | otherwise =
-        fromMaybe False $ (elem "text/html" . parseHttpAccept) <$>
-        "Accept" `lookup ` (requestHeaders request)
+        Just True == (elem "text/html" . parseHttpAccept <$>
+            "Accept" `lookup ` requestHeaders request)
 
     indexRes :: Response
     indexRes =

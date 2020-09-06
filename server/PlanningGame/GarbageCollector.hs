@@ -22,8 +22,8 @@ import qualified PlanningGame.Data.Table as Table
 
 
 filterMaybes :: Ord k => Map k (Maybe a) -> Map k a
-filterMaybes map' =
-  Map.foldrWithKey filter' Map.empty map'
+filterMaybes =
+  Map.foldrWithKey filter' Map.empty
 
   where
     filter' :: Ord k => k -> Maybe a -> Map k a -> Map k a
@@ -44,13 +44,13 @@ gcTables state minDeltaMin now =
         pure $ Just s
 
       else
-        pure $ Nothing
+        pure Nothing
 
     pure $ filterMaybes labeled
 
 
 start :: ServerState -> Int -> Integer -> IO ()
-start (ServerState { tables }) frequency tableMinLife = do
+start ServerState { tables } frequency tableMinLife = do
   putStrLn $ "GC will run every " <> show frequency <> "th minute."
 
   forever $ do

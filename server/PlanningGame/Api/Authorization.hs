@@ -64,7 +64,7 @@ maybeToEither e =
 
 handler :: (Request -> Maybe Session) -> (Session -> a) -> MVar Sessions -> Request -> Handler a
 handler getSessionId construct state req =
-    either Error.respond (\id' -> construct <$> lookupSession state id') $
+    either Error.respond (fmap construct . lookupSession state) $
         maybeToEither SessionIdMissing $ getSessionId req
 
 

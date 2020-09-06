@@ -35,6 +35,7 @@ import qualified Data.Time.Clock                 as Clock
 import           PlanningGame.Api.Error          (Error (..), ErrorType (..))
 import           PlanningGame.Api.GameSnapshot   (snapshot)
 
+import           Data.Maybe                      (fromMaybe)
 import           PlanningGame.Data.AutoIncrement (WithId)
 import           PlanningGame.Data.Game          (GameError, Games)
 import           PlanningGame.Data.Id            (Id (..), generateId)
@@ -185,13 +186,10 @@ sessionByPlayerId id' table =
 
 getDealer :: Table -> WithId Player
 getDealer Table { dealer, players } =
-  case Inc.lookup dealer players of
-    Just p  -> p
-    -- Should not ever happen
-    -- @TODO: avoidable bottom
-    Nothing -> undefined
+  -- @TODO: avoidable bottom
+  fromMaybe undefined $ Inc.lookup dealer players
 
 
 updatePlayer :: (Player -> Maybe Player) -> Session -> Table -> Table
-updatePlayer f session table@(Table { players }) =
+updatePlayer f session table@Table { players } =
   table { players = Inc.update f session players }

@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -9,7 +8,6 @@ module PlanningGame.Data.Id
   ) where
 
 import           Prelude            hiding (lookup, filter, null)
-import           Control.Monad      (liftM)
 import           Data.Aeson.Types   (ToJSON (..))
 import           Data.ByteString    (ByteString)
 import           Data.Map.Strict    (Map)
@@ -52,7 +50,7 @@ instance ToJSON (Id a) where
 
 randString :: IO String
 randString =
-    liftM (take 32 . randomRs ('a','z')) newStdGen
+    fmap (take 32 . randomRs ('a','z')) newStdGen
 
 
 class Lookupable a id where
