@@ -1,4 +1,3 @@
-{-# LANGUAGE InstanceSigs #-}
 module PlanningGame.Data.AutoIncrement
   ( Incremental
   , WithId(..)
@@ -60,7 +59,7 @@ data Incremental k v =
 
 
 instance Foldable (Incremental k) where
-  foldr f acc (Incremental _ m) = foldr (\a -> f $ unwrapValue a) acc m
+  foldr f acc (Incremental _ m) = foldr (f . unwrapValue) acc m
   foldl f acc (Incremental _ m) = foldl (\acc' -> f acc' . unwrapValue) acc m
 
 
@@ -103,7 +102,7 @@ getById id' =
   find f . assocs
 
   where
-    f ( _, (WithId i _) ) = unIncId i == id'
+    f ( _, WithId i _ )  = unIncId i == id'
 
 
 filter :: (v -> Bool) -> Incremental k v -> Incremental k v
