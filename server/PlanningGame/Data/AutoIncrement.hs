@@ -33,7 +33,7 @@ instance Show (IncId a) where
 
 
 data WithId a =
-  WithId (IncId a) a
+  WithId !(IncId a) !a
 
 
 instance Functor WithId where
@@ -55,7 +55,7 @@ unwrapId (WithId id' _) =
 
 
 data Incremental k v =
-  Incremental Int (Map k (WithId v))
+  Incremental !Int !(Map k (WithId v))
 
 
 instance Foldable (Incremental k) where

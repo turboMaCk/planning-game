@@ -108,22 +108,22 @@ instance FromJSON Vote where
 
 -- @TODO: named members
 data RunningGame =
-  RunningGame Text (Map Session Vote) Bool
+  RunningGame !Text !(Map Session Vote) Bool
 
 
 data FinishedGame =
   FinishedGame
-    { votes       :: Map Session Vote
-    , winningVote :: Vote
-    , name        :: Text
+    { votes       :: !(Map Session Vote)
+    , winningVote :: !Vote
+    , name        :: !Text
     }
 
 
 -- Isomorphic to ( [ PatGame ], Maybe RunningGame ) but more explicit.
 -- Past games are stored in opossite order
 data Games
-  = RunningGames  [ FinishedGame ] RunningGame
-  | FinishedGames [ FinishedGame ]
+  = RunningGames  ![ FinishedGame ] !RunningGame
+  | FinishedGames ![ FinishedGame ]
 
 
 data GameError
