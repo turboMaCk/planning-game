@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
+
 {-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -147,7 +148,7 @@ instance Error GameError where
 getName :: Text -> Games -> Text
 getName name' games
   | Text.null name' =
-      checkName $ "Task-" <> (Text.pack $ show (Set.size gameNames + 1))
+      checkName $ "Task-" <> Text.pack (show $ Set.size gameNames + 1)
   | otherwise = checkName name'
 
   where
@@ -243,18 +244,18 @@ finishedGames (FinishedGames finished)  = finished
 
 sumPoints :: Games -> Int
 sumPoints games =
-  sum $ (voteToInt . winningVote) <$> finishedGames games
+  sum $ voteToInt . winningVote <$> finishedGames games
 
 
 allVotes :: Games -> [ ( Text, Vote ) ]
 allVotes games =
-  reverse $ (\(FinishedGame { name, winningVote }) -> ( name, winningVote ))
+  reverse $ (\FinishedGame { name, winningVote } -> ( name, winningVote ))
   <$> finishedGames games
 
 
 playerVotes :: Players -> Games -> [ ( Text, [ ( Int, Vote ) ] ) ]
 playerVotes players games =
-  reverse $ (\game@(FinishedGame { name }) -> ( name, playerVotes' game ))
+  reverse $ (\game@FinishedGame { name } -> ( name, playerVotes' game ))
   <$> finishedGames games
 
   where
@@ -280,11 +281,11 @@ currentPlayerVotes players (RunningGames _ (RunningGame _ votes _)) =
 allVoted :: Players -> Games -> Bool
 allVoted _ (FinishedGames _) = False
 allVoted players (RunningGames _ (RunningGame _ votes _ )) =
-  Prelude.null $ Prelude.filter (not . flip Map.member votes) sessionIds
+  all (`Map.member` votes) sessionIds
 
   where
     sessionIds =
-      fst <$> (Prelude.filter (\(_, p) -> Player.status p == Active) $ Player.toList players)
+      fst <$> Prelude.filter (\(_, p) -> Player.status p == Active) (Player.toList players)
 
 
 removePlayerVotes :: Session -> Games -> Games

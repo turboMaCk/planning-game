@@ -80,7 +80,7 @@ instance Show Player where
 
 
 instance ToJSON (WithId Player) where
-  toJSON (WithId id' player@(Player { name, status })) =
+  toJSON (WithId id' player@Player { name, status }) =
     Aeson.object
         [ "id"        .= toJSON id'
         , "name"      .= name
