@@ -68,10 +68,10 @@ instance ToJSON PlayerStatus where
 
 
 data Player = Player
-  { name              :: Text
+  { name              :: !Text
   -- @TODO: autoincrement can be maybe utilized here as well
-  , playerConnections :: IntMap Connection
-  , status            :: PlayerStatus
+  , playerConnections :: !(IntMap Connection)
+  , status            :: !PlayerStatus
   }
 
 

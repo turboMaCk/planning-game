@@ -51,11 +51,11 @@ import qualified PlanningGame.Data.Player        as Player
 
 
 data Table = Table
-  { tableId   :: Id Table
-  , dealer    :: Session
-  , players   :: Players
-  , game      :: Maybe Games
-  , createdAt :: UTCTime
+  { tableId   :: !(Id Table)
+  , dealer    :: !Session
+  , players   :: !Players
+  , game      :: !(Maybe Games)
+  , createdAt :: !UTCTime
   }
 
 

@@ -41,16 +41,16 @@ import qualified PlanningGame.Data.Table         as Table
 
 -- | Msg is incomming msg from client
 data Msg
-  = NewGame Text
+  = NewGame !Text
   | FinishRound
-  | NextRound Vote Text
+  | NextRound !Vote !Text
   | Vote Vote
-  | FinishGame Vote
+  | FinishGame !Vote
   | RestartRound
-  | KickPlayer Int
-  | ChangeName Text
-  | RenameCurrentRound Text
-  | ChangeStatus PlayerStatus
+  | KickPlayer !Int
+  | ChangeName !Text
+  | RenameCurrentRound !Text
+  | ChangeStatus !PlayerStatus
 
 
 instance FromJSON Msg where
@@ -97,15 +97,15 @@ instance FromJSON Msg where
 
 -- | Event is outgoing event to clients
 data Event
-    = PlayerJoined (WithId Player)
-    | PlayerStatusUpdate (WithId Player)
-    | SyncTableState Table
-    | GameStarted Players Games
-    | VoteAccepted (WithId Player)
-    | VotingEnded Players Games
-    | GameEnded Players Games
-    | PlayerKicked (WithId Player)
-    | CurrentGameChanged Players Games
+    = PlayerJoined !(WithId Player)
+    | PlayerStatusUpdate !(WithId Player)
+    | SyncTableState !Table
+    | GameStarted !Players Games
+    | VoteAccepted !(WithId Player)
+    | VotingEnded !Players !Games
+    | GameEnded !Players !Games
+    | PlayerKicked !(WithId Player)
+    | CurrentGameChanged !Players !Games
 
 
 instance ToJSON Event where

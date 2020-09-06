@@ -10,8 +10,8 @@ import           PlanningGame.Data.Player (PlayerStatus)
 
 
 data PlayerInfo = PlayerInfo
-  { name   :: Text
-  , status :: PlayerStatus
+  { name   :: !Text
+  , status :: !PlayerStatus
   }
   deriving (Eq, Show)
 

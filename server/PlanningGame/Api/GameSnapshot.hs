@@ -23,19 +23,19 @@ doesn't leak outside.
 --}
 data GameSnapshot
   = RunningGameSnapshot
-    { snapshotName  :: Text
-    , snapshotVotes :: [ Int ]
-    , totalPoints   :: Int
+    { snapshotName  :: !Text
+    , snapshotVotes :: ![ Int ]
+    , totalPoints   :: !Int
     }
   | LockedGameSnapshot
-    { snapshotName :: Text
-    , playerVotes  :: [ ( Int, Vote ) ]
-    , totalPoints  :: Int
+    { snapshotName :: !Text
+    , playerVotes  :: ![ ( Int, Vote ) ]
+    , totalPoints  :: !Int
     }
   | FinishedGameSnapshot
-    { totalPoints       :: Int
-    , snapshotGameVotes :: [ ( Text, Vote ) ]
-    , playerGameVotes   :: [ ( Text, [ ( Int, Vote ) ] ) ]
+    { totalPoints       :: !Int
+    , snapshotGameVotes :: ![ ( Text, Vote ) ]
+    , playerGameVotes   :: ![ ( Text, [ ( Int, Vote ) ] ) ]
     }
 
 
