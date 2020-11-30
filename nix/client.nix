@@ -43,6 +43,7 @@ let
 
         # copy assets
         cp -r public $out/public
+        cp -f client/init.js $out/public
         mv $out/Main.min.js $out/public/app.js
       '';
 
