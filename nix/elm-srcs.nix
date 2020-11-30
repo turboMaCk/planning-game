@@ -36,8 +36,8 @@
       };
 
       "rtfeldman/elm-css" = {
-        sha256 = "1cnmpnwnndvraiz9qiv4d312j61kdb1qs8lkmmmj4dgpanby1w5f";
-        version = "16.0.2";
+        sha256 = "0nxiyxyw3kw55whkpwhrcgc0dr6a8zlm2nqvsaqdw6mzkykg0ba6";
+        version = "16.1.0";
       };
 
       "elm/core" = {
@@ -83,11 +83,6 @@
       "elm/time" = {
         sha256 = "0vch7i86vn0x8b850w1p69vplll1bnbkp8s383z7pinyg94cm2z1";
         version = "1.0.0";
-      };
-
-      "Skinney/murmur3" = {
-        sha256 = "1iiia68w8wlp2qjilyqgnzgjcxby47gla3rw5minj8i5c64zk18j";
-        version = "2.0.8";
       };
 
       "elm/virtual-dom" = {
