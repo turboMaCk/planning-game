@@ -246,7 +246,7 @@ handler state session id' conn = do
                 flip Exception.finally (disconnect tableState session connId) $ do
 
                     -- 3.2 Ping Thread
-                    WS.withPingThread conn 30 mzero $ do
+                    WS.withPingThread conn 30 (pure ()) $ do
                         -- 3.3 Broadcast join event
                         if Player.numberOfConnections (Inc.unwrapValue player) == 1 then do
                             table' <- Concurrent.readMVar tableState
