@@ -853,7 +853,7 @@ viewMe { me, dealer, newName, players, game, leaveConfirmation } =
                     else
                         "Start voting"
                 ]
-        , if me == dealer then
+        , if me == dealer || Data.votingEnded game then
             Html.text ""
 
           else

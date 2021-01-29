@@ -8,6 +8,7 @@ module Data exposing
     , TableError(..)
     , Vote(..)
     , createSession
+    , votingEnded
     , createTable
     , encodePlayerStatus
     , encodeVote
@@ -496,6 +497,16 @@ isVoting : Game -> Bool
 isVoting game =
     case game of
         Voting _ ->
+            True
+
+        _ ->
+            False
+
+
+votingEnded : Game -> Bool
+votingEnded game =
+    case game of
+        Overview _ ->
             True
 
         _ ->
