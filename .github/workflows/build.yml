@@ -1,0 +1,22 @@
+name: "Build"
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  ghc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.1
+      - uses: cachix/install-nix-action@v11
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      # - uses: cachix/cachix-action@v6
+      #   with:
+      #     name: aeson-combinators
+      #     signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
+      - run: |
+          nix-build -A clinet
+          nix-build -A server
+          nix-build -A docker
