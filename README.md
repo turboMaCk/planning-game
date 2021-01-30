@@ -2,8 +2,8 @@
     <h1>Planning Game</h1>
     <p>Planning tool for remote teams.</p>
     <!-- Badges -->
-    <a href="https://travis-ci.org/turboMaCk/planning-game">
-        <img src="https://travis-ci.org/turboMaCk/planning-game.svg?branch=master" alt="build">
+    <a href="https://github.com/turboMaCk/planning-game/actions">
+        <img src="https://github.com/turboMaCk/planning-game/workflows/build/badge.svg?branch=master&event=push" alt="build">
     </a>
     <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">
         <img src="https://img.shields.io/badge/license-AGPLv3-brightgreen.svg" alt="AGPLv3">
@@ -20,15 +20,47 @@ and unclear requirements in collaborative way.
 
 ## Quick Start
 
-Use free hosted service at [planning-game.com](http://planning-game.com)
+Use free hosted service at [planning-game.com](https://planning-game.com)
 
-> HTTPS version is temporarily unavailable due to technical difficulties.
+### Using Container
 
-Run locally:
+Run official container locally:
 
 ```shell
 $ docker run -p 3000:3000 --rm -it turbomack/planning-game
 ```
+
+### Using Nix
+
+> *Optionaly* one can use [Cachix cache of the project](https://app.cachix.org/cache/planning-game).
+>
+> Cache contains binaries for Linux x86-64 (also known as AMD64 Linux).
+>
+> ```shell
+> $ cachix use planning-game
+> ```
+
+Install server binary:
+
+```
+$ nix-env -iA server-mini -f https://github.com/turboMaCk/planning-game/archive/master.tar.gz
+```
+
+Server serves client side assets from the file system so it should ran within directory
+where client files are present. To provide them one can use nix-build:
+
+```
+$ nix-build -A client https://github.com/turboMaCk/planning-game/archive/master.tar.gz
+```
+
+Nix build will create `result` symlink pointing to nix-store containing all the required client side assets.
+You can then just run server within this directory:
+
+```
+$ cd result; planning-game
+```
+
+Server will run on http://localhost:3000
 
 ## Links
 
