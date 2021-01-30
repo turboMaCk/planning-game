@@ -3,7 +3,7 @@
     <p>Planning tool for remote teams.</p>
     <!-- Badges -->
     <a href="https://github.com/turboMaCk/planning-game/actions">
-        <img src="https://github.com/turboMaCk/planning-game/workflows/build/badge.svg?branch=master&event=push" alt="build">
+        <img src="https://github.com/turboMaCk/planning-game/workflows/Build/badge.svg?branch=master&event=push" alt="build">
     </a>
     <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">
         <img src="https://img.shields.io/badge/license-AGPLv3-brightgreen.svg" alt="AGPLv3">
