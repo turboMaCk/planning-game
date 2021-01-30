@@ -22,13 +22,43 @@ and unclear requirements in collaborative way.
 
 Use free hosted service at [planning-game.com](http://planning-game.com)
 
-> HTTPS version is temporarily unavailable due to technical difficulties.
+### Containers
 
-Run locally:
+Run official container locally:
 
 ```shell
 $ docker run -p 3000:3000 --rm -it turbomack/planning-game
 ```
+
+### Nix
+
+**Optionaly** you can ad [Cachix cache of the project](https://app.cachix.org/cache/planning-game):
+
+```shell
+$ cachix use planning-game
+```
+
+Install server binary:
+
+```
+$ nix-env -iA server -f https://github.com/turboMaCk/planning-game/archive/master.tar.gz
+```
+
+Server serves client side assets from the file system so it should be ran from directory
+where these files are present. To provide them you can use nix-build:
+
+```
+$ nix-build -A client https://github.com/turboMaCk/planning-game/archive/master.tar.gz
+```
+
+Nix build will create `result` symlink pointing to nix-store containing all thre required client side assets.
+You can then just run server within this directory:
+
+```
+$ cd result planning-game
+```
+
+Server will run on https://localhost:3000
 
 ## Links
 
