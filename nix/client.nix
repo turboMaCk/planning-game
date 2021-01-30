@@ -49,7 +49,7 @@ let
 
     };
 in mkDerivation {
-  name = "planning-game-client-0.3.0";
+  name = "planning-game-client-0.3.1";
   srcs = ./elm-srcs.nix;
   src = ../.;
   targets = ["Main"];

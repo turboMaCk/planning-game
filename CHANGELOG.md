@@ -1,5 +1,11 @@
 # Revision history for planning-game
 
+## 0.3.1 -- 2021-01-30
+
+* **CHORE:** Server code refactoring
+* **CHORE:** Front-end dependecies upgrade
+* **CHORE:** Nixpkgs pin
+
 ## 0.3.0 -- 2019-09-22
 
 * **FEATURE:** Player statuses / Non voting players
