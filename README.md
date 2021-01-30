@@ -32,11 +32,11 @@ $ docker run -p 3000:3000 --rm -it turbomack/planning-game
 
 ### Using Nix
 
-**Optionaly** one can use [Cachix cache of the project](https://app.cachix.org/cache/planning-game):
-
-```shell
-$ cachix use planning-game
-```
+> *Optionaly* one can use [Cachix cache of the project](https://app.cachix.org/cache/planning-game):
+>
+> ```shell
+> $ cachix use planning-game
+> ```
 
 Install server binary:
 
