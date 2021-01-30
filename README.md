@@ -32,7 +32,8 @@ $ docker run -p 3000:3000 --rm -it turbomack/planning-game
 
 ### Using Nix
 
-> *Optionaly* one can use [Cachix cache of the project](https://app.cachix.org/cache/planning-game):
+> *Optionaly* one can use [Cachix cache of the project](https://app.cachix.org/cache/planning-game).
+> Cache contains binaries for Linux x86-64 (also known as AMD64 Linux).
 >
 > ```shell
 > $ cachix use planning-game
