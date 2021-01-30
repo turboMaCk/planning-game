@@ -17,6 +17,5 @@ jobs:
           name: planning-game
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: |
-          nix-build -A client
-          nix-build -A server
-          nix-build -A docker
+          nix-build -A client -A server
+      - run: nix-build -A docker
