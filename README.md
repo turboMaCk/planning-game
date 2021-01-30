@@ -43,7 +43,7 @@ $ docker run -p 3000:3000 --rm -it turbomack/planning-game
 Install server binary:
 
 ```
-$ nix-env -iA server -f https://github.com/turboMaCk/planning-game/archive/master.tar.gz
+$ nix-env -iA server-mini -f https://github.com/turboMaCk/planning-game/archive/master.tar.gz
 ```
 
 Server serves client side assets from the file system so it should ran within directory
