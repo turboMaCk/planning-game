@@ -22,7 +22,7 @@ and unclear requirements in collaborative way.
 
 Use free hosted service at [planning-game.com](http://planning-game.com)
 
-### Containers
+### Using Container
 
 Run official container locally:
 
@@ -30,7 +30,7 @@ Run official container locally:
 $ docker run -p 3000:3000 --rm -it turbomack/planning-game
 ```
 
-### Nix
+### Using Nix
 
 **Optionaly** one can use [Cachix cache of the project](https://app.cachix.org/cache/planning-game):
 
