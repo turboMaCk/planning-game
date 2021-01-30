@@ -55,7 +55,7 @@ Nix build will create `result` symlink pointing to nix-store containing all the 
 You can then just run server within this directory:
 
 ```
-$ cd result planning-game
+$ cd result; planning-game
 ```
 
 Server will run on https://localhost:3000
