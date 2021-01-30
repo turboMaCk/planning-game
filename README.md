@@ -20,7 +20,7 @@ and unclear requirements in collaborative way.
 
 ## Quick Start
 
-Use free hosted service at [planning-game.com](http://planning-game.com)
+Use free hosted service at [planning-game.com](https://planning-game.com)
 
 ### Using Container
 
@@ -60,7 +60,7 @@ You can then just run server within this directory:
 $ cd result; planning-game
 ```
 
-Server will run on https://localhost:3000
+Server will run on http://localhost:3000
 
 ## Links
 
