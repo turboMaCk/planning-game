@@ -17,6 +17,6 @@ jobs:
       #     name: aeson-combinators
       #     signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
       - run: |
-          nix-build -A clinet
+          nix-build -A client
           nix-build -A server
           nix-build -A docker
