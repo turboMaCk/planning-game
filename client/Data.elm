@@ -8,7 +8,6 @@ module Data exposing
     , TableError(..)
     , Vote(..)
     , createSession
-    , votingEnded
     , createTable
     , encodePlayerStatus
     , encodeVote
@@ -27,6 +26,7 @@ module Data exposing
     , tableWithGameDecoder
     , voteDecoder
     , voteToInt
+    , votingEnded
     )
 
 import Dict exposing (Dict)
