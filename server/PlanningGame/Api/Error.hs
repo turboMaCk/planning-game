@@ -1,25 +1,32 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE ExplicitForAll    #-}
-{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ExplicitForAll #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module PlanningGame.Api.Error
- (Error (..),
-  ErrorType (..),
-  respond
-  ) where
+module PlanningGame.Api.Error (
+    Error (..),
+    ErrorType (..),
+    respond,
+) where
 
+import Control.Monad.Error.Class (MonadError)
+import Data.Aeson.Types (ToJSON (..), (.=))
+import Data.Text (Text)
+import GHC.Generics (Generic)
+import Servant (throwError)
+import Servant.Server (
+    ServerError,
+    err401,
+    err403,
+    err404,
+    err409,
+    err422,
+    errBody,
+    errHeaders,
+ )
 
-import           Control.Monad.Error.Class (MonadError)
-import           Data.Aeson.Types          (ToJSON (..), (.=))
-import           Data.Text                 (Text)
-import           GHC.Generics              (Generic)
-import           Servant                   (throwError)
-import           Servant.Server            (ServerError, err401, err403, err404,
-                                            err409, err422, errBody, errHeaders)
-
-import qualified Data.Aeson                as Aeson
-import qualified Data.Text                 as Text
+import qualified Data.Aeson as Aeson
+import qualified Data.Text as Text
 
 
 data ErrorType
@@ -35,36 +42,37 @@ instance ToJSON ErrorType
 
 
 class Error a where
-  toType     :: a -> ErrorType
-  toReadable :: a -> Text
+    toType :: a -> ErrorType
+    toReadable :: a -> Text
 
 
 {-- Just to trick the compiler
 --}
-newtype WrapError a =
-  WrapError a
+newtype WrapError a
+    = WrapError a
 
 
 instance (Show a, Error a) => ToJSON (WrapError a) where
-  toJSON (WrapError err) =
-    Aeson.object
-      [ "status"  .= toType err
-      , "error"   .= toJSON (Text.pack $ show err)
-      , "message" .= toReadable err
-      ]
+    toJSON (WrapError err) =
+        Aeson.object
+            [ "status" .= toType err
+            , "error" .= toJSON (Text.pack $ show err)
+            , "message" .= toReadable err
+            ]
 
 
-respond :: ( Show a, Error a) => MonadError ServerError m => a -> m b
+respond :: (Show a, Error a) => MonadError ServerError m => a -> m b
 respond res =
-  throwError $ err
-    { errBody = Aeson.encode $ toJSON (WrapError res)
-    , errHeaders = [ ( "Content-Type", "application/json;charset=utf-8" ) ]
-    }
+    throwError $
+        err
+            { errBody = Aeson.encode $ toJSON (WrapError res)
+            , errHeaders = [("Content-Type", "application/json;charset=utf-8")]
+            }
   where
     err =
         case toType res of
-            NotFound      -> err404
-            Unauthorized  -> err401
-            Forbidden     -> err403
-            Conflict      -> err409
+            NotFound -> err404
+            Unauthorized -> err401
+            Forbidden -> err403
+            Conflict -> err409
             Unprocessable -> err422
