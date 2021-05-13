@@ -584,7 +584,7 @@ viewGame model =
                 RoundFinished { playerVotes } ->
                     if amIDealer model && model.myVote /= Nothing then
                         -- Dealer definitng new ticket
-                        [ Theme.highlightedHeading False [ Html.text "Set next taks OR finish the game!" ]
+                        [ Theme.highlightedHeading False [ Html.text "Set next task OR finish the game!" ]
                         , viewSetName model
                         ]
 
