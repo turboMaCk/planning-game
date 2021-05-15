@@ -13,6 +13,15 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - run: nix-shell -p elmPackages.elm-format --run "elm-format --validate client"
+      - run: |
+          nix-shell -p fourmolu -i $(git ls-files '*.hs')
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No style errors detected."
+          else
+            echo "Style errors detected:"
+            git --no-pager diff
+            exit 1
+          fi
       - uses: cachix/cachix-action@v8
         with:
           name: planning-game
